@@ -1,0 +1,117 @@
+{
+  "spec": "SUM-7b",
+  "source": {
+    "workflow": "EmailSummarizerFromPgCron",
+    "node": "telegram-send-failed-exec",
+    "parameter": "text",
+    "template_sha256": "0ae9cc61fe5aced1e8746e8166554fa89de99a9a451689f3091e1f331993078f"
+  },
+  "generator": {
+    "script": "tests/golden/src/generate.mjs",
+    "node": "v26.13.0",
+    "now": "2026-11-14T12:00:00.000-03:00"
+  },
+  "notes": "Alert text with $now frozen at 2026-11-14T12:00:00.000-03:00. mock_telegram = what the HTML parse gives (D-012).",
+  "cases": [
+    {
+      "id": "fixture:01-morning-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "now": "2026-11-14T12:00:00.000-03:00",
+        "error": "Mock fault 503 for models/gemini-2.5-flash",
+        "transform-content": {
+          "news_id": 1,
+          "from": "Morning Brew",
+          "subject": "☕ Markets rally as rates hold steady",
+          "date": "Sat, 14 Nov 2026 at 08h 05min",
+          "to_translate": true,
+          "translate_language": "Brazilian Portuguese",
+          "content": "Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+        },
+        "prompt-builder": {
+          "model": "models/gemini-flash-lite-latest",
+          "modelFallback": "models/gemini-2.5-flash",
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+        }
+      },
+      "output": {
+        "text": "<b>Unable to summarize message</b>\n<i>Attempted at 2026-11-14T12:00:00.000-03:00</i>\n\n<b>Subject:</b> ☕ Markets rally as rates hold steady\n<b>From</b>: Morning Brew\n<b>Date:</b> Sat, 14 Nov 2026 at 08h 05min\n<b>Model:</b> models/gemini-flash-lite-latest\n<b>Model fallback:</b> models/gemini-2.5-flash\n\nExecution error <b>Mock fault 503 for models/gemini-2.5-flash</b>\n\n<i>Retrying after 10 minutes</i>",
+        "parse_mode": "HTML"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Unable to summarize message\nAttempted at 2026-11-14T12:00:00.000-03:00\n\nSubject: ☕ Markets rally as rates hold steady\nFrom: Morning Brew\nDate: Sat, 14 Nov 2026 at 08h 05min\nModel: models/gemini-flash-lite-latest\nModel fallback: models/gemini-2.5-flash\n\nExecution error Mock fault 503 for models/gemini-2.5-flash\n\nRetrying after 10 minutes"
+      }
+    },
+    {
+      "id": "fixture:02-the-news",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "now": "2026-11-14T12:00:00.000-03:00",
+        "error": "Mock fault 503 for models/gemini-2.5-flash",
+        "transform-content": {
+          "news_id": 2,
+          "from": "The News",
+          "subject": "Resumo do dia: economia, política e tecnologia",
+          "date": "Fri, 13 Nov 2026 at 09h 30min",
+          "to_translate": false,
+          "translate_language": "Brazilian Portuguese",
+          "content": "Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+        },
+        "prompt-builder": {
+          "model": "models/gemini-flash-lite-latest",
+          "modelFallback": "models/gemini-2.5-flash",
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+        }
+      },
+      "output": {
+        "text": "<b>Unable to summarize message</b>\n<i>Attempted at 2026-11-14T12:00:00.000-03:00</i>\n\n<b>Subject:</b> Resumo do dia: economia, política e tecnologia\n<b>From</b>: The News\n<b>Date:</b> Fri, 13 Nov 2026 at 09h 30min\n<b>Model:</b> models/gemini-flash-lite-latest\n<b>Model fallback:</b> models/gemini-2.5-flash\n\nExecution error <b>Mock fault 503 for models/gemini-2.5-flash</b>\n\n<i>Retrying after 10 minutes</i>",
+        "parse_mode": "HTML"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Unable to summarize message\nAttempted at 2026-11-14T12:00:00.000-03:00\n\nSubject: Resumo do dia: economia, política e tecnologia\nFrom: The News\nDate: Fri, 13 Nov 2026 at 09h 30min\nModel: models/gemini-flash-lite-latest\nModel fallback: models/gemini-2.5-flash\n\nExecution error Mock fault 503 for models/gemini-2.5-flash\n\nRetrying after 10 minutes"
+      }
+    },
+    {
+      "id": "edge:q15-html-in-subject",
+      "tags": [
+        "edge",
+        "quirk:Q-15"
+      ],
+      "input": {
+        "now": "2026-11-14T12:00:00.000-03:00",
+        "error": "Request failed with status code 500",
+        "transform-content": {
+          "news_id": 301,
+          "from": "Deals Daily",
+          "subject": "Deals <today> & more",
+          "date": "Sat, 14 Nov 2026 at 09h 05min",
+          "to_translate": false,
+          "translate_language": "Brazilian Portuguese",
+          "content": "Deals."
+        },
+        "prompt-builder": {
+          "model": "models/gemini-flash-lite-latest",
+          "modelFallback": "models/gemini-2.5-flash",
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Deals."
+        }
+      },
+      "output": {
+        "text": "<b>Unable to summarize message</b>\n<i>Attempted at 2026-11-14T12:00:00.000-03:00</i>\n\n<b>Subject:</b> Deals <today> & more\n<b>From</b>: Deals Daily\n<b>Date:</b> Sat, 14 Nov 2026 at 09h 05min\n<b>Model:</b> models/gemini-flash-lite-latest\n<b>Model fallback:</b> models/gemini-2.5-flash\n\nExecution error <b>Request failed with status code 500</b>\n\n<i>Retrying after 10 minutes</i>",
+        "parse_mode": "HTML"
+      },
+      "mock_telegram": {
+        "status": 400,
+        "ok": false,
+        "description": "Bad Request: can't parse entities: Unsupported start tag \"today\" at byte offset 108"
+      }
+    }
+  ]
+}

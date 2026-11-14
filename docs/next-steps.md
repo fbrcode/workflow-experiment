@@ -28,7 +28,13 @@ Don't include data. Schema only. The repo is public, so check the file for anyth
 Once it's in, Claude updates [baseline/data-model.md](baseline/data-model.md) and
 `infra/db/init/`, and marks D-007 as superseded.
 
-### 2. Provide the external reference doc
+### 2. Confirm the n8n version that runs the baseline (D-014)
+
+Settings → About n8n in the UI, or `n8n --version`. The golden vectors assume **2.47.7** (stable
+on 2026-11-14). If production is on a different major or minor version, Claude regenerates the
+vectors against it.
+
+### 3. Provide the external reference doc
 
 The shared Gemini conversation (`https://share.gemini.google/zIXCw75KhWSA`) renders client-side
 and can't be fetched. Paste its content into `docs/reference/gemini-comparison.md`. Claude will
@@ -37,7 +43,7 @@ then reconcile [comparison/criteria.md](comparison/criteria.md) with it.
 ## Claude actions (in order)
 
 1. ~~**Phase 1: shared infra.**~~ Done 2026-11-14. See [infra.md](infra.md).
-2. **Phase 2: golden vectors.** Run the original n8n JS from `baseline/` under Node to produce reference outputs.
+2. ~~**Phase 2: golden vectors.**~~ Done 2026-11-14. See [golden.md](golden.md).
 3. **Phases 3 and 4: Kestra and Prefect OSS implementations**, independent of each other.
 4. **Phase 5: parity suite.** Happy path plus fault scenarios F-1 to F-7.
 5. **Phase 6: measurements and the final report.**

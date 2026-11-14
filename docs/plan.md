@@ -31,12 +31,14 @@ Done 2026-11-14. Details are in [infra.md](infra.md).
 
 ## Phase 2: Golden vectors from the original n8n code (`tests/golden/`)
 
-- [ ] A Node script that pulls the `jsCode` of `map-content`, `transform-content`, `prompt-builder`
-  and `format-as-markdown` out of `baseline/*.json` and runs it with a small `$input`/`$()` shim
-- [ ] Generate `tests/golden/<node>.json` (input to output pairs) from the fixtures plus edge cases
-  (MarkdownV2 specials, nested bullets, literal `\n`, headings, `---`)
-- [ ] Both implementations must reproduce these outputs **byte for byte**
-- **Verify:** the generator is deterministic (two runs, no diff)
+Done 2026-11-14. Details are in [golden.md](golden.md).
+
+- [x] A Node generator (`tests/golden/src/`) that pulls the code and expressions out of `baseline/*.json` and runs them unmodified behind a minimal n8n shim. It covers the 4 planned Code nodes, plus the Set node (ING-2), the insert column map (ING-4) and the alert template (SUM-7b).
+- [x] ING-1 reference captured from GreenMail with **n8n's own IMAP code** (`@n8n/imap@0.33.0`, glue matching `n8n@2.47.7`), so ports have a referee for email decoding too (D-015)
+- [x] 8 vector files in `tests/golden/vectors/`: 115 cases (62 from fixtures, 53 edge cases). They cover MarkdownV2 specials, nested bullets, literal `\n`, headings, `---`, quotes, emoji, the length limit, date and `From` corner cases, and nulls.
+- [x] Runs in the pinned `node:26.13.0-alpine3.24` (n8n 2.47.7's Node version) with a locked `package-lock.json`. `make golden` and `make golden-check` added.
+- [ ] Both implementations reproduce these outputs **byte for byte** (checked in Phases 3 and 4)
+- **Verified:** 3 runs, one against freshly recreated infra and DB, gave identical files. Every fixture's SND-2 message is valid MarkdownV2 per mock-telegram. The only rejections are the deliberate edge cases `too-long-after-escaping` and Q-15.
 
 ## Phase 3: Kestra (`kestra/`)
 

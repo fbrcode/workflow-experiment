@@ -1,0 +1,304 @@
+{
+  "spec": "SUM-3",
+  "source": {
+    "workflow": "EmailSummarizerFromPgCron",
+    "node": "transform-content",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "code_sha256": "d2e28762eef7e8ba05434cd2c2b30bc6a6a764eae0bd7443d776ac6513b50da7"
+  },
+  "generator": {
+    "script": "tests/golden/src/generate.mjs",
+    "node": "v26.13.0",
+    "now": "2026-11-14T12:00:00.000-03:00"
+  },
+  "notes": "Input is a SUM-1 row. Fixture rows use id = position, translate_language = DB default, summary_retry = 0.",
+  "cases": [
+    {
+      "id": "fixture:01-morning-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 1,
+        "email_inbox_label": "morning-brew",
+        "email_date": "Sat, 14 Nov 2026 at 08h 05min",
+        "email_from": "Morning Brew",
+        "email_subject": "☕ Markets rally as rates hold steady",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Good morning. Here is what you need to know today.\r\n\r\nMARKETS\r\nStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.\r\n\r\nView image: https://img.morningbrew.example/chart.png\r\nCaption: The index closed at a record high.\r\n\r\nPRESENTED BY ACME CLOUD\r\nShip faster with Acme Cloud — try it free .\r\n\r\nWORLD\r\nA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.\r\n\r\nFollow image link: https://morningbrew.example/r/2\r\nThat's all for today — see you tomorrow!",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 1,
+        "from": "Morning Brew",
+        "subject": "☕ Markets rally as rates hold steady",
+        "date": "Sat, 14 Nov 2026 at 08h 05min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:02-the-news",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 2,
+        "email_inbox_label": "the-news",
+        "email_date": "Fri, 13 Nov 2026 at 09h 30min",
+        "email_from": "The News",
+        "email_subject": "Resumo do dia: economia, política e tecnologia",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Bom dia! Aqui está o seu resumo de sexta-feira.\r\n\r\nECONOMIA\r\nO Banco Central manteve a taxa básica de juros em 10,50% ao ano . A decisão foi unânime e veio em linha com o esperado pelo mercado.\r\n\r\nPOLÍTICA\r\nO Congresso aprovou em segunda votação o novo marco legal das startups. O texto segue para sanção.\r\n\r\nTECNOLOGIA\r\nUma empresa brasileira lançou um modelo de linguagem treinado em português — veja os detalhes .\r\n\r\nAté amanhã!",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 2,
+        "from": "The News",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "date": "Fri, 13 Nov 2026 at 09h 30min",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+      }
+    },
+    {
+      "id": "fixture:04-rico-matinal",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 3,
+        "email_inbox_label": "rico-matinal",
+        "email_date": "Fri, 13 Nov 2026 at 22h 30min",
+        "email_from": "Rico Matinal",
+        "email_subject": "Rico Matinal: Ibovespa sobe 1,2% com exterior positivo",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "<!DOCTYPE html>\n<html>\n  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>\n  <body>\n    <p><b>Bom dia, investidor!</b></p>\n    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dólar recuou para R$ 5,02.</p>\n    <p>Agenda do dia: dados de inflação nos EUA às 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>\n    <p>Destaque: a Petrobras anunciou dividendos extraordinários de R$ 0,85 por ação.</p>\n    <p><i>Este conteúdo não é recomendação de investimento.</i></p>\n  </body>\n</html>\n",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 3,
+        "from": "Rico Matinal",
+        "subject": "Rico Matinal: Ibovespa sobe 1,2% com exterior positivo",
+        "date": "Fri, 13 Nov 2026 at 22h 30min",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "content": "<!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>  <body>    <p><b>Bom dia, investidor!</b></p>    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dlar recuou para R$ 5,02.</p>    <p>Agenda do dia: dados de inflao nos EUA s 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>    <p>Destaque: a Petrobras anunciou dividendos extraordinrios de R$ 0,85 por ao.</p>    <p><i>Este contedo no  recomendao de investimento.</i></p>  </body></html>"
+      }
+    },
+    {
+      "id": "fixture:05-tech-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 4,
+        "email_inbox_label": "tech-brew",
+        "email_date": "Thu, 12 Nov 2026 at 12h 45min",
+        "email_from": "Tech Brew",
+        "email_subject": "Chipmakers bet big on edge AI",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>\r\n  <body>\r\n    <p><b>Chipmakers bet big on edge AI</b></p>\r\n    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>\r\n    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>\r\n    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>\r\n    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>\r\n  </body>\r\n</html>",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 4,
+        "from": "Tech Brew",
+        "subject": "Chipmakers bet big on edge AI",
+        "date": "Thu, 12 Nov 2026 at 12h 45min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "<!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>  <body>    <p><b>Chipmakers bet big on edge AI</b></p>    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>  </body></html>"
+      }
+    },
+    {
+      "id": "fixture:06-lennys-newsletter",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 5,
+        "email_inbox_label": "lennys-newsletter",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "How to run a pricing experiment [template] #42",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Hi friends! This week: a step-by-step pricing experiment (with a [template]).\r\n\r\n1. Pick one metric = revenue per visitor; ignore vanity stats.\r\n2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).\r\n3. Use a {holdout} group + track churn for 30 days.\r\n* Tip: keep the _test_ small; *ship* the winner.\r\n> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.\r\n\r\nCode sample: `if variant == \"B\": price *= 1.1`\r\nQuestions? Reply to this email .",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 5,
+        "from": "Lenny's Newsletter",
+        "subject": "How to run a pricing experiment [template] #42",
+        "date": "Wed, 11 Nov 2026 at 10h 00min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Hi friends! This week: a step-by-step pricing experiment (with a [template]).1. Pick one metric = revenue per visitor; ignore vanity stats.2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).3. Use a {holdout} group + track churn for 30 days.* Tip: keep the _test_ small; *ship* the winner.> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.Code sample: `if variant == \"B\": price *= 1.1`Questions? Reply to this email ."
+      }
+    },
+    {
+      "id": "fixture:07-the-neuron",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 6,
+        "email_inbox_label": "the-neuron",
+        "email_date": "Wed, 11 Nov 2026 at 01h 59min",
+        "email_from": "The Neuron",
+        "email_subject": "AI agents get a memory upgrade",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Welcome back, humans. 🤖\r\n\r\nToday: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .\r\n\r\nTreats to try:\r\n- A note-taking app that summarizes meetings in real time.\r\n- A browser extension that explains any chart.\r\n\r\nCaption: Our favorite robot of the week.\r\nSee you tomorrow!",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 6,
+        "from": "The Neuron",
+        "subject": "AI agents get a memory upgrade",
+        "date": "Wed, 11 Nov 2026 at 01h 59min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Welcome back, humans. Today: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .Treats to try:- A note-taking app that summarizes meetings in real time.- A browser extension that explains any chart.Our favorite robot of the week.See you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:08-no-display-name",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 7,
+        "email_inbox_label": "",
+        "email_date": "Mon, 9 Nov 2026 at 05h 00min",
+        "email_from": "",
+        "email_subject": "Weekly digest #17",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Your weekly digest.\r\n\r\nTop story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours.",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 7,
+        "from": "",
+        "subject": "Weekly digest #17",
+        "date": "Mon, 9 Nov 2026 at 05h 00min",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Your weekly digest.Top story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours."
+      }
+    },
+    {
+      "id": "fixture:09-pragmatic-engineer",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 8,
+        "email_inbox_label": "the-pragmatic-engineer",
+        "email_date": "Sun, 8 Nov 2026 at 13h 20min",
+        "email_from": "The Pragmatic Engineer",
+        "email_subject": "The state of platform teams in 2026",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Platform teams have changed a lot over the last two years. This issue looks at how.\r\n\r\nSection 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.\r\n\r\nSection 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.\r\n\r\nSection 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.\r\n\r\nSection 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.\r\n\r\nSection 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .\r\n\r\nThanks for reading. Reply with your own experience; I read every response.",
+        "summary_retry": 0
+      },
+      "output": {
+        "news_id": 8,
+        "from": "The Pragmatic Engineer",
+        "subject": "The state of platform teams in 2026",
+        "date": "Sun, 8 Nov 2026 at 13h 20min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Platform teams have changed a lot over the last two years. This issue looks at how.Section 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.Section 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.Section 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.Section 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.Section 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .Thanks for reading. Reply with your own experience; I read every response."
+      }
+    },
+    {
+      "id": "edge:phrases-and-non-ascii",
+      "input": {
+        "email_inbox_label": "edge",
+        "email_date": "Sat, 14 Nov 2026 at 09h 05min",
+        "email_subject": "Edge subject",
+        "summary_retry": 0,
+        "id": 101,
+        "email_from": "Morning Brew <crew@x.example>",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "View image: https://i.example/1\r\nCaption: Café — ação!\tTab\nFollow image link: https://l.example View image: again 🙂 end. Caption:no-space-kept"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 101,
+        "from": "Morning Brew",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": true,
+        "translate_language": "Brazilian Portuguese",
+        "content": "https://i.example/1Caf  ao!Tabhttps://l.example again  end. Caption:no-space-kept"
+      }
+    },
+    {
+      "id": "edge:from-without-angle",
+      "input": {
+        "email_inbox_label": "edge",
+        "email_date": "Sat, 14 Nov 2026 at 09h 05min",
+        "email_subject": "Edge subject",
+        "summary_retry": 0,
+        "id": 102,
+        "email_from": "The News",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "email_raw_content": "Simple."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 102,
+        "from": "The News",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": false,
+        "translate_language": "Brazilian Portuguese",
+        "content": "Simple."
+      }
+    },
+    {
+      "id": "edge:nulls",
+      "input": {
+        "email_inbox_label": "edge",
+        "email_date": "Sat, 14 Nov 2026 at 09h 05min",
+        "email_subject": "Edge subject",
+        "summary_retry": 0,
+        "id": 103,
+        "email_from": "",
+        "to_translate": false,
+        "translate_language": null,
+        "email_raw_content": null
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 103,
+        "from": "",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": false,
+        "translate_language": null,
+        "content": ""
+      }
+    }
+  ]
+}

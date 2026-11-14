@@ -109,5 +109,46 @@ services:
       mail:
         condition: service_healthy
 
+  golden:
+    # Phase 2: runs the original n8n code from baseline/ and writes tests/golden/vectors/.
+    image: wfx-golden:local
+    build:
+      context: ../tests/golden
+    profiles: ["tools"]
+    environment:
+      BASELINE_DIR: /work/baseline
+      GOLDEN_OUT: /work/vectors
+      IMAP_HOST: mail
+      IMAP_PORT: "3143"
+      IMAP_SECURE: "false"
+      IMAP_USER: ${IMAP_USER}
+      IMAP_PASSWORD: ${IMAP_PASSWORD}
+      IMAP_MAILBOX: ${IMAP_MAILBOX}
+      APP_DB_HOST: app-db
+      APP_DB_PORT: "5432"
+      APP_DB_NAME: ${APP_DB_NAME}
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      GEMINI_BASE_URL: http://mock-gemini:8091
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set in .env}
+      TELEGRAM_BASE_URL: http://mock-telegram:8090
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set in .env}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID}
+      TELEGRAM_CHAT_ID_NEWS: ${TELEGRAM_CHAT_ID_NEWS}
+      TELEGRAM_CHAT_ID_FINANCE: ${TELEGRAM_CHAT_ID_FINANCE}
+      TELEGRAM_CHAT_ID_TECH: ${TELEGRAM_CHAT_ID_TECH}
+    volumes:
+      - ../baseline:/work/baseline:ro
+      - ../tests/golden/vectors:/work/vectors
+    depends_on:
+      app-db:
+        condition: service_healthy
+      mail:
+        condition: service_healthy
+      mock-gemini:
+        condition: service_healthy
+      mock-telegram:
+        condition: service_healthy
+
 volumes:
   app-db-data:

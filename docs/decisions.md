@@ -89,3 +89,25 @@ The plan said SMTP. APPEND puts each message straight into the `n8n` folder (the
 with no flags, so it's UNSEEN, and keeps the original `Date` as INTERNALDATE. Delivering over
 SMTP would put mail in INBOX and need a server-side filter. Ingest behavior doesn't depend on
 how mail arrived in the folder.
+
+### D-014: Reference n8n version is 2.47.7 (stable) · `accepted`, owner to confirm
+
+The production n8n version that ran the baseline isn't recorded in the exports. The node
+`typeVersion`s are recent and consistent with n8n 2.x. Wherever n8n's own runtime decides behavior
+(IMAP decoding, Node/V8), the golden vectors use **n8n 2.47.7**, the stable release on 2026-11-14:
+`@n8n/imap@0.33.0` and Node 26.13.0. The IMAP glue in `EmailReadImap/v2/utils.ts` is the same on
+master. If the owner's version differs materially, the vectors get regenerated against it.
+
+### D-015: The ING-1 referee is n8n's own IMAP code · `accepted`
+
+Phase 2 originally covered only the Code nodes. Email decoding (ING-1) is just as easy to get
+subtly wrong (CRLF, header quoting, RFC 2047), and both tools' DB rows depend on it. So the
+generator reads the seeded GreenMail mailbox through the published `@n8n/imap` package, using the
+node's search and fetch calls, and records what n8n would hand to ING-2. Golden findings G-1
+(CRLF kept) and G-2 (quotes kept) come from this. The spec's ING-1 section now states both.
+
+### D-016: Golden vectors carry a Telegram verdict · `accepted`
+
+SND-2 and SUM-7b cases include `mock_telegram`: what the mock (D-012) does with the message. When
+`ok` is true, `result_text` is the expected `formatted_summary` (SND-4). When `ok` is false, the
+send fails and SND-5 applies. The verdict is generated, not hand-written, so it moves with D-012.
