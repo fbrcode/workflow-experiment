@@ -36,7 +36,7 @@ then reconcile [comparison/criteria.md](comparison/criteria.md) with it.
 
 ## Claude actions (in order)
 
-1. **Phase 1: shared infra.** `app-db` with the reconstructed schema, GreenMail, mock Telegram, mock Gemini, synthetic fixture emails, `.env.example`, and a root `Makefile`.
+1. ~~**Phase 1: shared infra.**~~ Done 2026-11-14. See [infra.md](infra.md).
 2. **Phase 2: golden vectors.** Run the original n8n JS from `baseline/` under Node to produce reference outputs.
 3. **Phases 3 and 4: Kestra and Prefect OSS implementations**, independent of each other.
 4. **Phase 5: parity suite.** Happy path plus fault scenarios F-1 to F-7.

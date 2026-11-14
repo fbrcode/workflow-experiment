@@ -1,0 +1,29 @@
+From: digest@weekly.example
+To: newsletters@local.test
+Subject: Weekly digest #17
+Date: Mon, 09 Nov 2026 08:00:00 +0000
+Message-ID: <08-no-display-name@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_08-no-display-name"
+
+--=_wfx_08-no-display-name
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Your weekly digest.
+
+Top story: a city council approved a new bike-lane network. Second story: t=
+he local library extended weekend hours.
+--=_wfx_08-no-display-name
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>Weekly digest</title></head>
+  <body>
+    <p>Your weekly digest.</p>
+    <p>Top story: new bike lanes.</p>
+  </body>
+</html>
+--=_wfx_08-no-display-name--

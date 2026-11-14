@@ -1,0 +1,34 @@
+From: "Tech Brew" <crew@techbrew.example>
+To: newsletters@local.test
+Subject: Chipmakers bet big on edge AI
+Date: Thu, 12 Nov 2026 15:45:10 +0000
+Message-ID: <05-tech-brew@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_05-tech-brew"
+
+--=_wfx_05-tech-brew
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Chipmakers bet big on edge AI. Read the full story online (https://techbrew=
+.example/s/1).
+--=_wfx_05-tech-brew
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>Tech Brew</title></head>
+  <body>
+    <p><b>Chipmakers bet big on edge AI</b></p>
+    <p>Three of the largest chip designers announced low-power accelerators=
+ for phones and laptops (https://techbrew.example/s/1).</p>
+    <p>Why it matters: running models on-device cuts latency and keeps data=
+ local.</p>
+    <p><img src=3D"https://techbrew.example/i/chip.png" alt=3D"A new accele=
+rator"></p>
+    <p>Also today: a robotics startup raised $40M; regulators opened a cons=
+ultation on AI labels.</p>
+  </body>
+</html>
+--=_wfx_05-tech-brew--

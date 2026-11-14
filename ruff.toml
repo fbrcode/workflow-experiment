@@ -1,0 +1,14 @@
+# Repo-wide Ruff config (CLAUDE.md: Python 3.12, ruff for format + lint).
+# Sub-projects extend this file so settings stay in one place.
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "S", "N", "A", "SIM", "RUF"]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S310"]
+# Local dev tooling: talks to local services only.
+"scripts/**" = ["S310"]
+# Fixture prose: a line break would change the generated email content.
+"fixtures/generate.py" = ["E501"]

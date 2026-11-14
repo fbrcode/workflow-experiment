@@ -1,0 +1,48 @@
+From: "The Pragmatic Engineer" <pragmaticengineer@substack.example>
+To: newsletters@local.test
+Subject: The state of platform teams in 2026
+Date: Sun, 08 Nov 2026 16:20:00 +0000
+Message-ID: <09-pragmatic-engineer@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_09-pragmatic-engineer"
+
+--=_wfx_09-pragmatic-engineer
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Platform teams have changed a lot over the last two years. This issue looks=
+ at how.
+
+Section 1. Team size. Most platform teams we surveyed have between five and=
+ twelve engineers. Smaller companies tend to fold platform work into infras=
+tructure teams.
+
+Section 2. Mandate. The most common mandate is developer productivity, foll=
+owed by reliability and cost. Teams with a written charter reported fewer c=
+onflicts with product teams.
+
+Section 3. Tooling. Internal developer portals are now common; golden paths=
+ for new services are the norm. Several teams moved their CI to ephemeral r=
+unners to cut queue times.
+
+Section 4. Measuring impact. Lead time for changes and onboarding time were=
+ the two most cited metrics. Few teams measure developer satisfaction consi=
+stently.
+
+Section 5. What is next. Respondents expect AI-assisted tooling to reshape =
+the golden paths, and platform teams to own more of the model-serving stack=
+ (https://pragmaticengineer.example/p/1).
+
+Thanks for reading. Reply with your own experience; I read every response.
+--=_wfx_09-pragmatic-engineer
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>The Pragmatic Engineer</title></head>
+  <body>
+    <p>Platform teams have changed a lot over the last two years.</p>
+  </body>
+</html>
+--=_wfx_09-pragmatic-engineer--
