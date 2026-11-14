@@ -28,11 +28,9 @@ Don't include data. Schema only. The repo is public, so check the file for anyth
 Once it's in, Claude updates [baseline/data-model.md](baseline/data-model.md) and
 `infra/db/init/`, and marks D-007 as superseded.
 
-### 2. Confirm the n8n version that runs the baseline (D-014)
+### 2. ~~Confirm the n8n version that runs the baseline~~
 
-Settings → About n8n in the UI, or `n8n --version`. The golden vectors assume **2.47.7** (stable
-on 2026-11-14). If production is on a different major or minor version, Claude regenerates the
-vectors against it.
+Answered 2026-11-14: **2.40.3**. The golden vectors were regenerated against it (D-017).
 
 ### 3. Provide the external reference doc
 

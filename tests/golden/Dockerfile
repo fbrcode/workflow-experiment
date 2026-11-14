@@ -1,5 +1,5 @@
-# Golden-vector generator. Same Node version as the n8n 2.47.7 image (docker/docker-bake.hcl).
-FROM node:26.13.0-alpine3.24
+# Golden-vector generator. Same Node version as the production n8n 2.40.3 image (docker/docker-bake.hcl @ n8n@2.40.3).
+FROM node:26.7.0-alpine3.24
 
 WORKDIR /golden
 COPY package.json package-lock.json ./

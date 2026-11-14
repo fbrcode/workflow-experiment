@@ -1,13 +1,13 @@
 {
   "spec": "ING-1",
   "source": {
-    "n8n": "n8n@2.47.7 (stable)",
-    "package": "@n8n/imap@0.33.0 (imapflow 1.7.1, libmime 5.4.2)",
+    "n8n": "n8n@2.40.3 (production, owner-confirmed)",
+    "package": "@n8n/imap@0.26.0 (imap 0.8.19, quoted-printable 1.0.1, utf8 3.0.0, iconv-lite 0.6.3)",
     "node": "n8n-nodes-base.emailReadImap typeVersion 2, format \"simple\""
   },
   "generator": {
     "script": "tests/golden/src/generate.mjs",
-    "node": "v26.13.0",
+    "node": "v26.7.0",
     "now": "2026-11-14T12:00:00.000-03:00"
   },
   "notes": "Output of the IMAP trigger (format \"simple\") for each fixture, read from GreenMail with n8n's own IMAP code. Only the fields ING-2 uses (plus \"to\") are kept. Line endings are exactly as n8n delivers them.",

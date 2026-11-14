@@ -44,7 +44,7 @@ fails loudly instead of silently falling back to a default.
 | `mock-telegram` | `wfx-mocks:local` (built from `python:3.12.16-slim-trixie`) | 8090 | `GET /_mock/health` |
 | `mock-gemini` | `wfx-mocks:local` | 8091 | `GET /_mock/health` |
 | `mail-seed` | `wfx-mocks:local` (profile `tools`, run on demand) | none | none |
-| `golden` | `wfx-golden:local` (built from `node:26.13.0-alpine3.24`; profile `tools`, run by `make golden`) | none | none. See [golden.md](golden.md). |
+| `golden` | `wfx-golden:local` (built from `node:26.7.0-alpine3.24`; profile `tools`, run by `make golden`) | none | none. See [golden.md](golden.md). |
 
 All images have arm64 builds, checked on Docker Hub on 2026-11-14. Observed on the dev host
 (Apple Silicon, Docker Desktop with 7.65 GiB) with the stack idle: about 126 MiB for `mail`

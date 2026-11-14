@@ -8,7 +8,7 @@ implementation passes when it reproduces every `output` **byte for byte**.
 ```mermaid
 flowchart LR
   FX[/fixtures .eml/] -->|seed| GM[(GreenMail)]
-  GM -->|"@n8n/imap 0.33.0<br/>(n8n's own IMAP code)"| I1[ing1-imap-simple]
+  GM -->|"@n8n/imap 0.26.0<br/>(n8n 2.40.3's own IMAP code)"| I1[ing1-imap-simple]
   I1 --> I2[ing2-select-content] --> I3[ing3-map-content] --> I4[ing4-insert-raw-news]
   I4 -->|"SUM-1 row"| S3[sum3-transform-content] --> S4[sum4-prompt-builder]
   S4 --> S7[sum7b-alert-message]
@@ -24,7 +24,7 @@ make golden         # start the infra, reseed the mail, run the generator in Doc
 make golden-check   # make golden, then fail if tests/golden/vectors differs from what's committed
 ```
 
-The generator runs in `node:26.13.0-alpine3.24`, the Node version of the n8n 2.47.7 image, with
+The generator runs in `node:26.7.0-alpine3.24`, the Node version of the production n8n 2.40.3 image, with
 locked dependencies (`tests/golden/package-lock.json`). It joins the infra network, so the host
 needs no Node install. Output is deterministic: `$now` is frozen at
 `2026-11-14T12:00:00.000-03:00`, nothing records a timestamp, and the case order is stable.
@@ -34,7 +34,7 @@ Three runs on 2026-11-14, one of them against freshly recreated infra, gave iden
 
 | Piece | What is run | Reference |
 |---|---|---|
-| ING-1 IMAP read | `ImapSimple.connect`, `search({seen:false}, {headers, bodyStructure})`, `downloadText`, `parseHeaders` from **`@n8n/imap@0.33.0`** (imapflow 1.7.1, libmime 5.4.2) | Glue mirrors `EmailReadImap/v2/utils.ts` at tag **`n8n@2.47.7`** (stable on 2026-11-14), which is identical to master for this path |
+| ING-1 IMAP read | `ImapSimple.connect`, `search(['UNSEEN'], {bodies: ['TEXT','HEADER'], markSeen: false, struct: true})`, `downloadText`, and the node-imap-parsed `HEADER` part, from **`@n8n/imap@0.26.0`** (imap 0.8.19, quoted-printable 1.0.1, utf8 3.0.0, iconv-lite 0.6.3) | Glue mirrors `EmailReadImap/v2/utils.ts` at tag **`n8n@2.40.3`**, the owner-confirmed production version (D-017) |
 | Code nodes | `jsCode` from the baseline JSON via `new Function('$input', code)`, with `$input.all/first/last` | Each file records `code_sha256` |
 | Set node, Postgres column maps, Telegram template | The `={{ … }}` expressions from the baseline JSON, evaluated with `$json`, `$now` and `$()` shims | Each file records the sha256 of what it evaluated |
 | `initcap()` (SND-1) | The real app-db: PostgreSQL 18.7, ctype `en_US.utf8`, locale provider `c` | Recorded in `snd2…notes` |
@@ -42,8 +42,9 @@ Three runs on 2026-11-14, one of them against freshly recreated infra, gave iden
 | Telegram verdict | mock-telegram parses the message as MarkdownV2 or HTML | D-012 |
 
 The shim only implements what the baseline uses. Anything else throws, so a missing piece can't
-quietly change an output. The production n8n version that ran the baseline is **unknown**. 2.47.7
-was the stable release on 2026-11-14 (D-014; owner asked to confirm in [next-steps.md](next-steps.md)).
+quietly change an output. Production runs **n8n 2.40.3** (D-017). As a cross-check, the vectors were
+also generated with the n8n 2.47.7 stack (`@n8n/imap@0.33.0` on imapflow and libmime, Node 26.13.0):
+all 115 case outputs were identical.
 
 ## Files (`tests/golden/vectors/`)
 
@@ -66,7 +67,7 @@ Fixture `03-the-news-duplicate` stops after ING-4, because DUP-1 deletes it befo
 {
   "spec": "SND-2",
   "source": { "workflow": "...", "node": "format-as-markdown", "code_sha256": "..." },
-  "generator": { "script": "tests/golden/src/generate.mjs", "node": "v26.13.0", "now": "..." },
+  "generator": { "script": "tests/golden/src/generate.mjs", "node": "v26.7.0", "now": "..." },
   "notes": "...",
   "cases": [
     {

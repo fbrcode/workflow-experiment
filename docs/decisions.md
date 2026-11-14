@@ -90,7 +90,7 @@ with no flags, so it's UNSEEN, and keeps the original `Date` as INTERNALDATE. De
 SMTP would put mail in INBOX and need a server-side filter. Ingest behavior doesn't depend on
 how mail arrived in the folder.
 
-### D-014: Reference n8n version is 2.47.7 (stable) · `accepted`, owner to confirm
+### D-014: Reference n8n version is 2.47.7 (stable) · `superseded by D-017`
 
 The production n8n version that ran the baseline isn't recorded in the exports. The node
 `typeVersion`s are recent and consistent with n8n 2.x. Wherever n8n's own runtime decides behavior
@@ -111,3 +111,16 @@ node's search and fetch calls, and records what n8n would hand to ING-2. Golden 
 SND-2 and SUM-7b cases include `mock_telegram`: what the mock (D-012) does with the message. When
 `ok` is true, `result_text` is the expected `formatted_summary` (SND-4). When `ok` is false, the
 send fails and SND-5 applies. The verdict is generated, not hand-written, so it moves with D-012.
+
+### D-017: Reference n8n version is 2.40.3 (production) · `accepted`
+
+The owner confirmed on 2026-11-14 that production runs **n8n 2.40.3**. This supersedes D-014.
+The golden generator now matches that release:
+
+- `@n8n/imap@0.26.0`, which is the older client built on `imap` 0.8.19, `quoted-printable`, `utf8` and `iconv-lite`. 2.47.7 uses `imapflow` and `libmime` instead.
+- The node glue from `EmailReadImap/v2/utils.ts` at tag `n8n@2.40.3`: search `['UNSEEN']`, fetch `{bodies: ['TEXT','HEADER'], markSeen: false, struct: true}`.
+- Node 26.7.0, the version in the 2.40.3 image.
+
+Cross-check: regenerating with the 2.40.3 stack changed **none** of the 115 case outputs compared
+with the 2.47.7 stack. Only the provenance fields differ. So G-1 (CRLF kept) and G-2 (raw header
+quoting) hold on both n8n versions, at least for these fixtures.

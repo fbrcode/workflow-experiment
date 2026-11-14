@@ -34,9 +34,9 @@ Done 2026-11-14. Details are in [infra.md](infra.md).
 Done 2026-11-14. Details are in [golden.md](golden.md).
 
 - [x] A Node generator (`tests/golden/src/`) that pulls the code and expressions out of `baseline/*.json` and runs them unmodified behind a minimal n8n shim. It covers the 4 planned Code nodes, plus the Set node (ING-2), the insert column map (ING-4) and the alert template (SUM-7b).
-- [x] ING-1 reference captured from GreenMail with **n8n's own IMAP code** (`@n8n/imap@0.33.0`, glue matching `n8n@2.47.7`), so ports have a referee for email decoding too (D-015)
+- [x] ING-1 reference captured from GreenMail with **n8n's own IMAP code** (`@n8n/imap@0.26.0`, glue matching production `n8n@2.40.3`; D-017), so ports have a referee for email decoding too (D-015)
 - [x] 8 vector files in `tests/golden/vectors/`: 115 cases (62 from fixtures, 53 edge cases). They cover MarkdownV2 specials, nested bullets, literal `\n`, headings, `---`, quotes, emoji, the length limit, date and `From` corner cases, and nulls.
-- [x] Runs in the pinned `node:26.13.0-alpine3.24` (n8n 2.47.7's Node version) with a locked `package-lock.json`. `make golden` and `make golden-check` added.
+- [x] Runs in the pinned `node:26.7.0-alpine3.24` (the Node version of n8n 2.40.3) with a locked `package-lock.json`. `make golden` and `make golden-check` added.
 - [ ] Both implementations reproduce these outputs **byte for byte** (checked in Phases 3 and 4)
 - **Verified:** 3 runs, one against freshly recreated infra and DB, gave identical files. Every fixture's SND-2 message is valid MarkdownV2 per mock-telegram. The only rejections are the deliberate edge cases `too-long-after-escaping` and Q-15.
 
@@ -91,6 +91,7 @@ Done 2026-11-14. Details are in [golden.md](golden.md).
 | 3 | Q-3: what goes in `model_used` on the error path? | The primary model. See [D-008](decisions.md). |
 | 4 | Run n8n as a third contestant? | No. See [D-009](decisions.md). |
 | 5 | The external reference doc (Gemini share link) | Still open. Tracked in [next-steps.md](next-steps.md). |
+| 6 | Production n8n version? | 2.40.3. See [D-017](decisions.md). |
 
 ## Planned layout and ports
 

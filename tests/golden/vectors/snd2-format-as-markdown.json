@@ -9,7 +9,7 @@
   },
   "generator": {
     "script": "tests/golden/src/generate.mjs",
-    "node": "v26.13.0",
+    "node": "v26.7.0",
     "now": "2026-11-14T12:00:00.000-03:00"
   },
   "notes": "Input is a SND-1 row. Fixture rows: initcap() from the real app-db (PostgreSQL 18.7, ctype en_US.utf8, locale provider c), summary_content from mock-gemini for the SUM-4 prompt (primary model), translated per the SND-1 CASE. mock_telegram.result_text is the expected formatted_summary (SND-4) when ok; when not ok the send fails and SND-5 applies.",

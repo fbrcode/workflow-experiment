@@ -44,7 +44,7 @@ Data model: [`data-model.md`](data-model.md).
 - n8n node `fetch-n8n-inbox` (`emailReadImap` v2), credential "GMAIL_IMAP", mailbox **`n8n`**.
 - The node's defaults apply: it fetches **UNSEEN** messages, **marks them as read** after fetching,
   and uses the "simple" output format (`from`, `subject`, `date`, `textHtml`, `textPlain`, ...).
-- **What the node hands to ING-2** (n8n 2.47.7, `@n8n/imap`; referee
+- **What the node hands to ING-2** (production n8n 2.40.3, `@n8n/imap@0.26.0`; referee
   `tests/golden/vectors/ing1-imap-simple.json`, D-015):
   - Header values (`from`, `subject`, `date`) are RFC 2047-decoded but otherwise **raw**. Quotes
     and spacing stay as sent, e.g. `"Morning Brew" <crew@…>`.

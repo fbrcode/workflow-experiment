@@ -9,7 +9,7 @@
   },
   "generator": {
     "script": "tests/golden/src/generate.mjs",
-    "node": "v26.13.0",
+    "node": "v26.7.0",
     "now": "2026-11-14T12:00:00.000-03:00"
   },
   "notes": "Model names are hard-coded in the node (D-011).",
