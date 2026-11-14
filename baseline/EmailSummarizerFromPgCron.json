@@ -1,0 +1,1616 @@
+{
+  "name": "EmailSummarizerFromPgCron",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get current item\nconst item = $input.first().json;\n\n// Build the id \nconst news_id = item.id;\n\n// Extract display name from \"Name <email>\" or use original if no match\nlet from = item.email_from || '';\nconst match = from.match(/^([^<]+)</);  // captures everything before '<'\nif (match) {\n  from = match[1].trim();\n}\n\n// Strings to strip from the content\nconst removePhrases = [\n  'View image: ',\n  'Caption: ',\n  'Follow image link: '\n];\n\n// Start from original content\nlet content = item.email_raw_content || '';\n\n// Remove the phrases\nfor (const phrase of removePhrases) {\n  content = content.split(phrase).join(''); // or content = content.replaceAll(phrase, '');\n}\n\n// Force to printable ASCII only -removes any non-ASCII chars\ncontent = content.replace(/[^\\x20-\\x7E]/g, '');  // printable ASCII range[web:31]\n\n\n\n// Write back cleaned content, keep other fields\nreturn [\n  {\n    json: {\n      news_id,\n      from,\n      subject: item.email_subject,\n      date: item.email_date,\n      to_translate: item.to_translate,\n      translate_language: item.translate_language,\n      content,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        544
+      ],
+      "id": "bd6852ec-4a0b-403c-bbe8-f926c9c36741",
+      "name": "transform-content"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        768,
+        544
+      ],
+      "id": "89164445-c420-42b3-a264-f2fe8f3845ca",
+      "name": "ai-summary",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst model = \"models/gemini-flash-lite-latest\";\nconst modelFallback = \"models/gemini-2.5-flash\";\n\nlet translatePrompt = (!$input.first().json.to_translate ? \"using \" : \"translated to \") + `${item.translate_language} language`\n\nconst prompt = `Summarize this email cntent in main topics with content with 2500 chars limit ${translatePrompt} and remove any sponsored news (presented by) silently. Content >> ${item.content}`\n\nreturn [\n  {\n    json: {\n      model,\n      modelFallback,\n      prompt,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        544
+      ],
+      "id": "c3aedb19-652b-40be-aeb0-5d72a889c8ca",
+      "name": "prompt-builder"
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('prompt-builder').item.json.model }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        784
+      ],
+      "id": "08ea450a-2f78-491f-a399-66f6f2a77e49",
+      "name": "gemini-flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FZAXS0EUfSlWjkkf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get current item\nconst item = $input.first().json;\n\n// Get summmary data to transform\nlet summary = `**${item.email_from}**\\n**${item.email_date}**\\n**${item.email_subject}**\\n*Summary ${item.translated} with ${item.model_used}*\\n\\n${item.summary_content}`;\n\n// 0) If LLM returned literal \"\\n\", convert to real newlines\nsummary = summary.replace(/\\\\n/g, '\\n');\n\n// 1) Replace headings with bold markers\nsummary = summary\n  .replace(/^####\\s*(.+)$/gm, '**$1**')\n  .replace(/^###\\s*(.+)$/gm, '**$1**')\n  .replace(/^##\\s*(.+)$/gm, '**$1**')\n  .replace(/^---$/gm, '');\n\n// 2) Convert bullet points BEFORE bold/italic processing\n//    Handles: `*   text`, `    *   text`, `* text`, `- text`, `    - text`\nsummary = summary.replace(/^(\\s*)[*\\-]\\s{2,}/gm, '$1• ');\nsummary = summary.replace(/^(\\s*)[*\\-]\\s/gm, '$1• ');\n\n// 3) Replace \" with '\nsummary = summary.replace(/\"/g, \"'\");\n\n// ALL Telegram MarkdownV2 specials (including * and -)\nconst ALL_SPECIAL = /([_\\[\\]\\(\\)~`>#\\+\\-=|{}\\.!\\*\\\\])/g;\n// Same but without * (for outside bold/italic spans)\nconst SPECIAL_NO_STAR = /([_\\[\\]\\(\\)~`>#\\+\\-=|{}\\.!\\\\])/g;\n\nfunction escapeKeepBoldItalic(text) {\n  // 1) Temporarily mask **bold** and *italic* spans\n  const placeholders = [];\n\n  // Match **bold** first (greedy enough to allow inner *)\n  text = text.replace(/\\*\\*([\\s\\S]+?)\\*\\*/g, (m, inner) => {\n    const key = `@@BOLD${placeholders.length}@@`;\n    inner = inner.replace(ALL_SPECIAL, '\\\\$1');\n    placeholders.push(`*${inner}*`);\n    return key;\n  });\n\n  // Match *italic* (no inner *, no newlines, must start with non-space)\n  text = text.replace(/\\*([^\\s*][^*\\n]*?)\\*/g, (m, inner) => {\n    const key = `@@ITAL${placeholders.length}@@`;\n    inner = inner.replace(ALL_SPECIAL, '\\\\$1');\n    placeholders.push(`_${inner}_`);\n    return key;\n  });\n\n  // 2) Escape all specials in remaining text\n  text = text.replace(SPECIAL_NO_STAR, '\\\\$1');\n  // Also escape any leftover * that weren't part of bold/italic\n  text = text.replace(/\\*/g, '\\\\*');\n\n  // 3) Restore bold/italic spans\n  text = text.replace(/@@(?:BOLD|ITAL)(\\d+)@@/g, (_, i) => placeholders[Number(i)]);\n\n  return text;\n}\n\nconst telegramMessage = escapeKeepBoldItalic(summary);\n\nreturn [{\n  json: {\n    news_id: item.id,\n    initialMessageLength: summary.length,\n    finalMessageLength: telegramMessage.length,\n    telegramMessage,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1184
+      ],
+      "id": "5a3f9f15-e9e6-48d0-817d-bf41d5ac27ba",
+      "name": "format-as-markdown"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('pg-get-summary').item.json.telegram_chat_id }}",
+        "text": "={{ $json.telegramMessage }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        1184
+      ],
+      "id": "0fdafc53-ad22-424a-81ad-2e5c06ecbbd6",
+      "name": "telegram-send-summary-markdown",
+      "webhookId": "ba17364d-cfe7-4095-a16e-622c21921224",
+      "credentials": {
+        "telegramApi": {
+          "id": "cJPS9jBEdTdzaOrB",
+          "name": "Telegram Daily News Reading account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dc312043-be31-493f-9103-c69349884418",
+              "name": "news_id",
+              "value": "={{ $('transform-content').item.json.news_id }}",
+              "type": "number"
+            },
+            {
+              "id": "e19ad25f-cad2-4522-a47d-5f74820ce468",
+              "name": "summarized_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "99e240f1-3563-4a5b-8924-e1e2777c84f0",
+              "name": "model",
+              "value": "={{ $('prompt-builder').item.json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "0efd50c4-00d2-4a52-abca-0d502c01fe51",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "1197592a-de6c-493f-b696-606d626802f3",
+              "name": "summary_retry",
+              "value": "={{ $('pg-get-dedup-raw-news').item.json.summary_retry + 1 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        384
+      ],
+      "id": "82c8c7ed-6435-4a4d-bc76-fdf58910ccc7",
+      "name": "combine-results"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "854dea02-c3f0-4e29-84c2-af05c2cffcd0",
+              "name": "news_id",
+              "value": "={{ $('transform-content').item.json.news_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0c301eb6-2495-4f33-bb41-6fe5f726b9ab",
+              "name": "summarized_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "ecdcc66a-3b40-4f65-99ea-992f79e7fbc9",
+              "name": "model",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "afce60dd-f11b-4a4d-a636-36c25690017a",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "ba333247-b165-4ff9-8310-4b8b5f6f0559",
+              "name": "summary_content",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "f27909a4-7734-40d7-8a29-7c323ef6bc75",
+              "name": "summary_retry",
+              "value": "={{ $('pg-get-dedup-raw-news').item.json.summary_retry + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "a50501e2-2ec2-4a3f-8ead-2c2f5a102eff",
+              "name": "is_summarized",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        688
+      ],
+      "id": "b186aa68-a475-476f-a8bf-2f89c6b262ce",
+      "name": "get-error"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news_email",
+          "mode": "list",
+          "cachedResultName": "news_email"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "summary_status": "OK",
+            "summary_content": "={{ $json.output }}",
+            "summarized_at": "={{ $json.summarized_at }}",
+            "model_used": "={{ $json.model }}",
+            "id": "={{ $json.news_id }}",
+            "is_summarized": true,
+            "summary_retry": "={{ $json.summary_retry }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_inbox_label",
+              "displayName": "email_inbox_label",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_from",
+              "displayName": "email_from",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_date",
+              "displayName": "email_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_raw_content",
+              "displayName": "email_raw_content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_consumed_at",
+              "displayName": "email_consumed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "to_translate",
+              "displayName": "to_translate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "translate_language",
+              "displayName": "translate_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_used",
+              "displayName": "model_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_summarized",
+              "displayName": "is_summarized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary_content",
+              "displayName": "summary_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summarized_at",
+              "displayName": "summarized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_retry",
+              "displayName": "summary_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent",
+              "displayName": "sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_retry",
+              "displayName": "sent_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1344,
+        384
+      ],
+      "id": "00c04913-b8ca-49ec-9f45-541f33e284e1",
+      "name": "pg-update-ai-summary",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news_email",
+          "mode": "list",
+          "cachedResultName": "news_email"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "summarized_at": "={{ $json.summarized_at }}",
+            "model_used": "={{ $json.model }}",
+            "id": "={{ $json.news_id }}",
+            "summary_status": "={{ $json.error }}",
+            "summary_content": "={{ $json.summary_content }}",
+            "summary_retry": "={{ $json.summary_retry }}",
+            "is_summarized": "={{ $json.is_summarized }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_inbox_label",
+              "displayName": "email_inbox_label",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_from",
+              "displayName": "email_from",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_date",
+              "displayName": "email_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_raw_content",
+              "displayName": "email_raw_content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_consumed_at",
+              "displayName": "email_consumed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "to_translate",
+              "displayName": "to_translate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "translate_language",
+              "displayName": "translate_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "model_used",
+              "displayName": "model_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_summarized",
+              "displayName": "is_summarized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary_content",
+              "displayName": "summary_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summarized_at",
+              "displayName": "summarized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_retry",
+              "displayName": "summary_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "was_sent",
+              "displayName": "was_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_retry",
+              "displayName": "sent_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1344,
+        576
+      ],
+      "id": "4f8f2ec8-a71e-4816-b3ea-c5e6f9a5032e",
+      "name": "pg-update-ai-error",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        832
+      ],
+      "id": "0c3d5804-d912-4c4d-b14e-228dc7bd7ee4",
+      "name": "10min-runner"
+    },
+    {
+      "parameters": {
+        "chatId": "REDACTED_TELEGRAM_ALERT_CHAT_ID",
+        "text": "=<b>Unable to summarize message</b>\n<i>Attempted at {{ $now.toISO() }}</i>\n\n<b>Subject:</b> {{ $('transform-content').item.json.subject }}\n<b>From</b>: {{ $('transform-content').item.json.from }}\n<b>Date:</b> {{ $('transform-content').item.json.date }}\n<b>Model:</b> {{ $('prompt-builder').item.json.model }}\n<b>Model fallback:</b> {{ $('prompt-builder').item.json.modelFallback }}\n\nExecution error <b>{{ $json.error }}</b>\n\n<i>Retrying after 10 minutes</i>",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        800
+      ],
+      "id": "0363ff21-249c-4abd-8489-5d82c600458c",
+      "name": "telegram-send-failed-exec",
+      "webhookId": "3c0c24ec-58d6-49bf-a802-9e2f52bdc920",
+      "credentials": {
+        "telegramApi": {
+          "id": "cJPS9jBEdTdzaOrB",
+          "name": "Telegram Daily News Reading account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('prompt-builder').item.json.modelFallback }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        784
+      ],
+      "id": "067a9fb6-10ba-49c2-95df-8632be912cdb",
+      "name": "gemini-flash-fallback",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FZAXS0EUfSlWjkkf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news_email",
+          "mode": "list",
+          "cachedResultName": "news_email"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('format-as-markdown').item.json.news_id }}",
+            "sent_at": "={{ new Date().toISOString() }}",
+            "was_sent": true,
+            "formatted_length": "={{ $('format-as-markdown').item.json.finalMessageLength }}",
+            "formatted_summary": "={{ $json.result.text }}",
+            "sent_status": "OK",
+            "sent_retry": "={{ $('pg-get-summary').item.json.sent_retry + 1 }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_inbox_label",
+              "displayName": "email_inbox_label",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_from",
+              "displayName": "email_from",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_date",
+              "displayName": "email_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_raw_content",
+              "displayName": "email_raw_content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_consumed_at",
+              "displayName": "email_consumed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "to_translate",
+              "displayName": "to_translate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "translate_language",
+              "displayName": "translate_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_used",
+              "displayName": "model_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "is_summarized",
+              "displayName": "is_summarized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_content",
+              "displayName": "summary_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summarized_at",
+              "displayName": "summarized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_retry",
+              "displayName": "summary_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "formatted_summary",
+              "displayName": "formatted_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "formatted_length",
+              "displayName": "formatted_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_status",
+              "displayName": "sent_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "was_sent",
+              "displayName": "was_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_retry",
+              "displayName": "sent_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        928,
+        1056
+      ],
+      "id": "b6743f3e-a372-4da6-a0dd-4e79a61c5040",
+      "name": "pg-update-summary-sent",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news_email",
+          "mode": "list",
+          "cachedResultName": "news_email"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('format-as-markdown').item.json.news_id }}",
+            "sent_retry": "={{ $('pg-get-summary').item.json.sent_retry + 1 }}",
+            "sent_at": "={{ new Date().toISOString() }}",
+            "sent_status": "={{ $json.error }}",
+            "was_sent": false,
+            "formatted_summary": "={{ $json.telegramMessage }}",
+            "formatted_length": "={{ $json.finalMessageLength }}",
+            "is_summarized": false
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_inbox_label",
+              "displayName": "email_inbox_label",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_from",
+              "displayName": "email_from",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_date",
+              "displayName": "email_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_raw_content",
+              "displayName": "email_raw_content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_consumed_at",
+              "displayName": "email_consumed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "to_translate",
+              "displayName": "to_translate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "translate_language",
+              "displayName": "translate_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_used",
+              "displayName": "model_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "is_summarized",
+              "displayName": "is_summarized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary_content",
+              "displayName": "summary_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summarized_at",
+              "displayName": "summarized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_retry",
+              "displayName": "summary_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "formatted_summary",
+              "displayName": "formatted_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "formatted_length",
+              "displayName": "formatted_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_status",
+              "displayName": "sent_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "was_sent",
+              "displayName": "was_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_retry",
+              "displayName": "sent_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        928,
+        1264
+      ],
+      "id": "a6ccf4af-f627-461e-b989-bfac0085c12d",
+      "name": "pg-update-sent-error",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select\n\tne.id,\n\tne.email_inbox_label,\n\ttc.chat_id as telegram_chat_id,\n\tne.email_category,\n\tinitcap(ne.email_from) as email_from,\n\tinitcap(ne.email_subject) as email_subject,\n\tne.email_date,\n\tcase when ne.to_translate then 'translated to ' else 'original on ' end || ne.translate_language as translated,\n\tne.model_used,\n\tne.summary_content,\n\tne.sent_retry\nfrom public.news_email ne\ninner join public.telegram_chat tc on tc.email_category = ne.email_category\nwhere ne.is_summarized \nand not ne.was_sent\nand ne.sent_retry < 5\norder by ne.id\nlimit 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -32,
+        1184
+      ],
+      "id": "a90b0297-157b-4312-9e9f-79c63f27cb5c",
+      "name": "pg-get-summary",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Summarizer",
+        "height": 672,
+        "width": 1728
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "c9be82a0-ca6c-4fe9-9e64-0b5404484b6a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Sender",
+        "height": 400,
+        "width": 1728,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        1024
+      ],
+      "typeVersion": 1,
+      "id": "ee8fb718-e7cf-4c9a-b96e-16b80793e12b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with email_dups as (\n\tselect \n\t\trank() over (partition by n.email_inbox_label, n.email_subject, n.email_date order by n.email_consumed_at) as dup_rank,\n\t\tn.*\n\tfrom public.news_email n\n)\nselect \n\td.id,\n\td.email_inbox_label,\n\td.email_date,\n\td.email_from,\n\td.email_subject,\n\td.to_translate,\n\td.translate_language,\n\td.email_raw_content,\n    d.summary_retry\nfrom email_dups d \nwhere dup_rank = 1\nand not d.is_summarized\nand d.summary_retry < 5\norder by id\nlimit 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -64,
+        560
+      ],
+      "id": "6398c2a0-1e9d-4576-b1be-acc9818b0515",
+      "name": "pg-get-dedup-raw-news",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "notesInFlow": false,
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with email_dups as (\n\tselect \n\t\trank() over (\n          partition by n.email_inbox_label, n.email_subject, n.email_date \n          order by n.email_consumed_at\n        ) as dup_rank,\n\t\tn.*\n\tfrom public.news_email n\n)\ndelete from news_email \nwhere id in (select id from email_dups where dup_rank > 1)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -80,
+        832
+      ],
+      "id": "019133de-da5a-4eb6-9f35-25a6f4222aae",
+      "name": "pg-drop-dups",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36afa168-b1ab-459b-9103-9d9002a03abd",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "826b2db1-3b9b-4549-87db-7b2f9e7c1f25",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        560
+      ],
+      "id": "c5acab77-aaa8-443d-9bf4-11763cbb1b76",
+      "name": "results-not-empty"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "transform-content": {
+      "main": [
+        [
+          {
+            "node": "prompt-builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ai-summary": {
+      "main": [
+        [
+          {
+            "node": "combine-results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get-error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prompt-builder": {
+      "main": [
+        [
+          {
+            "node": "ai-summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gemini-flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ai-summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ],
+      "main": [
+        []
+      ]
+    },
+    "format-as-markdown": {
+      "main": [
+        [
+          {
+            "node": "telegram-send-summary-markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "telegram-send-summary-markdown": {
+      "main": [
+        [
+          {
+            "node": "pg-update-summary-sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "pg-update-sent-error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "combine-results": {
+      "main": [
+        [
+          {
+            "node": "pg-update-ai-summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-error": {
+      "main": [
+        [
+          {
+            "node": "pg-update-ai-error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "telegram-send-failed-exec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10min-runner": {
+      "main": [
+        [
+          {
+            "node": "pg-get-summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "pg-get-dedup-raw-news",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "pg-drop-dups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "telegram-send-failed-exec": {
+      "main": [
+        []
+      ]
+    },
+    "gemini-flash-fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ai-summary",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "pg-get-summary": {
+      "main": [
+        [
+          {
+            "node": "format-as-markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pg-update-ai-summary": {
+      "main": [
+        []
+      ]
+    },
+    "pg-get-dedup-raw-news": {
+      "main": [
+        [
+          {
+            "node": "results-not-empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "results-not-empty": {
+      "main": [
+        [
+          {
+            "node": "transform-content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a4707fb0-6ada-4ece-a225-b92b74fe1ef6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c5f15341da8b13f6f26284fc0b6a2f89bc53bd4c26439b0e7b35995d88afdf6c"
+  },
+  "nodeGroups": [],
+  "id": "2mVVmf0p79nSprE2",
+  "tags": [
+    {
+      "updatedAt": "2026-09-20T17:52:41.394Z",
+      "createdAt": "2026-09-20T17:52:41.394Z",
+      "id": "o9wycfbK2JhrRxck",
+      "name": "news"
+    },
+    {
+      "updatedAt": "2026-09-20T17:52:41.433Z",
+      "createdAt": "2026-09-20T17:52:41.433Z",
+      "id": "1omrRa72yrGK75IY",
+      "name": "summary"
+    },
+    {
+      "updatedAt": "2026-09-20T17:52:41.484Z",
+      "createdAt": "2026-09-20T17:52:41.484Z",
+      "id": "DhPloOmQbkMlUJY8",
+      "name": "prod"
+    }
+  ]
+}

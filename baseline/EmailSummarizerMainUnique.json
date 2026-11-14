@@ -1,0 +1,453 @@
+{
+  "name": "EmailSummarizerMainUnique",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "\n## News Summarizer Single Entrypoint",
+        "height": 272,
+        "width": 900,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "e1d8ec72-8c75-4186-9436-59ba7b81e303",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news_email",
+          "mode": "list",
+          "cachedResultName": "news_email"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_from": "={{ $json.from_name }}",
+            "email_subject": "={{ $json.subject }}",
+            "email_date": "={{ $json.date_gmt3 }}",
+            "email_raw_content": "={{ $json.raw_content }}",
+            "email_inbox_label": "={{ $json.from_name_id }}",
+            "to_translate": "={{ $json.translate }}",
+            "email_category": "={{ $json.category }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email_inbox_label",
+              "displayName": "email_inbox_label",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_category",
+              "displayName": "email_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "options",
+              "canBeUsedToMatch": true,
+              "options": [
+                {
+                  "name": "news",
+                  "value": "news"
+                },
+                {
+                  "name": "finance",
+                  "value": "finance"
+                },
+                {
+                  "name": "tech",
+                  "value": "tech"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "email_from",
+              "displayName": "email_from",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_date",
+              "displayName": "email_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_raw_content",
+              "displayName": "email_raw_content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_consumed_at",
+              "displayName": "email_consumed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "to_translate",
+              "displayName": "to_translate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "translate_language",
+              "displayName": "translate_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_used",
+              "displayName": "model_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "is_summarized",
+              "displayName": "is_summarized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_content",
+              "displayName": "summary_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summarized_at",
+              "displayName": "summarized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "summary_retry",
+              "displayName": "summary_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "formatted_summary",
+              "displayName": "formatted_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "formatted_length",
+              "displayName": "formatted_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_status",
+              "displayName": "sent_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "was_sent",
+              "displayName": "was_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sent_retry",
+              "displayName": "sent_retry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        -192
+      ],
+      "id": "a2c842f9-b38f-4cc2-ba91-7b3f0238e09a",
+      "name": "insert_raw_news",
+      "credentials": {
+        "postgres": {
+          "id": "vgvvqtxEjYRM4vkL",
+          "name": "Email Summarizer Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mailbox": "n8n",
+        "options": {}
+      },
+      "id": "2fa474d6-6dd9-4585-a174-652886b79e56",
+      "name": "fetch-n8n-inbox",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        -192
+      ],
+      "credentials": {
+        "imap": {
+          "id": "LG1rvxhB7YxYxHPZ",
+          "name": "GMAIL_IMAP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3-from",
+              "name": "from",
+              "value": "={{ $json.from }}",
+              "type": "string"
+            },
+            {
+              "id": "a3-subject",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "a3-date",
+              "name": "date",
+              "value": "={{ $json.date }}",
+              "type": "string"
+            },
+            {
+              "id": "a3-content",
+              "name": "htmlContent",
+              "value": "={{ $json.textHtml.replace(/\\(https?:\\/\\/[^\\s)]+\\)/g, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "4e258866-ebf0-419c-a574-abc2240945bb",
+              "name": "plainContent",
+              "value": "={{ $json.textPlain.replace(/\\(https?:\\/\\/[^\\s)]+\\)/g, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        -192
+      ],
+      "id": "83c3cacc-c421-45c5-a6e2-d39cdc935434",
+      "name": "select-n8n-content-generic"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TRANSLATE_IDS = new Set([\n  'lennys-newsletter',\n  'the-pragmatic-engineer',\n  'tech-brew',\n  'the-neuron',\n  'morning-brew',\n  'refactoring',\n]);\n\nconst CATEGORY_MAP = {\n  finance: new Set([\n    'rico-matinal',\n  ]),\n  news: new Set([\n    'the-news',\n    'morning-brew',\n  ]),\n};\n\nconst HTML_CONTENT_IDS = new Set([\n  'tech-brew',\n  'rico-matinal',\n]);\n\nfunction getCategory(from_name_id) {\n  for (const [category, ids] of Object.entries(CATEGORY_MAP)) {\n    if (ids.has(from_name_id)) return category;\n  }\n  return 'tech';\n}\n\nconst items = $input.all().map(item => {\n  const from = item.json.from || '';\n\n  const match = from.match(/^\"?([^\"<]+)\"?\\s*<([^>]+)>$/);\n\n  let from_name = '';\n  let from_email = '';\n\n  if (match) {\n    from_name = match[1]\n      .trim()\n      .replace(/[^\\x20-\\x7E]/g, '')\n      .trim();\n    from_email = match[2].trim();\n  } else {\n    from_email = from.trim();\n  }\n\n  const from_name_id = from_name\n    .toLowerCase()\n    .replace(/[^a-z0-9\\s]/g, '')\n    .trim()\n    .replace(/\\s+/g, '-');\n\n  const translate = TRANSLATE_IDS.has(from_name_id);\n  const category = getCategory(from_name_id);\n  const raw_content = HTML_CONTENT_IDS.has(from_name_id)\n    ? item.json.htmlContent\n    : item.json.plainContent;\n\n  // Parse date and convert to GMT-3\n  const parsed = new Date(item.json.date);\n  const gmt3 = new Date(parsed.getTime() - (3 * 60 * 60 * 1000));\n\n  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];\n  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\n  const pad = n => String(n).padStart(2, '0');\n\n  const date_gmt3 = `${days[gmt3.getUTCDay()]}, ${gmt3.getUTCDate()} ${months[gmt3.getUTCMonth()]} ${gmt3.getUTCFullYear()} at ${pad(gmt3.getUTCHours())}h ${pad(gmt3.getUTCMinutes())}min`;\n\n  return {\n    json: {\n      from_name_id,\n      from_name,\n      from_email,\n      translate,\n      category,\n      date: item.json.date,\n      date_gmt3,\n      subject: item.json.subject,\n      raw_content,\n    }\n  };\n});\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "61da1f77-339b-40c6-986b-c3079d5f6da7",
+      "name": "map-content"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "insert_raw_news": {
+      "main": [
+        []
+      ]
+    },
+    "fetch-n8n-inbox": {
+      "main": [
+        [
+          {
+            "node": "select-n8n-content-generic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "select-n8n-content-generic": {
+      "main": [
+        [
+          {
+            "node": "map-content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "map-content": {
+      "main": [
+        [
+          {
+            "node": "insert_raw_news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ea19492a-d4ee-4ff4-a623-29329c02df96",
+  "meta": {
+    "instanceId": "c5f15341da8b13f6f26284fc0b6a2f89bc53bd4c26439b0e7b35995d88afdf6c"
+  },
+  "nodeGroups": [],
+  "id": "otYOklUEtjZCLLJO",
+  "tags": [
+    {
+      "updatedAt": "2026-09-20T17:52:41.394Z",
+      "createdAt": "2026-09-20T17:52:41.394Z",
+      "id": "o9wycfbK2JhrRxck",
+      "name": "news"
+    },
+    {
+      "updatedAt": "2026-09-20T17:52:41.433Z",
+      "createdAt": "2026-09-20T17:52:41.433Z",
+      "id": "1omrRa72yrGK75IY",
+      "name": "summary"
+    },
+    {
+      "updatedAt": "2026-09-20T17:52:41.484Z",
+      "createdAt": "2026-09-20T17:52:41.484Z",
+      "id": "DhPloOmQbkMlUJY8",
+      "name": "prod"
+    }
+  ]
+}
