@@ -7,7 +7,7 @@ real services.
 ```mermaid
 flowchart LR
   subgraph infra["infra/compose.yaml (project wfx-infra, or included by each tool stack)"]
-    DB[(app-db<br/>Postgres 18.7<br/>news_email, telegram_chat)]
+    DB[(app-db<br/>Postgres 18.7<br/>news_email + history, telegram_chat)]
     MAIL[mail<br/>GreenMail 2.1.15<br/>IMAP folder 'n8n']
     TG[mock-telegram<br/>:8090]
     GEM[mock-gemini<br/>:8091]
@@ -27,6 +27,7 @@ flowchart LR
 make infra-up      # build the mocks image, start everything, wait until all four services are healthy
 make seed          # empty the 'n8n' mailbox and load the 9 fixture emails as UNSEEN
 make infra-check   # DB tables, enum, telegram_chat rows; mock health; mailbox counts
+make schema-check  # diff app-db's \d+ output against the production schema (docs/baseline/prod-schema.md)
 make reset         # infra-down + infra-up + seed (about 11 s on the dev host)
 make infra-down    # stop and delete volumes
 ```
@@ -53,8 +54,9 @@ sample. The Phase 6 measurements will supersede it.
 
 ### app-db
 
-- Schema: `infra/db/init/001_schema.sql`, the reconstruction in [baseline/data-model.md](baseline/data-model.md). It includes the `email_category` enum and the `translate_language` default `'Brazilian Portuguese'` (D-007).
-- `infra/db/init/002_seed_telegram_chat.sh` fills `telegram_chat` from `TELEGRAM_CHAT_ID_{NEWS,FINANCE,TECH}`. The values pass through as psql variables, never concatenated into SQL.
+- Schema: `infra/db/init/001_schema.sql` reproduces the **production schema** (D-018; see [baseline/data-model.md](baseline/data-model.md)). That includes the `translate_language` default `'pt-BR'`, retry counters starting at -1, and the `news_email_history` audit table with its trigger. Two parts aren't in the production output: the enum labels are [inferred] and the trigger function's body is [assumed]. `make schema-check` diffs the `\d+` output against production.
+- `infra/db/init/002_seed_telegram_chat.sh` fills `telegram_chat` with one row per category from `TELEGRAM_CHAT_ID_{NEWS,FINANCE,TECH}`. `environment` stays at its default `'prod'`, and `chat_name` gets a placeholder. The values pass through as psql variables, never concatenated into SQL.
+- The audit trigger writes a `news_email_history` row for every insert and update, so the parity suite can count each tool's writes per email.
 - Init scripts run only on an **empty** volume. Run `make reset` after changing them.
 - Postgres 18 images keep their data under `/var/lib/postgresql`, not `.../data`. The volume is mounted at that path.
 

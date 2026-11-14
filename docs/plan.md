@@ -8,7 +8,7 @@ Legend: `[ ]` todo · `[~]` in progress / partial (see note) · `[x]` done and v
 ## Phase 0: Foundations
 
 - [x] Analyze the n8n baseline and write the [behavior spec](baseline/workflow-spec.md)
-- [x] Reconstruct the [data model](baseline/data-model.md)
+- [x] Reconstruct the [data model](baseline/data-model.md), then replace it with the production schema (2026-11-14, D-018)
 - [x] Write the [comparison framework](comparison/criteria.md) and the [decision log](decisions.md)
 - [x] Write `CLAUDE.md`, `README.md` and `.gitignore`
 - [x] Owner answers the open questions (below). Answered 2026-11-14. Remaining owner actions are in [next-steps.md](next-steps.md).
@@ -28,6 +28,7 @@ Done 2026-11-14. Details are in [infra.md](infra.md).
 - [x] Root `Makefile` with `infra-up`, `infra-down`, `seed`, `reset`, plus `infra-check`, `seed-check`, `fixtures`, `test-mocks`, `lint`
 - [x] Mock unit tests (45 pytest cases) and the repo-wide `ruff.toml`
 - **Verified:** `make reset` (down -v, up, seed) took 11 s from scratch. `make infra-check` shows tables `news_email` and `telegram_chat`, the enum `news,finance,tech`, 3 `telegram_chat` rows and 0 `news_email` rows; both mocks are healthy; mailbox `n8n` has 9 messages, all unseen. A wrong IMAP password is rejected. IMAPS works. Re-seeding is idempotent. `make test-mocks`: 45 passed. `make lint`: clean. Running `make fixtures` again gives byte-identical files.
+- **Updated 2026-11-14 (D-018):** the schema now reproduces production. `make reset` took 10 s. `make schema-check` matches the production `\d+` output, and a deliberately changed default made it fail as expected. `make infra-check` shows 3 tables (`news_email`, `news_email_history`, `telegram_chat`) and 3 `telegram_chat` rows in environment `prod`. A rolled-back probe confirmed a fresh row gets `pt-BR`, `'OK'` statuses and `-1` counters; that the `< 5` guard allows 6 attempts; that the trigger logs inserts and updates; and that a second environment doubles the SND-1 rows (Q-18). `make test-mocks`: 45 passed. `make lint`: clean.
 
 ## Phase 2: Golden vectors from the original n8n code (`tests/golden/`)
 
@@ -39,6 +40,12 @@ Done 2026-11-14. Details are in [golden.md](golden.md).
 - [x] Runs in the pinned `node:26.7.0-alpine3.24` (the Node version of n8n 2.40.3) with a locked `package-lock.json`. `make golden` and `make golden-check` added.
 - [ ] Both implementations reproduce these outputs **byte for byte** (checked in Phases 3 and 4)
 - **Verified:** 3 runs, one against freshly recreated infra and DB, gave identical files. Every fixture's SND-2 message is valid MarkdownV2 per mock-telegram. The only rejections are the deliberate edge cases `too-long-after-escaping` and Q-15.
+- **Regenerated 2026-11-14 for D-018.**
+  - ING-1 to ING-4: unchanged.
+  - SUM-3, SUM-4 and SND-2: changed only where `translate_language` (`pt-BR`) or the retry defaults (-1) appear.
+  - SUM-7b: inputs changed, alert texts didn't.
+  - Telegram verdicts: same 2 rejections.
+  - Determinism: two runs gave identical files.
 
 ## Phase 3: Kestra (`kestra/`)
 
@@ -87,7 +94,7 @@ Done 2026-11-14. Details are in [golden.md](golden.md).
 | # | Question | Answer (2026-11-14) |
 |---|---|---|
 | 1 | Is "perfect" Prefect? | Yes, Prefect OSS. See [D-001](decisions.md). |
-| 2 | Can the production DDL be shared? | Yes, it will be provided. Tracked in [next-steps.md](next-steps.md). |
+| 2 | Can the production DDL be shared? | Provided 2026-11-14 as psql `\d+` output ([prod-schema.md](baseline/prod-schema.md)). See [D-018](decisions.md). Small follow-ups are in [next-steps.md](next-steps.md). |
 | 3 | Q-3: what goes in `model_used` on the error path? | The primary model. See [D-008](decisions.md). |
 | 4 | Run n8n as a third contestant? | No. See [D-009](decisions.md). |
 | 5 | The external reference doc (Gemini share link) | Still open. Tracked in [next-steps.md](next-steps.md). |

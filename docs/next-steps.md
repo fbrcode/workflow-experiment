@@ -4,29 +4,25 @@ What's needed to move forward, split by who acts. Phase details are in [plan.md]
 
 ## Owner actions
 
-### 1. Provide the production schema (unblocks Q-14 and replaces D-007)
+### 1. ~~Provide the production schema~~
 
-Run this against the production database and save the output as
-`docs/baseline/prod-schema.sql`:
+Provided 2026-11-14 as psql `\d+` output ([baseline/prod-schema.md](baseline/prod-schema.md)).
+The local DB now reproduces it (D-018). Q-14 is resolved (`'pt-BR'`), and two new quirks came out
+of it: Q-17 (retries start at -1, so there are 6 attempts) and Q-18 (SND-1 ignores
+`telegram_chat.environment`).
 
-```bash
-pg_dump --schema-only --no-owner --no-privileges \
-  -t public.news_email -t public.telegram_chat \
-  "$PROD_DATABASE_URL" > docs/baseline/prod-schema.sql
+**Optional follow-up.** None of this blocks Phases 3 and 4. These read-only queries fill the
+last gaps:
 
-# the category enum, if pg_dump didn't include it:
-psql "$PROD_DATABASE_URL" -c '\dT+ public.*'
+```sql
+\sf public.log_news_email_changes      -- the audit trigger's body (local copy is [assumed])
+\dT+ public.email_category             -- enum labels (local: news, finance, tech [inferred])
+show server_version;
+select datcollate, datctype, datlocprovider from pg_database where datname = current_database();  -- initcap() locale, G-9
+select email_category, environment, count(*) from public.telegram_chat group by 1, 2 order by 1, 2;  -- Q-18; no chat IDs
 ```
 
-Most needed: the **default value of `news_email.translate_language`**. Also check the defaults
-for `email_consumed_at`, `is_summarized`, `was_sent`, `summary_retry` and `sent_retry`, and the
-type of `telegram_chat.chat_id`.
-
-Don't include data. Schema only. The repo is public, so check the file for anything sensitive
-(owner names, comments) before committing it.
-
-Once it's in, Claude updates [baseline/data-model.md](baseline/data-model.md) and
-`infra/db/init/`, and marks D-007 as superseded.
+The repo is public. Check the function source for anything sensitive before sharing it.
 
 ### 2. ~~Confirm the n8n version that runs the baseline~~
 

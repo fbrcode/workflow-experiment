@@ -7,7 +7,7 @@ INFRA    := docker compose --env-file $(ENV_FILE) -f infra/compose.yaml -p wfx-i
 MOCKS    := uv run --project infra/mocks
 
 .DEFAULT_GOAL := help
-.PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check reset \
+.PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check schema-check reset \
         golden golden-check fixtures test-mocks lint
 
 help: ## List targets
@@ -41,6 +41,10 @@ infra-check: ## Verify the running infra: DB schema + seed, mocks health, IMAP c
 	curl -fsS "http://localhost:$$MOCK_TELEGRAM_HOST_PORT/_mock/health"; echo; \
 	curl -fsS "http://localhost:$$MOCK_GEMINI_HOST_PORT/_mock/health"; echo
 	@echo "--- mail"; $(MAKE) --no-print-directory seed-check
+
+schema-check: ## Diff app-db's \d+ output against the production schema (docs/baseline/prod-schema.md)
+	@$(INFRA) exec -T app-db sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --pset pager=off \
+	  -c "\d+ news_email" -c "\d+ news_email_history" -c "\d+ telegram_chat"' | sh scripts/schema_check.sh
 
 reset: infra-down infra-up seed ## Recreate the infra from scratch and load the fixtures
 

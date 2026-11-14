@@ -42,7 +42,7 @@ either shape, and keeping the split keeps the comparison simple.
 Kestra open-source and the self-hosted Prefect server: no Kestra Enterprise and no Prefect Cloud.
 Features gated behind paid editions are noted under C12 but not used.
 
-### D-007: Reconstructed schema until the real DDL arrives · `accepted`
+### D-007: Reconstructed schema until the real DDL arrives · `superseded by D-018`
 
 We use the schema in [`baseline/data-model.md`](baseline/data-model.md). `translate_language`
 defaults to `'Brazilian Portuguese'` as an assumption (Q-14). Replace it when the production
@@ -124,3 +124,26 @@ The golden generator now matches that release:
 Cross-check: regenerating with the 2.40.3 stack changed **none** of the 115 case outputs compared
 with the 2.47.7 stack. Only the provenance fields differ. So G-1 (CRLF kept) and G-2 (raw header
 quoting) hold on both n8n versions, at least for these fixtures.
+
+### D-018: The local database uses the production schema · `accepted`
+
+The owner provided the production schema on 2026-11-14 as psql `\d+` output
+([baseline/prod-schema.md](baseline/prod-schema.md)). This supersedes D-007.
+`infra/db/init/001_schema.sql` now reproduces it, and `make schema-check` confirms that app-db's
+`\d+` output matches it, ignoring whitespace. What changed compared with the reconstruction:
+
+- `translate_language` defaults to **`'pt-BR'`**, not the assumed `'Brazilian Portuguese'`. That resolves Q-14, and the SUM-4 prompts and SND-2 headers in the golden vectors change with it.
+- `summary_retry` and `sent_retry` default to **-1**, not 0, so each `< 5` guard allows 6 attempts (Q-17).
+- `summary_status` and `sent_status` default to `'OK'`. `email_category` is `not null default 'tech'`. `to_translate` and `translate_language` are `not null`. `id` is a bigserial, not an identity column.
+- There's a new audit table, `news_email_history`, filled by an AFTER INSERT OR UPDATE trigger.
+- `telegram_chat` has `chat_name` and `environment` (default `'prod'`), with the primary key `(email_category, environment)`. SND-1 doesn't filter on `environment` (Q-18). Locally there's one `'prod'` row per category, as the workflow needs.
+
+Three pieces aren't in the output, so they stay as they were:
+
+- the enum labels, [inferred] from n8n
+- the trigger function's body, [assumed]
+- the database locale, the Postgres image default
+
+None of them changes a workflow output, except that the locale can affect `initcap()` on non-ASCII
+text (G-9). The golden generator now reads a fresh row's defaults from app-db instead of
+hard-coding them, so the vectors follow the schema.

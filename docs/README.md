@@ -8,7 +8,8 @@
 | [infra.md](infra.md) | Shared local infra: services, mock APIs and fault injection, fixtures matrix |
 | [golden.md](golden.md) | Golden vectors: provenance, file format, how ports use them, findings G-1 to G-9 |
 | [baseline/workflow-spec.md](baseline/workflow-spec.md) | **The contract.** Behavior spec derived from the n8n exports |
-| [baseline/data-model.md](baseline/data-model.md) | Reconstructed Postgres schema, with how sure each column is |
+| [baseline/data-model.md](baseline/data-model.md) | The production Postgres schema and what its defaults mean for behavior |
+| [baseline/prod-schema.md](baseline/prod-schema.md) | Owner-provided psql `\d+` output from production, verbatim |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |
 | [reference/](reference/) | External material provided by the owner (e.g. the original comparison doc) |
 | `kestra/` *(Phase 3)* | Setup, architecture, node mapping, effort log for Kestra |

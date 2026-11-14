@@ -112,6 +112,7 @@ Start every session by reading, in this order:
 | `make infra-up` / `make infra-down` | Start the shared infra and wait for healthy / stop it and delete volumes | Phase 1 |
 | `make seed` / `make seed-check` | Load the 9 fixture emails into IMAP folder `n8n` as UNSEEN (purges first) / print counts | Phase 1 |
 | `make infra-check` | DB tables, enum and `telegram_chat` rows; mock health; mailbox counts | Phase 1 |
+| `make schema-check` | Diff app-db's `\d+` output against the production schema in `docs/baseline/prod-schema.md` | Phase 2 (D-018) |
 | `make reset` | `infra-down` + `infra-up` + `seed` | Phase 1 |
 | `make infra-ps` / `make infra-logs` | Container status / follow logs | Phase 1 |
 | `make fixtures` | Regenerate `fixtures/emails/*.eml` (deterministic) | Phase 1 |

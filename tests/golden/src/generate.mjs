@@ -33,7 +33,6 @@ const CHAT_BY_CATEGORY = {
   finance: need('TELEGRAM_CHAT_ID_FINANCE'),
   tech: need('TELEGRAM_CHAT_ID_TECH'),
 };
-const TRANSLATE_LANGUAGE_DEFAULT = 'Brazilian Portuguese'; // DB default, D-007 / Q-14
 
 const ingest = loadWorkflow(join(BASELINE, 'EmailSummarizerMainUnique.json'));
 const summarizer = loadWorkflow(join(BASELINE, 'EmailSummarizerFromPgCron.json'));
@@ -95,6 +94,16 @@ async function main() {
          from pg_database d where d.datname = current_database()`,
     )
   ).rows[0];
+  // What a freshly ingested row holds in the columns ING-4 doesn't write (Q-14, D-018), read from the
+  // real schema with a rolled-back insert. The explicit id keeps the sequence untouched.
+  await db.query('begin');
+  const fresh = (
+    await db.query(
+      `insert into public.news_email (id, email_inbox_label, email_from, email_subject, email_date, email_raw_content)
+       values (0, '', '', '', '', '') returning translate_language, summary_retry, sent_retry`,
+    )
+  ).rows[0];
+  await db.query('rollback');
 
   // ING-1: n8n's IMAP read of the seeded mailbox --------------------------------------------
   const captured = await captureSimpleItems({
@@ -160,9 +169,9 @@ async function main() {
     email_from: row.email_from,
     email_subject: row.email_subject,
     to_translate: row.to_translate,
-    translate_language: TRANSLATE_LANGUAGE_DEFAULT,
+    translate_language: fresh.translate_language,
     email_raw_content: row.email_raw_content,
-    summary_retry: 0,
+    summary_retry: fresh.summary_retry,
   });
   const transform = codeNode(summarizer, 'transform-content');
   const transformCases = [
@@ -173,7 +182,8 @@ async function main() {
     'sum3-transform-content.json',
     'SUM-3',
     transform.source,
-    'Input is a SUM-1 row. Fixture rows use id = position, translate_language = DB default, summary_retry = 0.',
+    'Input is a SUM-1 row. Fixture rows use id = position and the app-db defaults of a fresh row ' +
+      `(translate_language = '${fresh.translate_language}', summary_retry = ${fresh.summary_retry}).`,
     transformCases,
   );
 
@@ -227,7 +237,7 @@ async function main() {
   const fixtureSendRows = [];
   for (const [i, c] of promptCases.filter((p) => p.tags.includes('fixture')).entries()) {
     const row = fixtureInserts[i].output;
-    const translated = `${row.to_translate ? 'translated to ' : 'original on '}${TRANSLATE_LANGUAGE_DEFAULT}`;
+    const translated = `${row.to_translate ? 'translated to ' : 'original on '}${fresh.translate_language}`;
     fixtureSendRows.push({
       id: c.id,
       tags: ['fixture'],
@@ -242,7 +252,7 @@ async function main() {
         translated,
         model_used: model,
         summary_content: await mockSummary(c.output.prompt, model),
-        sent_retry: 0,
+        sent_retry: fresh.sent_retry,
       },
     });
   }

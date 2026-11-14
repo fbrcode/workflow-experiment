@@ -27,13 +27,13 @@
           "subject": "☕ Markets rally as rates hold steady",
           "date": "Sat, 14 Nov 2026 at 08h 05min",
           "to_translate": true,
-          "translate_language": "Brazilian Portuguese",
+          "translate_language": "pt-BR",
           "content": "Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
         },
         "prompt-builder": {
           "model": "models/gemini-flash-lite-latest",
           "modelFallback": "models/gemini-2.5-flash",
-          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
         }
       },
       "output": {
@@ -60,13 +60,13 @@
           "subject": "Resumo do dia: economia, política e tecnologia",
           "date": "Fri, 13 Nov 2026 at 09h 30min",
           "to_translate": false,
-          "translate_language": "Brazilian Portuguese",
+          "translate_language": "pt-BR",
           "content": "Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
         },
         "prompt-builder": {
           "model": "models/gemini-flash-lite-latest",
           "modelFallback": "models/gemini-2.5-flash",
-          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
         }
       },
       "output": {
@@ -94,13 +94,13 @@
           "subject": "Deals <today> & more",
           "date": "Sat, 14 Nov 2026 at 09h 05min",
           "to_translate": false,
-          "translate_language": "Brazilian Portuguese",
+          "translate_language": "pt-BR",
           "content": "Deals."
         },
         "prompt-builder": {
           "model": "models/gemini-flash-lite-latest",
           "modelFallback": "models/gemini-2.5-flash",
-          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using Brazilian Portuguese language and remove any sponsored news (presented by) silently. Content >> Deals."
+          "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> Deals."
         }
       },
       "output": {

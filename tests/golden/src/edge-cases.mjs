@@ -51,7 +51,7 @@ const rowBase = {
   email_inbox_label: 'edge',
   email_date: 'Sat, 14 Nov 2026 at 09h 05min',
   email_subject: 'Edge subject',
-  summary_retry: 0,
+  summary_retry: -1, // DB default for a fresh row (D-018)
 };
 export const transformEdges = [
   {
@@ -61,7 +61,7 @@ export const transformEdges = [
       id: 101,
       email_from: 'Morning Brew <crew@x.example>',
       to_translate: true,
-      translate_language: 'Brazilian Portuguese',
+      translate_language: 'pt-BR',
       email_raw_content:
         'View image: https://i.example/1\r\nCaption: Café — ação!\tTab\nFollow image link: https://l.example ' +
         'View image: again 🙂 end. Caption:no-space-kept',
@@ -69,7 +69,7 @@ export const transformEdges = [
   },
   {
     id: 'edge:from-without-angle',
-    input: { ...rowBase, id: 102, email_from: 'The News', to_translate: false, translate_language: 'Brazilian Portuguese', email_raw_content: 'Simple.' },
+    input: { ...rowBase, id: 102, email_from: 'The News', to_translate: false, translate_language: 'pt-BR', email_raw_content: 'Simple.' },
   },
   {
     id: 'edge:nulls',
@@ -85,9 +85,9 @@ const sendBase = {
   email_from: "Lenny's Newsletter",
   email_subject: 'Edge Case',
   email_date: 'Wed, 11 Nov 2026 at 10h 00min',
-  translated: 'translated to Brazilian Portuguese',
+  translated: 'translated to pt-BR',
   model_used: 'models/gemini-flash-lite-latest',
-  sent_retry: 0,
+  sent_retry: -1, // DB default for a fresh row (D-018)
 };
 const summaryCase = (n, id, summary_content, extra = {}) => ({
   id: `edge:${id}`,
@@ -135,6 +135,6 @@ export const alertEdgeTransform = {
   subject: 'Deals <today> & more',
   date: 'Sat, 14 Nov 2026 at 09h 05min',
   to_translate: false,
-  translate_language: 'Brazilian Portuguese',
+  translate_language: 'pt-BR',
   content: 'Deals.',
 };

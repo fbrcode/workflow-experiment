@@ -3,7 +3,7 @@
 # isolated copy. Variables are required and come from .env (or .env.example): see Makefile.
 #
 # Services:
-#   app-db         Postgres with the reconstructed news_email/telegram_chat schema
+#   app-db         Postgres with the production schema (news_email, its audit history, telegram_chat)
 #   mail           GreenMail IMAP/SMTP, the stand-in for Gmail (mailbox IMAP_MAILBOX)
 #   mock-telegram  Telegram Bot API mock (validates MarkdownV2/HTML, records calls)
 #   mock-gemini    Gemini API mock (deterministic summaries, fault injection)

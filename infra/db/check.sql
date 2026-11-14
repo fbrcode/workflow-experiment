@@ -6,6 +6,9 @@ select table_name from information_schema.tables where table_schema = 'public' o
 select string_agg(enumlabel, ',' order by enumsortorder) from pg_enum
  where enumtypid = 'public.email_category'::regtype;
 \echo '[telegram_chat]'
-select email_category || ' -> ' || chat_id from public.telegram_chat order by 1;
+select email_category || ' / ' || environment || ' -> ' || chat_id || ' (' || chat_name || ')'
+  from public.telegram_chat order by email_category, environment;
 \echo '[news_email rows]'
 select count(*) from public.news_email;
+\echo '[news_email_history rows (audit trigger)]'
+select count(*) from public.news_email_history;

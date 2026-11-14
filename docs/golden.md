@@ -28,7 +28,8 @@ The generator runs in `node:26.7.0-alpine3.24`, the Node version of the producti
 locked dependencies (`tests/golden/package-lock.json`). It joins the infra network, so the host
 needs no Node install. Output is deterministic: `$now` is frozen at
 `2026-11-14T12:00:00.000-03:00`, nothing records a timestamp, and the case order is stable.
-Three runs on 2026-11-14, one of them against freshly recreated infra, gave identical files.
+Three runs on 2026-11-14, one of them against freshly recreated infra, gave identical files. After
+the switch to the production schema (D-018), two more consecutive runs also matched each other.
 
 ## Provenance
 
@@ -38,6 +39,7 @@ Three runs on 2026-11-14, one of them against freshly recreated infra, gave iden
 | Code nodes | `jsCode` from the baseline JSON via `new Function('$input', code)`, with `$input.all/first/last` | Each file records `code_sha256` |
 | Set node, Postgres column maps, Telegram template | The `={{ … }}` expressions from the baseline JSON, evaluated with `$json`, `$now` and `$()` shims | Each file records the sha256 of what it evaluated |
 | `initcap()` (SND-1) | The real app-db: PostgreSQL 18.7, ctype `en_US.utf8`, locale provider `c` | Recorded in `snd2…notes` |
+| Fresh-row defaults (SUM-1, SND-1 rows) | Read from app-db with a rolled-back insert: `translate_language = 'pt-BR'`, `summary_retry = sent_retry = -1` | The production schema (D-018). Recorded in `sum3…notes` |
 | LLM summary | mock-gemini (deterministic per prompt and model), primary model, system message "You are a helpful assistant" (Q-13) | [infra.md](infra.md#mock-gemini) |
 | Telegram verdict | mock-telegram parses the message as MarkdownV2 or HTML | D-012 |
 

@@ -59,7 +59,7 @@ It isn't averaged in.
 | F-4 | Postgres unavailable during a tick | Run fails visibly; next tick recovers; no partial writes |
 | F-5 | Duplicate email ingested | DUP-1 deletes it; only one Telegram message |
 | F-6 | Empty queue | No writes, no Telegram calls (SUM-2, SND-1a) |
-| F-7 | 5 failures in a row | Row stops being retried (`*_retry < 5`) |
+| F-7 | 6 failures in a row | Row stops being retried: the counter goes from -1 to 5, and `*_retry < 5` excludes it (Q-17) |
 
 ## Node mapping template
 
