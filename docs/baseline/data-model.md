@@ -1,73 +1,130 @@
-# Baseline data model (reconstructed)
+# Baseline data model
 
-The n8n exports contain **no DDL**. This schema was rebuilt from what the workflows show:
+This is the **production schema**, provided by the owner on 2026-11-14 as psql `\d+` output and
+kept verbatim in [prod-schema.md](prod-schema.md). It replaces the reconstruction that D-007 used
+(see D-018).
 
-- the column schema cached in the n8n Postgres node (`insert_raw_news`), which records type, `required`, and enum options
-- the columns that the queries and updates read and write
+`infra/db/init/001_schema.sql` reproduces it. `make schema-check` diffs app-db's `\d+` output
+against the production output, ignoring whitespace. It matched on 2026-11-14.
 
-Each column is tagged with how sure the reconstruction is:
+Everything below comes from production unless it's tagged:
 
-- **[export]**: stated directly by the n8n column schema
-- **[inferred]**: implied by how the column is used
-- **[assumed]**: a guess made so the experiment can run. Confirm it against production.
+- **[inferred]**: not in the production output, implied by the n8n exports
+- **[assumed]**: not in the production output; a guess so the experiment can run
 
-> **Implemented in** `infra/db/init/001_schema.sql` (Phase 1).
->
-> **Pending owner action:** the production DDL will be provided as `docs/baseline/prod-schema.sql`
-> (see [next-steps.md](../next-steps.md)). It will then replace this reconstruction.
+The `Not-null constraints:` sections in the output only exist on PostgreSQL 18 and later, so
+production runs 18 or newer. app-db runs 18.7.
 
-## `public.email_category` (enum) [inferred]
-
-n8n shows `email_category` as type `options` with the values `news`, `finance` and `tech`. n8n
-does this for Postgres **enum** columns.
-
-```sql
-create type public.email_category as enum ('news', 'finance', 'tech');
+```mermaid
+erDiagram
+  news_email ||--o{ news_email_history : "audit trigger (no FK)"
+  telegram_chat }o--o{ news_email : "SND-1 joins on email_category"
+  news_email {
+    bigserial id PK
+    email_category email_category "default tech"
+    text translate_language "default pt-BR"
+    integer summary_retry "default -1"
+    integer sent_retry "default -1"
+  }
+  news_email_history {
+    bigserial id PK
+    integer news_email_id
+    text operation "INSERT or UPDATE"
+    jsonb old_row
+    jsonb new_row
+    text_array changed_fields
+  }
+  telegram_chat {
+    email_category email_category PK
+    text environment PK "default prod"
+    text chat_id
+    text chat_name
+  }
 ```
+
+## `public.email_category` (enum)
+
+The labels are **[inferred]**: `news`, `finance` and `tech`, from the n8n Postgres node, which
+shows the column as type `options`. n8n does that for enums. Production confirms that the type
+exists and that `tech` is one of its labels, because it's the column default.
 
 ## `public.news_email`
 
-| column | type | null / default | basis | written by |
-|---|---|---|---|---|
-| `id` | `bigint` identity / serial | PK | [export] number, not required | DB |
-| `email_inbox_label` | `text` | not null | [export] required | ING-4 (sender slug) |
-| `email_category` | `email_category` | nullable | [export] options, not required | ING-4 |
-| `email_from` | `text` | not null | [export] required | ING-4 |
-| `email_subject` | `text` | not null | [export] required | ING-4 |
-| `email_date` | `text` | not null | [export] string, required | ING-4 (GMT-3 display string) |
-| `email_raw_content` | `text` | not null | [export] required | ING-4 |
-| `email_consumed_at` | `timestamptz` | `default now()` | [export] dateTime; **default [assumed]**. Dedup orders by it, but nothing writes it. | DB |
-| `to_translate` | `boolean` | `default false` [assumed] | [export] boolean | ING-4 |
-| `translate_language` | `text` | **default [assumed]** | [export] string. Never written but read by SUM-1 and SND-1, so it **must** have a default. | DB |
-| `model_used` | `text` | nullable | [export] | SUM-6/7a |
-| `summary_status` | `text` | nullable | [export] | SUM-6/7a (`'OK'` or error text) |
-| `is_summarized` | `boolean` | `not null default false` [assumed] | [export]; `not d.is_summarized` needs a non-null value | SUM-6/7a, SND-5 |
-| `summary_content` | `text` | nullable | [export] | SUM-6/7a |
-| `summarized_at` | `timestamptz` | nullable | [export] dateTime | SUM-6/7a |
-| `summary_retry` | `integer` | `not null default 0` [assumed] | [export] number; `< 5` and `+ 1` need a non-null value | SUM-6/7a |
-| `formatted_summary` | `text` | nullable | [export] | SND-4/5 |
-| `formatted_length` | `integer` | nullable | [export] number | SND-4/5 |
-| `sent_status` | `text` | nullable | [export] | SND-4/5 |
-| `was_sent` | `boolean` | `not null default false` [assumed] | [export]; `not ne.was_sent` | SND-4/5 |
-| `sent_at` | `timestamptz` | nullable | [export] dateTime | SND-4/5 |
-| `sent_retry` | `integer` | `not null default 0` [assumed] | [export] number | SND-4/5 |
+| column | type | null / default | written by |
+|---|---|---|---|
+| `id` | `bigint` | `nextval('news_email_id_seq')` (bigserial), PK | DB |
+| `email_inbox_label` | `text` | not null | ING-4 (sender slug) |
+| `email_category` | `email_category` | not null, `'tech'` | ING-4 |
+| `email_from` | `text` | not null | ING-4 |
+| `email_subject` | `text` | not null | ING-4 |
+| `email_date` | `text` | not null | ING-4 (GMT-3 display string) |
+| `email_raw_content` | `text` | not null | ING-4 |
+| `email_consumed_at` | `timestamptz` | not null, `CURRENT_TIMESTAMP` | DB (DUP-1 orders by it) |
+| `to_translate` | `boolean` | not null, `false` | ING-4 |
+| `translate_language` | `text` | not null, **`'pt-BR'`** | DB only, never written (Q-14) |
+| `model_used` | `text` | nullable | SUM-6/7a |
+| `summary_status` | `text` | nullable, **`'OK'`** | SUM-6/7a (`'OK'` or error text) |
+| `is_summarized` | `boolean` | not null, `false` | SUM-6/7a, SND-5 |
+| `summary_content` | `text` | nullable | SUM-6/7a |
+| `summarized_at` | `timestamptz` | nullable | SUM-6/7a |
+| `summary_retry` | `integer` | not null, **`-1`** | SUM-6/7a (`+ 1`) |
+| `formatted_summary` | `text` | nullable | SND-4/5 |
+| `formatted_length` | `integer` | nullable | SND-4/5 |
+| `sent_status` | `text` | nullable, **`'OK'`** | SND-4/5 |
+| `was_sent` | `boolean` | not null, `false` | SND-4/5 |
+| `sent_at` | `timestamptz` | nullable | SND-4/5 |
+| `sent_retry` | `integer` | not null, **`-1`** | SND-4/5 (`+ 1`) |
 
-**Open question (Q-14): the default for `translate_language`.** The sender header renders
-`"translated to " || translate_language` or `"original on " || translate_language`. The prompt says
-`"... translated to <x> language"`. The newsletters are Brazilian and the dates are GMT-3, so
-until confirmed the experiment assumes **`'Brazilian Portuguese'`**.
+Trigger: `tr_news_email_audit AFTER INSERT OR UPDATE ... FOR EACH ROW EXECUTE FUNCTION log_news_email_changes()`.
 
-## `public.telegram_chat` [inferred]
+### What the defaults mean for behavior
 
-This table is only used in the SND-1 join. It maps each category to a destination chat.
-
-| column | type | basis |
+| Default | Effect | Where it shows |
 |---|---|---|
-| `email_category` | `email_category` (probably the PK or unique) | join key |
-| `chat_id` | `bigint` or `text` | sent to Telegram as `chat_id`. **[assumed]** `text`, because negative group IDs and `@channel` names are both valid. |
+| `translate_language = 'pt-BR'` | The prompt says `translated to pt-BR language` or `using pt-BR language`. The Telegram header says `translated to pt-BR` or `original on pt-BR`. | Q-14 (resolved), SUM-4, SND-2 vectors |
+| `summary_retry = -1`, `sent_retry = -1` | The `< 5` guards in SUM-1 and SND-1 allow **6 attempts** (counter values -1 to 4), not 5. After the first successful summary, `summary_retry` is 0. | Q-17, F-7 |
+| `summary_status = 'OK'`, `sent_status = 'OK'` | A row that has never been attempted already reads `'OK'`. To tell "not tried" from "succeeded", use `is_summarized`/`was_sent` and the retry counters, not the status text. | Parity assertions (Phase 5) |
+| `email_category = 'tech'` | Never applies, because ING-3 always sets a category (falling back to `tech` itself). | none |
 
-Seed data comes from env or fixtures. Real chat IDs must not be committed.
+## `public.news_email_history` (audit)
 
-## Indexes
+The workflow never reads or writes this table. The trigger fills it on every insert and update of
+`news_email`, whichever tool issues them.
 
-Unknown. The experiment adds none beyond the PK. At this volume (a few dozen emails a day) none are needed.
+| column | type | null / default |
+|---|---|---|
+| `id` | `bigint` | `nextval('news_email_history_id_seq')` (bigserial), PK |
+| `news_email_id` | `integer` | not null (`news_email.id` is `bigint`; kept as in production) |
+| `operation` | `text` | not null, `CHECK (operation IN ('INSERT', 'UPDATE'))` |
+| `changed_at` | `timestamptz` | not null, `clock_timestamp()` |
+| `changed_by` | `text` | `SESSION_USER` |
+| `old_row`, `new_row` | `jsonb` | nullable |
+| `changed_fields` | `text[]` | nullable |
+
+Indexes: `(news_email_id, changed_at)` and `(operation)`.
+
+- **The function body is [assumed].** Production shows only the trigger and the function name. The local version stores the whole row as jsonb (`old_row` only on UPDATE) and, on UPDATE, the sorted names of the columns whose values changed. The real source is requested in [next-steps.md](../next-steps.md).
+- **Deletes aren't audited.** The trigger and the check constraint cover only INSERT and UPDATE, so DUP-1 deletes leave no trace, and there's no foreign key, so a deleted duplicate's history rows remain.
+- **Use in this experiment:** the parity suite can count history rows per `news_email_id` to compare how many writes each tool makes per email, not just the final state. The jsonb content and `changed_fields` depend on the assumed function, so treat them as diagnostic only until the real body arrives.
+- In production the table is about 4× the size of `news_email` (29 MB vs 7.5 MB).
+
+## `public.telegram_chat`
+
+| column | type | null / default |
+|---|---|---|
+| `email_category` | `email_category` | not null, PK part |
+| `chat_id` | `text` | not null |
+| `chat_name` | `text` | not null |
+| `environment` | `text` | not null, `'prod'`, PK part |
+
+- The primary key is `(email_category, environment)`, but **SND-1 joins on `email_category` only** (Q-18). With a second environment, every summarized email matches more than one chat, and `limit 1` (ordered by `ne.id` only) picks one of them arbitrarily.
+- Locally, `infra/db/init/002_seed_telegram_chat.sh` inserts one row per category from `TELEGRAM_CHAT_ID_*`, with `environment` left at `'prod'` and placeholder `chat_name`s. The workflow doesn't read `chat_name`.
+- Real chat IDs must not be committed.
+
+## Not in the production output
+
+| Item | Local stand-in | Matters for |
+|---|---|---|
+| Enum labels | `news`, `finance`, `tech` [inferred] | ING-3 categories |
+| `log_news_email_changes()` body | jsonb snapshot + changed fields [assumed] | `news_email_history` content only |
+| Database locale (`datctype`, provider) | `en_US.utf8`, libc (Postgres image default) | `initcap()` on non-ASCII text in SND-1 (G-9) |

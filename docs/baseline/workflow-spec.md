@@ -44,6 +44,12 @@ Data model: [`data-model.md`](data-model.md).
 - n8n node `fetch-n8n-inbox` (`emailReadImap` v2), credential "GMAIL_IMAP", mailbox **`n8n`**.
 - The node's defaults apply: it fetches **UNSEEN** messages, **marks them as read** after fetching,
   and uses the "simple" output format (`from`, `subject`, `date`, `textHtml`, `textPlain`, ...).
+- **What the node hands to ING-2** (production n8n 2.40.3, `@n8n/imap@0.26.0`; referee
+  `tests/golden/vectors/ing1-imap-simple.json`, D-015):
+  - Header values (`from`, `subject`, `date`) are RFC 2047-decoded but otherwise **raw**. Quotes
+    and spacing stay as sent, e.g. `"Morning Brew" <crew@…>`.
+  - `textPlain` / `textHtml` are transfer-decoded and converted to UTF-8, with the original **CRLF**
+    line endings kept. A missing part is `''`.
 - n8n keeps a persistent IMAP connection (IDLE), so ingestion is close to real time.
   Implementations may poll on an interval instead. Record the interval and the extra latency as a
   deviation.
@@ -92,7 +98,9 @@ The regex strips URLs in parentheses, like `(https://...)`. Bare URLs stay.
 | `to_translate` | `translate` |
 | `email_category` | `category` |
 
-All other columns take their database defaults. One row is written per email. Ingest does no
+All other columns take their database defaults ([data-model.md](data-model.md)). The ones that matter
+are `translate_language = 'pt-BR'` (Q-14), `summary_retry = sent_retry = -1` (Q-17), and
+`summary_status = sent_status = 'OK'`. One row is written per email. Ingest does no
 dedup; workflow 2 handles that (DUP-1).
 
 ---
@@ -257,6 +265,9 @@ limit 1;
 
 **SND-1a:** if no row comes back, branch C does nothing. n8n has no explicit guard here (Q-7).
 
+The join ignores `telegram_chat.environment`, which is part of that table's primary key (Q-18).
+Keep the SQL verbatim. The local DB has exactly one row per category.
+
 #### SND-2 Format for Telegram MarkdownV2 (`format-as-markdown`, JavaScript)
 
 Port the original code **exactly**. The golden vectors in `tests/golden/` are the referee. The steps:
@@ -325,6 +336,7 @@ stateDiagram-v2
 ```
 
 - `summary_retry` counts **every** summarize attempt, successes included. `sent_retry` counts every send attempt.
+- Both counters start at **-1** (the DB default), so the `< 5` guards allow **6** attempts each (Q-17). A row that was summarized on the first try has `summary_retry = 0`.
 - A row whose send fails after `summary_retry` has reached 5 is stuck: it's no longer summarized
   and it can't be summarized again. This is inherited behavior. Document it; don't fix it silently.
 
@@ -350,9 +362,11 @@ Default policy: **keep the baseline behavior.** Any change is a deviation. Log i
 | Q-11 | `summary_retry` is incremented on success too | Keep |
 | Q-12 | A send failure resets `is_summarized`, so the email is summarized again and summary retries are used up | Keep |
 | Q-13 | Agent default system message "You are a helpful assistant" | Send it explicitly |
-| Q-14 | `translate_language` is never written; the DB default supplies it | See [data-model.md](data-model.md), open question |
+| Q-14 | `translate_language` is never written; the DB default supplies it | Keep. The production default is `'pt-BR'` ([D-018](../decisions.md)), so prompts say `translated to pt-BR language` |
 | Q-15 | Alert HTML isn't escaped. A subject containing `<` or `&` can make the alert itself fail. | Keep (parity). Note it in the comparison. |
 | Q-16 | No protection against overlapping runs. n8n can start a tick while the last one is still running. | Note what each tool offers (concurrency limits). Single-flight is allowed as a documented improvement. |
+| Q-17 | The retry counters default to -1, so `*_retry < 5` allows 6 attempts, not 5 | Keep. The schema supplies it ([D-018](../decisions.md)). F-7 expects 6. |
+| Q-18 | SND-1 joins `telegram_chat` on `email_category` only, but that table's primary key is `(email_category, environment)`. A second environment makes the destination chat arbitrary. | Keep the SQL. Seed one row per category, as production presumably does (to be confirmed). |
 
 ---
 
@@ -361,6 +375,6 @@ Default policy: **keep the baseline behavior.** Any change is a deviation. Log i
 | Dependency | Used by | Local experiment substitute |
 |---|---|---|
 | Gmail IMAP (label `n8n`) | ING-1 | GreenMail (IMAP/SMTP) seeded with fixture emails |
-| Postgres (`news_email`, `telegram_chat`) | all | `app-db` container with a reconstructed schema |
+| Postgres (`news_email`, `telegram_chat`; trigger-fed `news_email_history`) | all | `app-db` container with the production schema ([D-018](../decisions.md)) |
 | Gemini API (2 models) | SUM-5 | Mock Gemini HTTP server by default; real API key optional |
 | Telegram Bot API `sendMessage` | SUM-7b, SND-3 | Mock Telegram HTTP server that records calls; real bot optional |

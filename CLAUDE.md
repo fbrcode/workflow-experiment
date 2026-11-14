@@ -32,8 +32,11 @@ Start every session by reading, in this order:
    choice goes in the per-tool node mapping table. That data feeds the comparison.
 3. **Independent implementations.** Port from the spec and `tests/golden/`, never from the other
    tool's code. This keeps the comparison fair.
-4. **Golden vectors are the referee** for the ported JS logic (`map-content`, `transform-content`,
-   `prompt-builder`, `format-as-markdown`). Output must match byte for byte.
+4. **Golden vectors are the referee** for the ported logic: IMAP decoding, `select-n8n-content-generic`,
+   `map-content`, the insert mapping, `transform-content`, `prompt-builder`, the alert text and
+   `format-as-markdown`. They're in `tests/golden/vectors/`, explained in `docs/golden.md`.
+   Output must match byte for byte. Read the "What the vectors pin down" table (G-1 to G-9)
+   before porting. Never hand-edit a vector; change `tests/golden/src/` and run `make golden`.
 5. **Verify, don't assume, tool facts.** Plugin type names, task properties, CLI flags, image tags
    and config keys change between versions. Check the official docs or release notes (kestra.io/docs,
    docs.prefect.io, GitHub releases) at implementation time instead of relying on memory. Note
@@ -109,10 +112,13 @@ Start every session by reading, in this order:
 | `make infra-up` / `make infra-down` | Start the shared infra and wait for healthy / stop it and delete volumes | Phase 1 |
 | `make seed` / `make seed-check` | Load the 9 fixture emails into IMAP folder `n8n` as UNSEEN (purges first) / print counts | Phase 1 |
 | `make infra-check` | DB tables, enum and `telegram_chat` rows; mock health; mailbox counts | Phase 1 |
+| `make schema-check` | Diff app-db's `\d+` output against the production schema in `docs/baseline/prod-schema.md` | Phase 2 (D-018) |
 | `make reset` | `infra-down` + `infra-up` + `seed` | Phase 1 |
 | `make infra-ps` / `make infra-logs` | Container status / follow logs | Phase 1 |
 | `make fixtures` | Regenerate `fixtures/emails/*.eml` (deterministic) | Phase 1 |
 | `make test-mocks` | pytest for `infra/mocks` | Phase 1 |
 | `make lint` | `ruff format --check` + `ruff check` (repo `ruff.toml`) | Phase 1 |
+| `make golden` | Regenerate `tests/golden/vectors/` by running the original n8n code (Docker; starts infra, reseeds mail) | Phase 2 |
+| `make golden-check` | `make golden`, then fail if the committed vectors changed | Phase 2 |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

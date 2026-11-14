@@ -4,7 +4,7 @@ A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefe
 as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
 with docker compose, and judged against one behavior spec and one scorecard.
 
-> **Status:** Phases 0 (foundations) and 1 (shared local infrastructure) are done. Neither orchestrator is implemented yet. See [docs/plan.md](docs/plan.md).
+> **Status:** Phases 0 (foundations), 1 (shared local infrastructure) and 2 (golden vectors from the original n8n code) are done. Neither orchestrator is implemented yet. See [docs/plan.md](docs/plan.md).
 
 ## The workflow under test
 
@@ -44,7 +44,7 @@ docs/         all documentation: spec, plan, decisions, per-tool docs, compariso
 infra/        shared local services: app Postgres, GreenMail, mocks          (done)
 fixtures/     synthetic newsletter emails + generator                        (done)
 scripts/      helper scripts (IMAP seeding)                                  (done)
-tests/        golden vectors from the n8n JS + end-to-end parity scenarios   (Phases 2, 5)
+tests/        golden vectors from the original n8n code (done) + parity suite (Phase 5)
 kestra/       Kestra compose + YAML flows                                    (Phase 3)
 prefect/      Prefect compose + Python flows + unit tests                    (Phase 4)
 ```

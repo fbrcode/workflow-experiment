@@ -109,9 +109,7 @@ def test_message_too_long(telegram: str) -> None:
 
 
 # --- Gemini ---------------------------------------------------------------------------------
-PROMPT = (
-    "Summarize this email cntent ... translated to Brazilian Portuguese language ... Content >> One. Two! Three? Four."
-)
+PROMPT = "Summarize this email cntent ... translated to pt-BR language ... Content >> One. Two! Three? Four."
 BODY = {
     "contents": [{"role": "user", "parts": [{"text": PROMPT}]}],
     "systemInstruction": {"parts": [{"text": "You are a helpful assistant"}]},
@@ -128,7 +126,7 @@ def test_generate_content_is_deterministic(gemini: str) -> None:
     assert text == second["candidates"][0]["content"]["parts"][0]["text"]
     assert text.splitlines()[0] == "## Main topics - gemini-flash-lite-latest"
     assert "*   **Topic 3:** Three?" in text
-    assert "translated to Brazilian Portuguese" in text
+    assert "translated to pt-BR" in text
 
 
 def test_api_key_required_and_unknown_model(gemini: str) -> None:

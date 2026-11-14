@@ -7,8 +7,8 @@ INFRA    := docker compose --env-file $(ENV_FILE) -f infra/compose.yaml -p wfx-i
 MOCKS    := uv run --project infra/mocks
 
 .DEFAULT_GOAL := help
-.PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check reset \
-        fixtures test-mocks lint
+.PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check schema-check reset \
+        golden golden-check fixtures test-mocks lint
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
@@ -42,7 +42,21 @@ infra-check: ## Verify the running infra: DB schema + seed, mocks health, IMAP c
 	curl -fsS "http://localhost:$$MOCK_GEMINI_HOST_PORT/_mock/health"; echo
 	@echo "--- mail"; $(MAKE) --no-print-directory seed-check
 
+schema-check: ## Diff app-db's \d+ output against the production schema (docs/baseline/prod-schema.md)
+	@$(INFRA) exec -T app-db sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --pset pager=off \
+	  -c "\d+ news_email" -c "\d+ news_email_history" -c "\d+ telegram_chat"' | sh scripts/schema_check.sh
+
 reset: infra-down infra-up seed ## Recreate the infra from scratch and load the fixtures
+
+## --- Golden vectors (Phase 2) -----------------------------------------------------------------
+golden: ## Regenerate tests/golden/vectors from the original n8n code (starts infra, reseeds mail)
+	$(INFRA) up -d --build --wait
+	$(INFRA) run --rm mail-seed --purge
+	$(INFRA) run --rm --build golden
+	$(INFRA) run --rm mail-seed --purge  # n8n-style reads leave mail untouched, but keep state canonical
+
+golden-check: golden ## Regenerate and fail if the committed vectors changed
+	git diff --exit-code --stat -- tests/golden/vectors && echo "golden vectors reproducible"
 
 ## --- Development ------------------------------------------------------------------------------
 fixtures: ## Regenerate fixtures/emails/*.eml from fixtures/generate.py

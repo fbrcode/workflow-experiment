@@ -1,0 +1,238 @@
+{
+  "spec": "SUM-4",
+  "source": {
+    "workflow": "EmailSummarizerFromPgCron",
+    "node": "prompt-builder",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "code_sha256": "bf285cff5de3ed105dd18f67d421222812b845ad7ee369f6fa9d5440d6c2266d"
+  },
+  "generator": {
+    "script": "tests/golden/src/generate.mjs",
+    "node": "v26.7.0",
+    "now": "2026-11-14T12:00:00.000-03:00"
+  },
+  "notes": "Model names are hard-coded in the node (D-011).",
+  "cases": [
+    {
+      "id": "fixture:01-morning-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 1,
+        "from": "Morning Brew",
+        "subject": "☕ Markets rally as rates hold steady",
+        "date": "Sat, 14 Nov 2026 at 08h 05min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> Good morning. Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.https://morningbrew.example/r/2That's all for today  see you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:02-the-news",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 2,
+        "from": "The News",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "date": "Fri, 13 Nov 2026 at 09h 30min",
+        "to_translate": false,
+        "translate_language": "pt-BR",
+        "content": "Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> Bom dia! Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano . A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups. O texto segue para sano.TECNOLOGIAUma empresa brasileira lanou um modelo de linguagem treinado em portugus  veja os detalhes .At amanh!"
+      }
+    },
+    {
+      "id": "fixture:04-rico-matinal",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 3,
+        "from": "Rico Matinal",
+        "subject": "Rico Matinal: Ibovespa sobe 1,2% com exterior positivo",
+        "date": "Fri, 13 Nov 2026 at 22h 30min",
+        "to_translate": false,
+        "translate_language": "pt-BR",
+        "content": "<!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>  <body>    <p><b>Bom dia, investidor!</b></p>    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dlar recuou para R$ 5,02.</p>    <p>Agenda do dia: dados de inflao nos EUA s 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>    <p>Destaque: a Petrobras anunciou dividendos extraordinrios de R$ 0,85 por ao.</p>    <p><i>Este contedo no  recomendao de investimento.</i></p>  </body></html>"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> <!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>  <body>    <p><b>Bom dia, investidor!</b></p>    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dlar recuou para R$ 5,02.</p>    <p>Agenda do dia: dados de inflao nos EUA s 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>    <p>Destaque: a Petrobras anunciou dividendos extraordinrios de R$ 0,85 por ao.</p>    <p><i>Este contedo no  recomendao de investimento.</i></p>  </body></html>"
+      }
+    },
+    {
+      "id": "fixture:05-tech-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 4,
+        "from": "Tech Brew",
+        "subject": "Chipmakers bet big on edge AI",
+        "date": "Thu, 12 Nov 2026 at 12h 45min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "<!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>  <body>    <p><b>Chipmakers bet big on edge AI</b></p>    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>  </body></html>"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> <!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>  <body>    <p><b>Chipmakers bet big on edge AI</b></p>    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>  </body></html>"
+      }
+    },
+    {
+      "id": "fixture:06-lennys-newsletter",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 5,
+        "from": "Lenny's Newsletter",
+        "subject": "How to run a pricing experiment [template] #42",
+        "date": "Wed, 11 Nov 2026 at 10h 00min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "Hi friends! This week: a step-by-step pricing experiment (with a [template]).1. Pick one metric = revenue per visitor; ignore vanity stats.2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).3. Use a {holdout} group + track churn for 30 days.* Tip: keep the _test_ small; *ship* the winner.> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.Code sample: `if variant == \"B\": price *= 1.1`Questions? Reply to this email ."
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> Hi friends! This week: a step-by-step pricing experiment (with a [template]).1. Pick one metric = revenue per visitor; ignore vanity stats.2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).3. Use a {holdout} group + track churn for 30 days.* Tip: keep the _test_ small; *ship* the winner.> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.Code sample: `if variant == \"B\": price *= 1.1`Questions? Reply to this email ."
+      }
+    },
+    {
+      "id": "fixture:07-the-neuron",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 6,
+        "from": "The Neuron",
+        "subject": "AI agents get a memory upgrade",
+        "date": "Wed, 11 Nov 2026 at 01h 59min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "Welcome back, humans. Today: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .Treats to try:- A note-taking app that summarizes meetings in real time.- A browser extension that explains any chart.Our favorite robot of the week.See you tomorrow!"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> Welcome back, humans. Today: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .Treats to try:- A note-taking app that summarizes meetings in real time.- A browser extension that explains any chart.Our favorite robot of the week.See you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:08-no-display-name",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 7,
+        "from": "",
+        "subject": "Weekly digest #17",
+        "date": "Mon, 9 Nov 2026 at 05h 00min",
+        "to_translate": false,
+        "translate_language": "pt-BR",
+        "content": "Your weekly digest.Top story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours."
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> Your weekly digest.Top story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours."
+      }
+    },
+    {
+      "id": "fixture:09-pragmatic-engineer",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "news_id": 8,
+        "from": "The Pragmatic Engineer",
+        "subject": "The state of platform teams in 2026",
+        "date": "Sun, 8 Nov 2026 at 13h 20min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "Platform teams have changed a lot over the last two years. This issue looks at how.Section 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.Section 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.Section 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.Section 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.Section 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .Thanks for reading. Reply with your own experience; I read every response."
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> Platform teams have changed a lot over the last two years. This issue looks at how.Section 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.Section 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.Section 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.Section 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.Section 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .Thanks for reading. Reply with your own experience; I read every response."
+      }
+    },
+    {
+      "id": "edge:phrases-and-non-ascii",
+      "tags": [
+        "edge"
+      ],
+      "input": {
+        "news_id": 101,
+        "from": "Morning Brew",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": true,
+        "translate_language": "pt-BR",
+        "content": "https://i.example/1Caf  ao!Tabhttps://l.example again  end. Caption:no-space-kept"
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit translated to pt-BR language and remove any sponsored news (presented by) silently. Content >> https://i.example/1Caf  ao!Tabhttps://l.example again  end. Caption:no-space-kept"
+      }
+    },
+    {
+      "id": "edge:from-without-angle",
+      "tags": [
+        "edge"
+      ],
+      "input": {
+        "news_id": 102,
+        "from": "The News",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": false,
+        "translate_language": "pt-BR",
+        "content": "Simple."
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using pt-BR language and remove any sponsored news (presented by) silently. Content >> Simple."
+      }
+    },
+    {
+      "id": "edge:nulls",
+      "tags": [
+        "edge"
+      ],
+      "input": {
+        "news_id": 103,
+        "from": "",
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 at 09h 05min",
+        "to_translate": false,
+        "translate_language": null,
+        "content": ""
+      },
+      "output": {
+        "model": "models/gemini-flash-lite-latest",
+        "modelFallback": "models/gemini-2.5-flash",
+        "prompt": "Summarize this email cntent in main topics with content with 2500 chars limit using null language and remove any sponsored news (presented by) silently. Content >> "
+      }
+    }
+  ]
+}

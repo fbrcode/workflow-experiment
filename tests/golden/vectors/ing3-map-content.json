@@ -1,0 +1,594 @@
+{
+  "spec": "ING-3",
+  "source": {
+    "workflow": "EmailSummarizerMainUnique",
+    "node": "map-content",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "code_sha256": "66e087d4ee884a92815af4b0fcbe20bf205bb284eeb180fd4bb45ea4847d6ce8"
+  },
+  "generator": {
+    "script": "tests/golden/src/generate.mjs",
+    "node": "v26.7.0",
+    "now": "2026-11-14T12:00:00.000-03:00"
+  },
+  "notes": "Code node run per item ($input.all() = [input]).",
+  "cases": [
+    {
+      "id": "fixture:01-morning-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "\"Morning Brew\" <crew@morningbrew.example>",
+        "subject": "☕ Markets rally as rates hold steady",
+        "date": "Sat, 14 Nov 2026 11:05:00 +0000",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Morning Brew</title></head>\r\n  <body>\r\n    <p>Good morning. Here is what you need to know today.</p>\r\n    <p><b>MARKETS</b> Stocks climbed for a third straight session as the central bank held rates at 4.25%. <a href=\"https://morningbrew.example/r/1\">More</a></p>\r\n    <p><img src=\"https://img.morningbrew.example/chart.png\" alt=\"Index chart\"></p>\r\n    <p><b>PRESENTED BY ACME CLOUD</b> Ship faster with Acme Cloud.</p>\r\n    <p><b>WORLD</b> A new trade agreement was signed between two regional blocs.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Good morning. Here is what you need to know today.\r\n\r\nMARKETS\r\nStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.\r\n\r\nView image: https://img.morningbrew.example/chart.png\r\nCaption: The index closed at a record high.\r\n\r\nPRESENTED BY ACME CLOUD\r\nShip faster with Acme Cloud — try it free .\r\n\r\nWORLD\r\nA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.\r\n\r\nFollow image link: https://morningbrew.example/r/2\r\nThat's all for today — see you tomorrow!"
+      },
+      "output": {
+        "from_name_id": "morning-brew",
+        "from_name": "Morning Brew",
+        "from_email": "crew@morningbrew.example",
+        "translate": true,
+        "category": "news",
+        "date": "Sat, 14 Nov 2026 11:05:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 08h 05min",
+        "subject": "☕ Markets rally as rates hold steady",
+        "raw_content": "Good morning. Here is what you need to know today.\r\n\r\nMARKETS\r\nStocks climbed for a third straight session  as the central bank held rates at 4.25%. Tech led the gains; energy lagged.\r\n\r\nView image: https://img.morningbrew.example/chart.png\r\nCaption: The index closed at a record high.\r\n\r\nPRESENTED BY ACME CLOUD\r\nShip faster with Acme Cloud — try it free .\r\n\r\nWORLD\r\nA new trade agreement was signed between two regional blocs. Analysts expect lower tariffs on agricultural goods by 2027.\r\n\r\nFollow image link: https://morningbrew.example/r/2\r\nThat's all for today — see you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:02-the-news",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "The News <contato@thenews.example>",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "date": "Fri, 13 Nov 2026 09:30:00 -0300",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>The News</title></head>\r\n  <body>\r\n    <p>Bom dia! Aqui está o seu resumo de sexta-feira.</p>\r\n    <p><b>ECONOMIA</b> O Banco Central manteve a taxa básica de juros em 10,50% ao ano. <a href=\"https://thenews.example/a/1\">Leia mais</a></p>\r\n    <p><b>POLÍTICA</b> O Congresso aprovou em segunda votação o novo marco legal das startups.</p>\r\n    <p><b>TECNOLOGIA</b> Uma empresa brasileira lançou um modelo de linguagem treinado em português.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Bom dia! Aqui está o seu resumo de sexta-feira.\r\n\r\nECONOMIA\r\nO Banco Central manteve a taxa básica de juros em 10,50% ao ano . A decisão foi unânime e veio em linha com o esperado pelo mercado.\r\n\r\nPOLÍTICA\r\nO Congresso aprovou em segunda votação o novo marco legal das startups. O texto segue para sanção.\r\n\r\nTECNOLOGIA\r\nUma empresa brasileira lançou um modelo de linguagem treinado em português — veja os detalhes .\r\n\r\nAté amanhã!"
+      },
+      "output": {
+        "from_name_id": "the-news",
+        "from_name": "The News",
+        "from_email": "contato@thenews.example",
+        "translate": false,
+        "category": "news",
+        "date": "Fri, 13 Nov 2026 09:30:00 -0300",
+        "date_gmt3": "Fri, 13 Nov 2026 at 09h 30min",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "raw_content": "Bom dia! Aqui está o seu resumo de sexta-feira.\r\n\r\nECONOMIA\r\nO Banco Central manteve a taxa básica de juros em 10,50% ao ano . A decisão foi unânime e veio em linha com o esperado pelo mercado.\r\n\r\nPOLÍTICA\r\nO Congresso aprovou em segunda votação o novo marco legal das startups. O texto segue para sanção.\r\n\r\nTECNOLOGIA\r\nUma empresa brasileira lançou um modelo de linguagem treinado em português — veja os detalhes .\r\n\r\nAté amanhã!"
+      }
+    },
+    {
+      "id": "fixture:03-the-news-duplicate",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "The News <contato@thenews.example>",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "date": "Fri, 13 Nov 2026 09:30:00 -0300",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>The News</title></head>\r\n  <body>\r\n    <p>Bom dia! Aqui está o seu resumo de sexta-feira.</p>\r\n    <p><b>ECONOMIA</b> O Banco Central manteve a taxa básica de juros em 10,50% ao ano. <a href=\"https://thenews.example/a/1\">Leia mais</a></p>\r\n    <p><b>POLÍTICA</b> O Congresso aprovou em segunda votação o novo marco legal das startups.</p>\r\n    <p><b>TECNOLOGIA</b> Uma empresa brasileira lançou um modelo de linguagem treinado em português.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Bom dia! Aqui está o seu resumo de sexta-feira.\r\n\r\nECONOMIA\r\nO Banco Central manteve a taxa básica de juros em 10,50% ao ano . A decisão foi unânime e veio em linha com o esperado pelo mercado.\r\n\r\nPOLÍTICA\r\nO Congresso aprovou em segunda votação o novo marco legal das startups. O texto segue para sanção.\r\n\r\nTECNOLOGIA\r\nUma empresa brasileira lançou um modelo de linguagem treinado em português — veja os detalhes .\r\n\r\nAté amanhã!"
+      },
+      "output": {
+        "from_name_id": "the-news",
+        "from_name": "The News",
+        "from_email": "contato@thenews.example",
+        "translate": false,
+        "category": "news",
+        "date": "Fri, 13 Nov 2026 09:30:00 -0300",
+        "date_gmt3": "Fri, 13 Nov 2026 at 09h 30min",
+        "subject": "Resumo do dia: economia, política e tecnologia",
+        "raw_content": "Bom dia! Aqui está o seu resumo de sexta-feira.\r\n\r\nECONOMIA\r\nO Banco Central manteve a taxa básica de juros em 10,50% ao ano . A decisão foi unânime e veio em linha com o esperado pelo mercado.\r\n\r\nPOLÍTICA\r\nO Congresso aprovou em segunda votação o novo marco legal das startups. O texto segue para sanção.\r\n\r\nTECNOLOGIA\r\nUma empresa brasileira lançou um modelo de linguagem treinado em português — veja os detalhes .\r\n\r\nAté amanhã!"
+      }
+    },
+    {
+      "id": "fixture:04-rico-matinal",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "\"Rico Matinal\" <matinal@rico.example>",
+        "subject": "Rico Matinal: Ibovespa sobe 1,2% com exterior positivo",
+        "date": "Sat, 14 Nov 2026 01:30:00 +0000",
+        "htmlContent": "<!DOCTYPE html>\n<html>\n  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>\n  <body>\n    <p><b>Bom dia, investidor!</b></p>\n    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dólar recuou para R$ 5,02.</p>\n    <p>Agenda do dia: dados de inflação nos EUA às 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>\n    <p>Destaque: a Petrobras anunciou dividendos extraordinários de R$ 0,85 por ação.</p>\n    <p><i>Este conteúdo não é recomendação de investimento.</i></p>\n  </body>\n</html>\n",
+        "plainContent": "Versão em texto indisponível. Abra a versão HTML ."
+      },
+      "output": {
+        "from_name_id": "rico-matinal",
+        "from_name": "Rico Matinal",
+        "from_email": "matinal@rico.example",
+        "translate": false,
+        "category": "finance",
+        "date": "Sat, 14 Nov 2026 01:30:00 +0000",
+        "date_gmt3": "Fri, 13 Nov 2026 at 22h 30min",
+        "subject": "Rico Matinal: Ibovespa sobe 1,2% com exterior positivo",
+        "raw_content": "<!DOCTYPE html>\n<html>\n  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>\n  <body>\n    <p><b>Bom dia, investidor!</b></p>\n    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras. O dólar recuou para R$ 5,02.</p>\n    <p>Agenda do dia: dados de inflação nos EUA às 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>\n    <p>Destaque: a Petrobras anunciou dividendos extraordinários de R$ 0,85 por ação.</p>\n    <p><i>Este conteúdo não é recomendação de investimento.</i></p>\n  </body>\n</html>\n"
+      }
+    },
+    {
+      "id": "fixture:05-tech-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "\"Tech Brew\" <crew@techbrew.example>",
+        "subject": "Chipmakers bet big on edge AI",
+        "date": "Thu, 12 Nov 2026 15:45:10 +0000",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>\r\n  <body>\r\n    <p><b>Chipmakers bet big on edge AI</b></p>\r\n    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>\r\n    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>\r\n    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>\r\n    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Chipmakers bet big on edge AI. Read the full story online ."
+      },
+      "output": {
+        "from_name_id": "tech-brew",
+        "from_name": "Tech Brew",
+        "from_email": "crew@techbrew.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Thu, 12 Nov 2026 15:45:10 +0000",
+        "date_gmt3": "Thu, 12 Nov 2026 at 12h 45min",
+        "subject": "Chipmakers bet big on edge AI",
+        "raw_content": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>\r\n  <body>\r\n    <p><b>Chipmakers bet big on edge AI</b></p>\r\n    <p>Three of the largest chip designers announced low-power accelerators for phones and laptops .</p>\r\n    <p>Why it matters: running models on-device cuts latency and keeps data local.</p>\r\n    <p><img src=\"https://techbrew.example/i/chip.png\" alt=\"A new accelerator\"></p>\r\n    <p>Also today: a robotics startup raised $40M; regulators opened a consultation on AI labels.</p>\r\n  </body>\r\n</html>"
+      }
+    },
+    {
+      "id": "fixture:06-lennys-newsletter",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "\"Lenny's Newsletter\" <lenny@substack.example>",
+        "subject": "How to run a pricing experiment [template] #42",
+        "date": "Wed, 11 Nov 2026 13:00:00 +0000",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Lenny's Newsletter</title></head>\r\n  <body>\r\n    <p>Hi friends! This week: a step-by-step pricing experiment.</p>\r\n    <p>Pick one metric; split traffic 50/50; track churn for 30 days.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Hi friends! This week: a step-by-step pricing experiment (with a [template]).\r\n\r\n1. Pick one metric = revenue per visitor; ignore vanity stats.\r\n2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).\r\n3. Use a {holdout} group + track churn for 30 days.\r\n* Tip: keep the _test_ small; *ship* the winner.\r\n> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.\r\n\r\nCode sample: `if variant == \"B\": price *= 1.1`\r\nQuestions? Reply to this email ."
+      },
+      "output": {
+        "from_name_id": "lennys-newsletter",
+        "from_name": "Lenny's Newsletter",
+        "from_email": "lenny@substack.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Wed, 11 Nov 2026 13:00:00 +0000",
+        "date_gmt3": "Wed, 11 Nov 2026 at 10h 00min",
+        "subject": "How to run a pricing experiment [template] #42",
+        "raw_content": "Hi friends! This week: a step-by-step pricing experiment (with a [template]).\r\n\r\n1. Pick one metric = revenue per visitor; ignore vanity stats.\r\n2. Split traffic 50/50 -> control vs. \"variant\" (no peeking!).\r\n3. Use a {holdout} group + track churn for 30 days.\r\n* Tip: keep the _test_ small; *ship* the winner.\r\n> \"Price is a feature,\" says one founder. Costs: ~$0 | time: 2 weeks.\r\n\r\nCode sample: `if variant == \"B\": price *= 1.1`\r\nQuestions? Reply to this email ."
+      }
+    },
+    {
+      "id": "fixture:07-the-neuron",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "🧠 The Neuron <hi@theneuron.example>",
+        "subject": "AI agents get a memory upgrade",
+        "date": "Tue, 10 Nov 2026 23:59:59 -0500",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>The Neuron</title></head>\r\n  <body>\r\n    <p>Welcome back, humans.</p>\r\n    <p>Today: AI agents get long-term memory.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Welcome back, humans. 🤖\r\n\r\nToday: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .\r\n\r\nTreats to try:\r\n- A note-taking app that summarizes meetings in real time.\r\n- A browser extension that explains any chart.\r\n\r\nCaption: Our favorite robot of the week.\r\nSee you tomorrow!"
+      },
+      "output": {
+        "from_name_id": "the-neuron",
+        "from_name": "The Neuron",
+        "from_email": "hi@theneuron.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Tue, 10 Nov 2026 23:59:59 -0500",
+        "date_gmt3": "Wed, 11 Nov 2026 at 01h 59min",
+        "subject": "AI agents get a memory upgrade",
+        "raw_content": "Welcome back, humans. 🤖\r\n\r\nToday: AI agents get long-term memory. A new open-source library lets assistants remember user preferences across sessions .\r\n\r\nTreats to try:\r\n- A note-taking app that summarizes meetings in real time.\r\n- A browser extension that explains any chart.\r\n\r\nCaption: Our favorite robot of the week.\r\nSee you tomorrow!"
+      }
+    },
+    {
+      "id": "fixture:08-no-display-name",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "digest@weekly.example",
+        "subject": "Weekly digest #17",
+        "date": "Mon, 09 Nov 2026 08:00:00 +0000",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>Weekly digest</title></head>\r\n  <body>\r\n    <p>Your weekly digest.</p>\r\n    <p>Top story: new bike lanes.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Your weekly digest.\r\n\r\nTop story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours."
+      },
+      "output": {
+        "from_name_id": "",
+        "from_name": "",
+        "from_email": "digest@weekly.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Mon, 09 Nov 2026 08:00:00 +0000",
+        "date_gmt3": "Mon, 9 Nov 2026 at 05h 00min",
+        "subject": "Weekly digest #17",
+        "raw_content": "Your weekly digest.\r\n\r\nTop story: a city council approved a new bike-lane network. Second story: the local library extended weekend hours."
+      }
+    },
+    {
+      "id": "fixture:09-pragmatic-engineer",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "from": "\"The Pragmatic Engineer\" <pragmaticengineer@substack.example>",
+        "subject": "The state of platform teams in 2026",
+        "date": "Sun, 08 Nov 2026 16:20:00 +0000",
+        "htmlContent": "<!DOCTYPE html>\r\n<html>\r\n  <head><meta charset=\"utf-8\"><title>The Pragmatic Engineer</title></head>\r\n  <body>\r\n    <p>Platform teams have changed a lot over the last two years.</p>\r\n  </body>\r\n</html>",
+        "plainContent": "Platform teams have changed a lot over the last two years. This issue looks at how.\r\n\r\nSection 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.\r\n\r\nSection 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.\r\n\r\nSection 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.\r\n\r\nSection 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.\r\n\r\nSection 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .\r\n\r\nThanks for reading. Reply with your own experience; I read every response."
+      },
+      "output": {
+        "from_name_id": "the-pragmatic-engineer",
+        "from_name": "The Pragmatic Engineer",
+        "from_email": "pragmaticengineer@substack.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Sun, 08 Nov 2026 16:20:00 +0000",
+        "date_gmt3": "Sun, 8 Nov 2026 at 13h 20min",
+        "subject": "The state of platform teams in 2026",
+        "raw_content": "Platform teams have changed a lot over the last two years. This issue looks at how.\r\n\r\nSection 1. Team size. Most platform teams we surveyed have between five and twelve engineers. Smaller companies tend to fold platform work into infrastructure teams.\r\n\r\nSection 2. Mandate. The most common mandate is developer productivity, followed by reliability and cost. Teams with a written charter reported fewer conflicts with product teams.\r\n\r\nSection 3. Tooling. Internal developer portals are now common; golden paths for new services are the norm. Several teams moved their CI to ephemeral runners to cut queue times.\r\n\r\nSection 4. Measuring impact. Lead time for changes and onboarding time were the two most cited metrics. Few teams measure developer satisfaction consistently.\r\n\r\nSection 5. What is next. Respondents expect AI-assisted tooling to reshape the golden paths, and platform teams to own more of the model-serving stack .\r\n\r\nThanks for reading. Reply with your own experience; I read every response."
+      }
+    },
+    {
+      "id": "edge:from-unquoted-morning-brew",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Morning Brew <crew@morningbrew.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "morning-brew",
+        "from_name": "Morning Brew",
+        "from_email": "crew@morningbrew.example",
+        "translate": true,
+        "category": "news",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-angle-only",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "<only@addr.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "",
+        "from_name": "",
+        "from_email": "<only@addr.example>",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-symbols-in-name",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"AI & ML Weekly #3\" <x@y.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "ai-ml-weekly-3",
+        "from_name": "AI & ML Weekly #3",
+        "from_email": "x@y.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-extra-spaces",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"  Spaced   Out  Name \" <s@o.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "spaced-out-name",
+        "from_name": "Spaced   Out  Name",
+        "from_email": "s@o.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-accented-name",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"Café Brasil\" <c@b.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "caf-brasil",
+        "from_name": "Caf Brasil",
+        "from_email": "c@b.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-uppercase-rico",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"RICO MATINAL\" <m@rico.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "rico-matinal",
+        "from_name": "RICO MATINAL",
+        "from_email": "m@rico.example",
+        "translate": false,
+        "category": "finance",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "<p>html body</p>"
+      }
+    },
+    {
+      "id": "edge:from-refactoring",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"Refactoring\" <luca@refactoring.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "refactoring",
+        "from_name": "Refactoring",
+        "from_email": "luca@refactoring.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:from-no-space-before-angle",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "\"Tech Brew\"<crew@techbrew.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "tech-brew",
+        "from_name": "Tech Brew",
+        "from_email": "crew@techbrew.example",
+        "translate": true,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "<p>html body</p>"
+      }
+    },
+    {
+      "id": "edge:from-inner-quotes",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Name With \"Quote\" <q@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "",
+        "from_name": "",
+        "from_email": "Name With \"Quote\" <q@x.example>",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "date_gmt3": "Sat, 14 Nov 2026 at 09h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-utc-comment",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sat, 14 Nov 2026 11:05:00 +0000 (UTC)",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Sat, 14 Nov 2026 11:05:00 +0000 (UTC)",
+        "date_gmt3": "Sat, 14 Nov 2026 at 08h 05min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-gmt-no-weekday",
+      "input": {
+        "subject": "Edge subject",
+        "date": "14 Nov 2026 02:59:00 GMT",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "14 Nov 2026 02:59:00 GMT",
+        "date_gmt3": "Fri, 13 Nov 2026 at 23h 59min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-month-rollback",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Sun, 1 Mar 2026 02:00:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Sun, 1 Mar 2026 02:00:00 +0000",
+        "date_gmt3": "Sat, 28 Feb 2026 at 23h 00min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-year-end-minus-0300",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Thu, 31 Dec 2026 23:30:00 -0300",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Thu, 31 Dec 2026 23:30:00 -0300",
+        "date_gmt3": "Thu, 31 Dec 2026 at 23h 30min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-single-digit-hour",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Mon, 9 Nov 2026 8:05:00 +0000",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Mon, 9 Nov 2026 8:05:00 +0000",
+        "date_gmt3": "Mon, 9 Nov 2026 at 05h 05min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    },
+    {
+      "id": "edge:date-est-zone-name",
+      "input": {
+        "subject": "Edge subject",
+        "date": "Tue, 10 Nov 2026 23:59:59 EST",
+        "htmlContent": "<p>html body</p>",
+        "plainContent": "plain body",
+        "from": "Date Tester <d@x.example>"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "from_name_id": "date-tester",
+        "from_name": "Date Tester",
+        "from_email": "d@x.example",
+        "translate": false,
+        "category": "tech",
+        "date": "Tue, 10 Nov 2026 23:59:59 EST",
+        "date_gmt3": "Wed, 11 Nov 2026 at 01h 59min",
+        "subject": "Edge subject",
+        "raw_content": "plain body"
+      }
+    }
+  ]
+}

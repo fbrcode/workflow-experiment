@@ -1,0 +1,678 @@
+{
+  "spec": "SND-2",
+  "source": {
+    "workflow": "EmailSummarizerFromPgCron",
+    "node": "format-as-markdown",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "code_sha256": "b983d6e7fc98c694ac1032eb6fb92d0a6dfefdaf1600d3da34d152a2873e4a38"
+  },
+  "generator": {
+    "script": "tests/golden/src/generate.mjs",
+    "node": "v26.7.0",
+    "now": "2026-11-14T12:00:00.000-03:00"
+  },
+  "notes": "Input is a SND-1 row. Fixture rows: initcap() from the real app-db (PostgreSQL 18.7, ctype en_US.utf8, locale provider c), summary_content from mock-gemini for the SUM-4 prompt (primary model), translated per the SND-1 CASE. mock_telegram.result_text is the expected formatted_summary (SND-4) when ok; when not ok the send fails and SND-5 applies.",
+  "cases": [
+    {
+      "id": "fixture:01-morning-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 1,
+        "email_inbox_label": "morning-brew",
+        "telegram_chat_id": "-1001000000001",
+        "email_category": "news",
+        "email_from": "Morning Brew",
+        "email_subject": "☕ Markets Rally As Rates Hold Steady",
+        "email_date": "Sat, 14 Nov 2026 at 08h 05min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Good morning.\n*   **Topic 2:** Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%.\n*   **Topic 3:** Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement\n\n---\nMock summary (translated to pt-BR); 513 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 1,
+        "initialMessageLength": 650,
+        "finalMessageLength": 658,
+        "telegramMessage": "*Morning Brew*\n*Sat, 14 Nov 2026 at 08h 05min*\n*☕ Markets Rally As Rates Hold Steady*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Good morning\\.\n• *Topic 2:* Here is what you need to know today\\.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4\\.25%\\.\n• *Topic 3:* Tech led the gains; energy lagged\\.https://img\\.morningbrew\\.example/chart\\.pngThe index closed at a record high\\.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free \\.WORLDA new trade agreement\n\n\nMock summary \\(translated to pt\\-BR\\); 513 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Morning Brew\nSat, 14 Nov 2026 at 08h 05min\n☕ Markets Rally As Rates Hold Steady\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Good morning.\n• Topic 2: Here is what you need to know today.MARKETSStocks climbed for a third straight session  as the central bank held rates at 4.25%.\n• Topic 3: Tech led the gains; energy lagged.https://img.morningbrew.example/chart.pngThe index closed at a record high.PRESENTED BY ACME CLOUDShip faster with Acme Cloud  try it free .WORLDA new trade agreement\n\n\nMock summary (translated to pt-BR); 513 chars of input."
+      }
+    },
+    {
+      "id": "fixture:02-the-news",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 2,
+        "email_inbox_label": "the-news",
+        "telegram_chat_id": "-1001000000001",
+        "email_category": "news",
+        "email_from": "The News",
+        "email_subject": "Resumo Do Dia: Economia, Política E Tecnologia",
+        "email_date": "Fri, 13 Nov 2026 at 09h 30min",
+        "translated": "original on pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Bom dia!\n*   **Topic 2:** Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano .\n*   **Topic 3:** A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups.\n\n---\nMock summary (using pt-BR); 395 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 2,
+        "initialMessageLength": 562,
+        "finalMessageLength": 566,
+        "telegramMessage": "*The News*\n*Fri, 13 Nov 2026 at 09h 30min*\n*Resumo Do Dia: Economia, Política E Tecnologia*\n_Summary original on pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Bom dia\\!\n• *Topic 2:* Aqui est o seu resumo de sexta\\-feira\\.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano \\.\n• *Topic 3:* A deciso foi unnime e veio em linha com o esperado pelo mercado\\.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups\\.\n\n\nMock summary \\(using pt\\-BR\\); 395 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "The News\nFri, 13 Nov 2026 at 09h 30min\nResumo Do Dia: Economia, Política E Tecnologia\nSummary original on pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Bom dia!\n• Topic 2: Aqui est o seu resumo de sexta-feira.ECONOMIAO Banco Central manteve a taxa bsica de juros em 10,50% ao ano .\n• Topic 3: A deciso foi unnime e veio em linha com o esperado pelo mercado.POLTICAO Congresso aprovou em segunda votao o novo marco legal das startups.\n\n\nMock summary (using pt-BR); 395 chars of input."
+      }
+    },
+    {
+      "id": "fixture:04-rico-matinal",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 3,
+        "email_inbox_label": "rico-matinal",
+        "telegram_chat_id": "-1001000000002",
+        "email_category": "finance",
+        "email_from": "Rico Matinal",
+        "email_subject": "Rico Matinal: Ibovespa Sobe 1,2% Com Exterior Positivo",
+        "email_date": "Fri, 13 Nov 2026 at 22h 30min",
+        "translated": "original on pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** <!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Rico Matinal</title></head>  <body>    <p><b>Bom dia, investidor!</b></p>    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras.\n*   **Topic 2:** O dlar recuou para R$ 5,02.</p>    <p>Agenda do dia: dados de inflao nos EUA s 10h30 (<a href=\"https://rico.example/agenda\">agenda completa</a>).</p>    <p>Destaque: a Petrobras anunciou dividendos ex\n\n---\nMock summary (using pt-BR); 513 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 3,
+        "initialMessageLength": 700,
+        "finalMessageLength": 730,
+        "telegramMessage": "*Rico Matinal*\n*Fri, 13 Nov 2026 at 22h 30min*\n*Rico Matinal: Ibovespa Sobe 1,2% Com Exterior Positivo*\n_Summary original on pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* <\\!DOCTYPE html\\><html\\>  <head\\><meta charset\\='utf\\-8'\\><title\\>Rico Matinal</title\\></head\\>  <body\\>    <p\\><b\\>Bom dia, investidor\\!</b\\></p\\>    <p\\>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras\\.\n• *Topic 2:* O dlar recuou para R$ 5,02\\.</p\\>    <p\\>Agenda do dia: dados de inflao nos EUA s 10h30 \\(<a href\\='https://rico\\.example/agenda'\\>agenda completa</a\\>\\)\\.</p\\>    <p\\>Destaque: a Petrobras anunciou dividendos ex\n\n\nMock summary \\(using pt\\-BR\\); 513 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Rico Matinal\nFri, 13 Nov 2026 at 22h 30min\nRico Matinal: Ibovespa Sobe 1,2% Com Exterior Positivo\nSummary original on pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: <!DOCTYPE html><html>  <head><meta charset='utf-8'><title>Rico Matinal</title></head>  <body>    <p><b>Bom dia, investidor!</b></p>    <p>O Ibovespa subiu 1,2% ontem, puxado por bancos e mineradoras.\n• Topic 2: O dlar recuou para R$ 5,02.</p>    <p>Agenda do dia: dados de inflao nos EUA s 10h30 (<a href='https://rico.example/agenda'>agenda completa</a>).</p>    <p>Destaque: a Petrobras anunciou dividendos ex\n\n\nMock summary (using pt-BR); 513 chars of input."
+      }
+    },
+    {
+      "id": "fixture:05-tech-brew",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 4,
+        "email_inbox_label": "tech-brew",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Tech Brew",
+        "email_subject": "Chipmakers Bet Big On Edge Ai",
+        "email_date": "Thu, 12 Nov 2026 at 12h 45min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** <!DOCTYPE html><html>  <head><meta charset=\"utf-8\"><title>Tech Brew</title></head>  <body>    <p><b>Chipmakers bet big on edge AI</b></p>    <p>Three of the largest chip designers announced low-power \n\n---\nMock summary (translated to pt-BR); 526 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 4,
+        "initialMessageLength": 467,
+        "finalMessageLength": 486,
+        "telegramMessage": "*Tech Brew*\n*Thu, 12 Nov 2026 at 12h 45min*\n*Chipmakers Bet Big On Edge Ai*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* <\\!DOCTYPE html\\><html\\>  <head\\><meta charset\\='utf\\-8'\\><title\\>Tech Brew</title\\></head\\>  <body\\>    <p\\><b\\>Chipmakers bet big on edge AI</b\\></p\\>    <p\\>Three of the largest chip designers announced low\\-power \n\n\nMock summary \\(translated to pt\\-BR\\); 526 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Tech Brew\nThu, 12 Nov 2026 at 12h 45min\nChipmakers Bet Big On Edge Ai\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: <!DOCTYPE html><html>  <head><meta charset='utf-8'><title>Tech Brew</title></head>  <body>    <p><b>Chipmakers bet big on edge AI</b></p>    <p>Three of the largest chip designers announced low-power \n\n\nMock summary (translated to pt-BR); 526 chars of input."
+      }
+    },
+    {
+      "id": "fixture:06-lennys-newsletter",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 5,
+        "email_inbox_label": "lennys-newsletter",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny'S Newsletter",
+        "email_subject": "How To Run A Pricing Experiment [Template] #42",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Hi friends!\n*   **Topic 2:** This week: a step-by-step pricing experiment (with a [template]).1.\n*   **Topic 3:** Pick one metric = revenue per visitor; ignore vanity stats.2.\n\n---\nMock summary (translated to pt-BR); 447 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 5,
+        "initialMessageLength": 464,
+        "finalMessageLength": 477,
+        "telegramMessage": "*Lenny'S Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*How To Run A Pricing Experiment \\[Template\\] \\#42*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Hi friends\\!\n• *Topic 2:* This week: a step\\-by\\-step pricing experiment \\(with a \\[template\\]\\)\\.1\\.\n• *Topic 3:* Pick one metric \\= revenue per visitor; ignore vanity stats\\.2\\.\n\n\nMock summary \\(translated to pt\\-BR\\); 447 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny'S Newsletter\nWed, 11 Nov 2026 at 10h 00min\nHow To Run A Pricing Experiment [Template] #42\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Hi friends!\n• Topic 2: This week: a step-by-step pricing experiment (with a [template]).1.\n• Topic 3: Pick one metric = revenue per visitor; ignore vanity stats.2.\n\n\nMock summary (translated to pt-BR); 447 chars of input."
+      }
+    },
+    {
+      "id": "fixture:07-the-neuron",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 6,
+        "email_inbox_label": "the-neuron",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "The Neuron",
+        "email_subject": "Ai Agents Get A Memory Upgrade",
+        "email_date": "Wed, 11 Nov 2026 at 01h 59min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Welcome back, humans.\n*   **Topic 2:** Today: AI agents get long-term memory.\n*   **Topic 3:** A new open-source library lets assistants remember user preferences across sessions .Treats to try:- A note-taking app that summarizes meetings in real time.- A browser extension that explains any cha\n\n---\nMock summary (translated to pt-BR); 312 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 6,
+        "initialMessageLength": 560,
+        "finalMessageLength": 567,
+        "telegramMessage": "*The Neuron*\n*Wed, 11 Nov 2026 at 01h 59min*\n*Ai Agents Get A Memory Upgrade*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Welcome back, humans\\.\n• *Topic 2:* Today: AI agents get long\\-term memory\\.\n• *Topic 3:* A new open\\-source library lets assistants remember user preferences across sessions \\.Treats to try:\\- A note\\-taking app that summarizes meetings in real time\\.\\- A browser extension that explains any cha\n\n\nMock summary \\(translated to pt\\-BR\\); 312 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "The Neuron\nWed, 11 Nov 2026 at 01h 59min\nAi Agents Get A Memory Upgrade\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Welcome back, humans.\n• Topic 2: Today: AI agents get long-term memory.\n• Topic 3: A new open-source library lets assistants remember user preferences across sessions .Treats to try:- A note-taking app that summarizes meetings in real time.- A browser extension that explains any cha\n\n\nMock summary (translated to pt-BR); 312 chars of input."
+      }
+    },
+    {
+      "id": "fixture:08-no-display-name",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 7,
+        "email_inbox_label": "",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "",
+        "email_subject": "Weekly Digest #17",
+        "email_date": "Mon, 9 Nov 2026 at 05h 00min",
+        "translated": "original on pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Your weekly digest.Top story: a city council approved a new bike-lane network.\n*   **Topic 2:** Second story: the local library extended weekend hours.\n\n---\nMock summary (using pt-BR); 134 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 7,
+        "initialMessageLength": 384,
+        "finalMessageLength": 397,
+        "telegramMessage": "*\\*\\*\n*Mon, 9 Nov 2026 at 05h 00min*\n*Weekly Digest \\#17*\n\\*Summary original on pt\\-BR with models/gemini\\-flash\\-lite\\-latest\\*\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Your weekly digest\\.Top story: a city council approved a new bike\\-lane network\\.\n• *Topic 2:\\*\\* Second story: the local library extended weekend hours\\.\n\n\nMock summary \\(using pt\\-BR\\); 134 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "**\nMon, 9 Nov 2026 at 05h 00min\nWeekly Digest #17\n*Summary original on pt-BR with models/gemini-flash-lite-latest*\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Your weekly digest.Top story: a city council approved a new bike-lane network.\n• Topic 2:** Second story: the local library extended weekend hours.\n\n\nMock summary (using pt-BR); 134 chars of input."
+      }
+    },
+    {
+      "id": "fixture:09-pragmatic-engineer",
+      "tags": [
+        "fixture"
+      ],
+      "input": {
+        "id": 8,
+        "email_inbox_label": "the-pragmatic-engineer",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "The Pragmatic Engineer",
+        "email_subject": "The State Of Platform Teams In 2026",
+        "email_date": "Sun, 8 Nov 2026 at 13h 20min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "summary_content": "## Main topics - gemini-flash-lite-latest\n\n*   **Topic 1:** Platform teams have changed a lot over the last two years.\n*   **Topic 2:** This issue looks at how.Section 1.\n*   **Topic 3:** Team size.\n\n---\nMock summary (translated to pt-BR); 986 chars of input.",
+        "sent_retry": -1
+      },
+      "output": {
+        "news_id": 8,
+        "initialMessageLength": 419,
+        "finalMessageLength": 421,
+        "telegramMessage": "*The Pragmatic Engineer*\n*Sun, 8 Nov 2026 at 13h 20min*\n*The State Of Platform Teams In 2026*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Main topics \\- gemini\\-flash\\-lite\\-latest*\n\n• *Topic 1:* Platform teams have changed a lot over the last two years\\.\n• *Topic 2:* This issue looks at how\\.Section 1\\.\n• *Topic 3:* Team size\\.\n\n\nMock summary \\(translated to pt\\-BR\\); 986 chars of input\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "The Pragmatic Engineer\nSun, 8 Nov 2026 at 13h 20min\nThe State Of Platform Teams In 2026\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nMain topics - gemini-flash-lite-latest\n\n• Topic 1: Platform teams have changed a lot over the last two years.\n• Topic 2: This issue looks at how.Section 1.\n• Topic 3: Team size.\n\n\nMock summary (translated to pt-BR); 986 chars of input."
+      }
+    },
+    {
+      "id": "edge:literal-backslash-n",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 201,
+        "summary_content": "Intro line\\n\\n* First point\\n* Second point"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 201,
+        "initialMessageLength": 179,
+        "finalMessageLength": 177,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nIntro line\n\n• First point\n• Second point"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nIntro line\n\n• First point\n• Second point"
+      }
+    },
+    {
+      "id": "edge:headings-and-rules",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 202,
+        "summary_content": "## Heading Two\n### Heading Three\n#### Heading Four\n---\nBody."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 202,
+        "initialMessageLength": 196,
+        "finalMessageLength": 189,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Heading Two*\n*Heading Three*\n*Heading Four*\n\nBody\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nHeading Two\nHeading Three\nHeading Four\n\nBody."
+      }
+    },
+    {
+      "id": "edge:bullet-variants",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 203,
+        "summary_content": "*   Star three spaces\n    *   Nested star\n* Star one space\n- Dash one\n    - Nested dash\n-   Dash three spaces"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 203,
+        "initialMessageLength": 242,
+        "finalMessageLength": 240,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n• Star three spaces\n    • Nested star\n• Star one space\n• Dash one\n    • Nested dash\n• Dash three spaces"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\n• Star three spaces\n    • Nested star\n• Star one space\n• Dash one\n    • Nested dash\n• Dash three spaces"
+      }
+    },
+    {
+      "id": "edge:bold-with-specials",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 204,
+        "summary_content": "**Price: $4.25 (up 1.2%)!** and **[tag] #1 + x = y**"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 204,
+        "initialMessageLength": 191,
+        "finalMessageLength": 195,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Price: $4\\.25 \\(up 1\\.2%\\)\\!* and *\\[tag\\] \\#1 \\+ x \\= y*"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nPrice: $4.25 (up 1.2%)! and [tag] #1 + x = y"
+      }
+    },
+    {
+      "id": "edge:italic-and-lone-star",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 205,
+        "summary_content": "*italic words* then a lone * star and 2 * 3 = 6"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 205,
+        "initialMessageLength": 186,
+        "finalMessageLength": 187,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n_italic words_ then a lone \\* star and 2 \\* 3 \\= 6"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nitalic words then a lone * star and 2 * 3 = 6"
+      }
+    },
+    {
+      "id": "edge:double-quotes",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 206,
+        "summary_content": "He said \"ship it\" and \"test it\"."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 206,
+        "initialMessageLength": 171,
+        "finalMessageLength": 170,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nHe said 'ship it' and 'test it'\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nHe said 'ship it' and 'test it'."
+      }
+    },
+    {
+      "id": "edge:all-specials",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 207,
+        "summary_content": "Specials: _ [ ] ( ) ~ ` > # + - = | { } . ! \\ end"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 207,
+        "initialMessageLength": 188,
+        "finalMessageLength": 204,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nSpecials: \\_ \\[ \\] \\( \\) \\~ \\` \\> \\# \\+ \\- \\= \\| \\{ \\} \\. \\! \\\\ end"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nSpecials: _ [ ] ( ) ~ ` > # + - = | { } . ! \\ end"
+      }
+    },
+    {
+      "id": "edge:emoji-and-accents",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 208,
+        "summary_content": "Resumo 🇧🇷: ação, café, coração, “aspas” e ‘simples’."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 208,
+        "initialMessageLength": 193,
+        "finalMessageLength": 192,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nResumo 🇧🇷: ação, café, coração, “aspas” e ‘simples’\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nResumo 🇧🇷: ação, café, coração, “aspas” e ‘simples’."
+      }
+    },
+    {
+      "id": "edge:bold-across-lines",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 209,
+        "summary_content": "**bold that\nspans lines** after"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 209,
+        "initialMessageLength": 170,
+        "finalMessageLength": 166,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*bold that\nspans lines* after"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nbold that\nspans lines after"
+      }
+    },
+    {
+      "id": "edge:unclosed-bold",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 210,
+        "summary_content": "**never closed and more text."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 210,
+        "initialMessageLength": 168,
+        "finalMessageLength": 169,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n\\*\\*never closed and more text\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\n**never closed and more text."
+      }
+    },
+    {
+      "id": "edge:empty-summary",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 211,
+        "summary_content": ""
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 211,
+        "initialMessageLength": 139,
+        "finalMessageLength": 137,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "edge:too-long-after-escaping",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 212,
+        "summary_content": "A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A. A."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 212,
+        "initialMessageLength": 4338,
+        "finalMessageLength": 5736,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nA\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\. A\\."
+      },
+      "mock_telegram": {
+        "status": 400,
+        "ok": false,
+        "description": "Bad Request: message is too long"
+      }
+    },
+    {
+      "id": "edge:typical-llm-output",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000003",
+        "email_category": "tech",
+        "email_from": "Lenny's Newsletter",
+        "email_subject": "Edge Case",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 213,
+        "summary_content": "### Principais tópicos\n\n*   **Mercados:** As bolsas subiram 1,2% (maior alta do mês).\n*   **Juros:** O BC manteve a taxa em 10,50%.\n    *   Decisão unânime.\n\n#### Tecnologia\n- Novo modelo de IA em português - veja mais em example.com/ia\n\n---\n*Resumo gerado automaticamente.*"
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 213,
+        "initialMessageLength": 403,
+        "finalMessageLength": 401,
+        "telegramMessage": "*Lenny's Newsletter*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Edge Case*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\n*Principais tópicos*\n\n• *Mercados:* As bolsas subiram 1,2% \\(maior alta do mês\\)\\.\n• *Juros:* O BC manteve a taxa em 10,50%\\.\n    • Decisão unânime\\.\n\n*Tecnologia*\n• Novo modelo de IA em português \\- veja mais em example\\.com/ia\n\n\n_Resumo gerado automaticamente\\._"
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Lenny's Newsletter\nWed, 11 Nov 2026 at 10h 00min\nEdge Case\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nPrincipais tópicos\n\n• Mercados: As bolsas subiram 1,2% (maior alta do mês).\n• Juros: O BC manteve a taxa em 10,50%.\n    • Decisão unânime.\n\nTecnologia\n• Novo modelo de IA em português - veja mais em example.com/ia\n\n\nResumo gerado automaticamente."
+      }
+    },
+    {
+      "id": "edge:specials-in-header",
+      "input": {
+        "email_inbox_label": "edge",
+        "telegram_chat_id": "-1001000000002",
+        "email_category": "finance",
+        "email_from": "Ai & Ml Weekly #3",
+        "email_subject": "Q3 Results (Final) - Up 12.5%!",
+        "email_date": "Wed, 11 Nov 2026 at 10h 00min",
+        "translated": "translated to pt-BR",
+        "model_used": "models/gemini-flash-lite-latest",
+        "sent_retry": -1,
+        "id": 214,
+        "summary_content": "Short body."
+      },
+      "tags": [
+        "edge"
+      ],
+      "output": {
+        "news_id": 214,
+        "initialMessageLength": 170,
+        "finalMessageLength": 175,
+        "telegramMessage": "*Ai & Ml Weekly \\#3*\n*Wed, 11 Nov 2026 at 10h 00min*\n*Q3 Results \\(Final\\) \\- Up 12\\.5%\\!*\n_Summary translated to pt\\-BR with models/gemini\\-flash\\-lite\\-latest_\n\nShort body\\."
+      },
+      "mock_telegram": {
+        "status": 200,
+        "ok": true,
+        "result_text": "Ai & Ml Weekly #3\nWed, 11 Nov 2026 at 10h 00min\nQ3 Results (Final) - Up 12.5%!\nSummary translated to pt-BR with models/gemini-flash-lite-latest\n\nShort body."
+      }
+    }
+  ]
+}
