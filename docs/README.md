@@ -5,6 +5,7 @@
 | [next-steps.md](next-steps.md) | **Start here.** Pending owner actions and Claude's next moves |
 | [plan.md](plan.md) | Phases, checklist, open questions, planned layout and ports |
 | [decisions.md](decisions.md) | Decision log: assumptions, scope, deviations from the baseline |
+| [infra.md](infra.md) | Shared local infra: services, mock APIs and fault injection, fixtures matrix |
 | [baseline/workflow-spec.md](baseline/workflow-spec.md) | **The contract.** Behavior spec derived from the n8n exports |
 | [baseline/data-model.md](baseline/data-model.md) | Reconstructed Postgres schema, with how sure each column is |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |

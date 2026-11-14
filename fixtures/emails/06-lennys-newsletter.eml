@@ -1,0 +1,36 @@
+From: "Lenny's Newsletter" <lenny@substack.example>
+To: newsletters@local.test
+Subject: How to run a pricing experiment [template] #42
+Date: Wed, 11 Nov 2026 13:00:00 +0000
+Message-ID: <06-lennys-newsletter@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_06-lennys-newsletter"
+
+--=_wfx_06-lennys-newsletter
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi friends! This week: a step-by-step pricing experiment (with a [template]=
+).
+
+1. Pick one metric =3D revenue per visitor; ignore vanity stats.
+2. Split traffic 50/50 -> control vs. "variant" (no peeking!).
+3. Use a {holdout} group + track churn for 30 days.
+* Tip: keep the _test_ small; *ship* the winner.
+> "Price is a feature," says one founder. Costs: ~$0 | time: 2 weeks.
+
+Code sample: `if variant =3D=3D "B": price *=3D 1.1`
+Questions? Reply to this email (https://substack.example/lenny/reply).
+--=_wfx_06-lennys-newsletter
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>Lenny's Newsletter</title></head>
+  <body>
+    <p>Hi friends! This week: a step-by-step pricing experiment.</p>
+    <p>Pick one metric; split traffic 50/50; track churn for 30 days.</p>
+  </body>
+</html>
+--=_wfx_06-lennys-newsletter--

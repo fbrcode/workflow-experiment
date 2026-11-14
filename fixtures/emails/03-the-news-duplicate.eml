@@ -1,0 +1,46 @@
+From: The News <contato@thenews.example>
+To: newsletters@local.test
+Subject: =?utf-8?q?Resumo_do_dia=3A_economia=2C_pol=C3=ADtica_e_tecnologia?=
+Date: Fri, 13 Nov 2026 09:30:00 -0300
+Message-ID: <03-the-news-duplicate@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_03-the-news-duplicate"
+
+--=_wfx_03-the-news-duplicate
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Bom dia! Aqui est=C3=A1 o seu resumo de sexta-feira.
+
+ECONOMIA
+O Banco Central manteve a taxa b=C3=A1sica de juros em 10,50% ao ano (https=
+://thenews.example/a/1). A decis=C3=A3o foi un=C3=A2nime e veio em linha co=
+m o esperado pelo mercado.
+
+POL=C3=8DTICA
+O Congresso aprovou em segunda vota=C3=A7=C3=A3o o novo marco legal das sta=
+rtups. O texto segue para san=C3=A7=C3=A3o.
+
+TECNOLOGIA
+Uma empresa brasileira lan=C3=A7ou um modelo de linguagem treinado em portu=
+gu=C3=AAs =E2=80=94 veja os detalhes (https://thenews.example/a/2).
+
+At=C3=A9 amanh=C3=A3!
+--=_wfx_03-the-news-duplicate
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>The News</title></head>
+  <body>
+    <p>Bom dia! Aqui est=C3=A1 o seu resumo de sexta-feira.</p>
+    <p><b>ECONOMIA</b> O Banco Central manteve a taxa b=C3=A1sica de juros =
+em 10,50% ao ano. <a href=3D"https://thenews.example/a/1">Leia mais</a></p>
+    <p><b>POL=C3=8DTICA</b> O Congresso aprovou em segunda vota=C3=A7=C3=A3=
+o o novo marco legal das startups.</p>
+    <p><b>TECNOLOGIA</b> Uma empresa brasileira lan=C3=A7ou um modelo de li=
+nguagem treinado em portugu=C3=AAs.</p>
+  </body>
+</html>
+--=_wfx_03-the-news-duplicate--

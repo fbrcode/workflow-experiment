@@ -11,6 +11,8 @@ Each column is tagged with how sure the reconstruction is:
 - **[inferred]**: implied by how the column is used
 - **[assumed]**: a guess made so the experiment can run. Confirm it against production.
 
+> **Implemented in** `infra/db/init/001_schema.sql` (Phase 1).
+>
 > **Pending owner action:** the production DDL will be provided as `docs/baseline/prod-schema.sql`
 > (see [next-steps.md](../next-steps.md)). It will then replace this reconstruction.
 

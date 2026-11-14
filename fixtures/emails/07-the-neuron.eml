@@ -1,0 +1,37 @@
+From: =?utf-8?b?8J+noCBUaGUgTmV1cm9u?= <hi@theneuron.example>
+To: newsletters@local.test
+Subject: AI agents get a memory upgrade
+Date: Tue, 10 Nov 2026 23:59:59 -0500
+Message-ID: <07-the-neuron@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_07-the-neuron"
+
+--=_wfx_07-the-neuron
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Welcome back, humans. =F0=9F=A4=96
+
+Today: AI agents get long-term memory. A new open-source library lets assis=
+tants remember user preferences across sessions (https://theneuron.example/=
+n/1).
+
+Treats to try:
+- A note-taking app that summarizes meetings in real time.
+- A browser extension that explains any chart.
+
+Caption: Our favorite robot of the week.
+See you tomorrow!
+--=_wfx_07-the-neuron
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>The Neuron</title></head>
+  <body>
+    <p>Welcome back, humans.</p>
+    <p>Today: AI agents get long-term memory.</p>
+  </body>
+</html>
+--=_wfx_07-the-neuron--

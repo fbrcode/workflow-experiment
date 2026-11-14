@@ -105,4 +105,14 @@ Start every session by reading, in this order:
 
 | Command | What it does | Available since |
 |---|---|---|
-| | | |
+| `make` / `make help` | List targets and show which env file is in use (`.env`, else `.env.example`) | Phase 1 |
+| `make infra-up` / `make infra-down` | Start the shared infra and wait for healthy / stop it and delete volumes | Phase 1 |
+| `make seed` / `make seed-check` | Load the 9 fixture emails into IMAP folder `n8n` as UNSEEN (purges first) / print counts | Phase 1 |
+| `make infra-check` | DB tables, enum and `telegram_chat` rows; mock health; mailbox counts | Phase 1 |
+| `make reset` | `infra-down` + `infra-up` + `seed` | Phase 1 |
+| `make infra-ps` / `make infra-logs` | Container status / follow logs | Phase 1 |
+| `make fixtures` | Regenerate `fixtures/emails/*.eml` (deterministic) | Phase 1 |
+| `make test-mocks` | pytest for `infra/mocks` | Phase 1 |
+| `make lint` | `ruff format --check` + `ruff check` (repo `ruff.toml`) | Phase 1 |
+
+Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

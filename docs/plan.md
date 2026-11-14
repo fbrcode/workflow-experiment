@@ -15,16 +15,19 @@ Legend: `[ ]` todo · `[~]` in progress / partial (see note) · `[x]` done and v
 
 ## Phase 1: Shared local infrastructure (`infra/`)
 
-- [ ] `infra/compose.yaml` with these services:
-  - `app-db`: Postgres plus `infra/db/init/*.sql` (schema from data-model.md, `telegram_chat` seed from env)
-  - `mail`: GreenMail (IMAP and SMTP), a stand-in for Gmail. Mailbox/label `n8n`.
-  - `mock-telegram`: records `sendMessage` calls, can be told to fail (F-3), and exposes a `GET /calls` inspection endpoint
-  - `mock-gemini`: implements `generateContent` for both model names, deterministic output, can be told to fail (F-1, F-2)
-- [ ] Fixtures in `fixtures/emails/*.eml`, covering at least: a translated sender, a non-translated sender, an HTML-body sender (`tech-brew` or `rico-matinal`), each of the 3 categories, a duplicate, non-ASCII content, and a `From` header without a display name
-- [ ] `scripts/seed-mail` delivers the fixtures to GreenMail over SMTP
-- [ ] `.env.example` with every variable documented; `.env` gitignored
-- [ ] Root `Makefile` with `infra-up`, `infra-down`, `seed`, `reset`
-- **Verify:** `make infra-up && make seed`, then the IMAP mailbox `n8n` holds N unseen messages and `app-db` has the schema
+Done 2026-11-14. Details are in [infra.md](infra.md).
+
+- [x] `infra/compose.yaml` with these services. Every one has a healthcheck, and `up --wait` returns only when all of them are healthy.
+  - `app-db`: Postgres 18.7 plus `infra/db/init/` (schema from data-model.md, `telegram_chat` seeded from env)
+  - `mail`: GreenMail 2.1.15 (IMAP, IMAPS and SMTP) with real auth, a stand-in for Gmail. Mailbox/label `n8n`.
+  - `mock-telegram`: validates MarkdownV2 and HTML like Telegram, returns the rendered text, records calls (`/_mock/calls`), and accepts injected faults (`/_mock/faults`)
+  - `mock-gemini`: `generateContent` and `streamGenerateContent` for both models, deterministic output, API key required, fault injection (F-1, F-2)
+- [x] 9 fixtures in `fixtures/emails/*.eml`, generated deterministically by `fixtures/generate.py`. They cover every required case; see the [coverage matrix](infra.md#fixtures-fixturesemails-from-fixturesgeneratepy).
+- [x] `scripts/seed_mail.py` loads the fixtures with **IMAP APPEND**, not SMTP as first planned, so they land in the `n8n` folder as UNSEEN (D-013)
+- [x] `.env.example` documents every variable; `.env` is gitignored, and the Makefile falls back to `.env.example`
+- [x] Root `Makefile` with `infra-up`, `infra-down`, `seed`, `reset`, plus `infra-check`, `seed-check`, `fixtures`, `test-mocks`, `lint`
+- [x] Mock unit tests (45 pytest cases) and the repo-wide `ruff.toml`
+- **Verified:** `make reset` (down -v, up, seed) took 11 s from scratch. `make infra-check` shows tables `news_email` and `telegram_chat`, the enum `news,finance,tech`, 3 `telegram_chat` rows and 0 `news_email` rows; both mocks are healthy; mailbox `n8n` has 9 messages, all unseen. A wrong IMAP password is rejected. IMAPS works. Re-seeding is idempotent. `make test-mocks`: 45 passed. `make lint`: clean. Running `make fixtures` again gives byte-identical files.
 
 ## Phase 2: Golden vectors from the original n8n code (`tests/golden/`)
 
@@ -96,7 +99,7 @@ tests/golden/     vectors generated from the original n8n JS
 tests/parity/     tool-agnostic end-to-end scenarios
 kestra/           compose + flows/*.yaml (+ scripts if needed)
 prefect/          compose + Dockerfile + src/ + tests/
-scripts/          helper scripts (seed, measure)
+scripts/          helper scripts (seed_mail.py; measurement scripts later)
 docs/             all documentation
 ```
 
@@ -105,7 +108,7 @@ docs/             all documentation
 | Kestra UI/API | 8080 | |
 | Prefect UI/API | 4200 | |
 | app-db (Postgres) | 5433 | avoids a local 5432 |
-| GreenMail SMTP / IMAP / API | 3025 / 3143 / 8083 | its API defaults to 8080, so it's remapped |
+| GreenMail SMTP / IMAP / IMAPS / API | 3025 / 3143 / 3993 / 8083 | its API defaults to 8080, so it's remapped |
 | mock-telegram | 8090 | |
 | mock-gemini | 8091 | |
 

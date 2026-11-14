@@ -1,0 +1,52 @@
+From: "Morning Brew" <crew@morningbrew.example>
+To: newsletters@local.test
+Subject: =?utf-8?q?=E2=98=95_Markets_rally_as_rates_hold_steady?=
+Date: Sat, 14 Nov 2026 11:05:00 +0000
+Message-ID: <01-morning-brew@fixtures.wfx.local>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_wfx_01-morning-brew"
+
+--=_wfx_01-morning-brew
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Good morning. Here is what you need to know today.
+
+MARKETS
+Stocks climbed for a third straight session (https://morningbrew.example/r/=
+1) as the central bank held rates at 4.25%. Tech led the gains; energy lagg=
+ed.
+
+View image: https://img.morningbrew.example/chart.png
+Caption: The index closed at a record high.
+
+PRESENTED BY ACME CLOUD
+Ship faster with Acme Cloud =E2=80=94 try it free (https://acme.example/pro=
+mo).
+
+WORLD
+A new trade agreement was signed between two regional blocs. Analysts expec=
+t lower tariffs on agricultural goods by 2027.
+
+Follow image link: https://morningbrew.example/r/2
+That's all for today =E2=80=94 see you tomorrow!
+--=_wfx_01-morning-brew
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+  <head><meta charset=3D"utf-8"><title>Morning Brew</title></head>
+  <body>
+    <p>Good morning. Here is what you need to know today.</p>
+    <p><b>MARKETS</b> Stocks climbed for a third straight session as the ce=
+ntral bank held rates at 4.25%. <a href=3D"https://morningbrew.example/r/1"=
+>More</a></p>
+    <p><img src=3D"https://img.morningbrew.example/chart.png" alt=3D"Index =
+chart"></p>
+    <p><b>PRESENTED BY ACME CLOUD</b> Ship faster with Acme Cloud.</p>
+    <p><b>WORLD</b> A new trade agreement was signed between two regional b=
+locs.</p>
+  </body>
+</html>
+--=_wfx_01-morning-brew--

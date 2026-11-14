@@ -66,3 +66,26 @@ The repo is public. The owner approved one edit to `baseline/EmailSummarizerFrom
 before the first commit: in node `telegram-send-failed-exec`, `chatId` was changed from the real
 Telegram ID to `"REDACTED_TELEGRAM_ALERT_CHAT_ID"`. No other byte changed. Implementations read
 the value from `TELEGRAM_ALERT_CHAT_ID`. Apart from this one approved change, `baseline/` stays read-only.
+
+### D-011: Model names keep the `models/` prefix in config · `accepted`
+
+`GEMINI_MODEL=models/gemini-flash-lite-latest` and `GEMINI_MODEL_FALLBACK=models/gemini-2.5-flash`
+are written exactly as the baseline has them. The prefixed string is what n8n stores in `model_used`
+(SUM-6, and SUM-7a per D-008) and shows in the Telegram header (SND-2), so parity needs it. Each
+implementation strips the prefix only when it builds the API URL. This is a config convention,
+not a behavior deviation.
+
+### D-012: The Telegram mock validates and renders like Telegram · `accepted`
+
+The mock parses MarkdownV2 and HTML and rejects invalid text with Telegram-style 400 errors. On
+success it returns the rendered plain text in `result.text`. Two reasons: SND-4 stores
+`result.text`, so the rendered value matters for parity; and escaping bugs (F-3, Q-15) should
+come up naturally rather than only through injected faults. Known approximations are listed in
+[infra.md](infra.md#mock-telegram). Phase 7 (real Telegram) is where any gaps would show.
+
+### D-013: Fixtures are loaded with IMAP APPEND, not SMTP · `accepted`
+
+The plan said SMTP. APPEND puts each message straight into the `n8n` folder (the Gmail label)
+with no flags, so it's UNSEEN, and keeps the original `Date` as INTERNALDATE. Delivering over
+SMTP would put mail in INBOX and need a server-side filter. Ingest behavior doesn't depend on
+how mail arrived in the folder.

@@ -4,7 +4,7 @@ A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefe
 as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
 with docker compose, and judged against one behavior spec and one scorecard.
 
-> **Status:** Phase 0 (foundations) is done. There's nothing to run yet. See [docs/plan.md](docs/plan.md).
+> **Status:** Phases 0 (foundations) and 1 (shared local infrastructure) are done. Neither orchestrator is implemented yet. See [docs/plan.md](docs/plan.md).
 
 ## The workflow under test
 
@@ -41,8 +41,9 @@ The full contract, with requirement IDs and known quirks, is in [docs/baseline/w
 ```text
 baseline/     n8n exports (read-only source of truth)
 docs/         all documentation: spec, plan, decisions, per-tool docs, comparison
-infra/        shared local services: app Postgres, GreenMail, mocks          (Phase 1)
-fixtures/     synthetic newsletter emails                                    (Phase 1)
+infra/        shared local services: app Postgres, GreenMail, mocks          (done)
+fixtures/     synthetic newsletter emails + generator                        (done)
+scripts/      helper scripts (IMAP seeding)                                  (done)
 tests/        golden vectors from the n8n JS + end-to-end parity scenarios   (Phases 2, 5)
 kestra/       Kestra compose + YAML flows                                    (Phase 3)
 prefect/      Prefect compose + Python flows + unit tests                    (Phase 4)
@@ -57,8 +58,18 @@ prefect/      Prefect compose + Python flows + unit tests                    (Ph
 
 ## Getting started
 
-*Coming in Phase 1.* The planned entry points are `make kestra-up`, `make prefect-up`, `make seed`,
-`make parity-kestra` and `make parity-prefect`. They'll be documented here once they exist and work.
+The shared infrastructure runs today. The orchestrator stacks (`make kestra-up`, `make prefect-up`)
+and the parity suite come in later phases.
+
+```bash
+make infra-up      # Postgres, GreenMail (IMAP), mock Telegram, mock Gemini, all healthy
+make seed          # load 9 synthetic newsletters into the IMAP folder 'n8n'
+make infra-check   # confirm schema, chat seed, mock health, mailbox counts
+make infra-down    # stop and remove everything
+```
+
+No `.env` is needed: the Makefile falls back to `.env.example` (local-only placeholders).
+Details: [docs/infra.md](docs/infra.md).
 
 ## Documentation
 

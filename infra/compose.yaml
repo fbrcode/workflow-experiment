@@ -1,0 +1,113 @@
+# Shared local infrastructure (Phase 1). Started on its own with `make infra-up`, and
+# pulled into each tool's stack with `include:` (Phases 3-4), so every stack gets its own
+# isolated copy. Variables are required and come from .env (or .env.example): see Makefile.
+#
+# Services:
+#   app-db         Postgres with the reconstructed news_email/telegram_chat schema
+#   mail           GreenMail IMAP/SMTP, the stand-in for Gmail (mailbox IMAP_MAILBOX)
+#   mock-telegram  Telegram Bot API mock (validates MarkdownV2/HTML, records calls)
+#   mock-gemini    Gemini API mock (deterministic summaries, fault injection)
+#   mail-seed      [profile: tools] loads fixtures/emails into the IMAP mailbox
+
+x-mocks-image: &mocks-image
+  image: wfx-mocks:local
+  build:
+    context: ./mocks
+
+x-mock-health: &mock-health
+  interval: 5s
+  timeout: 3s
+  retries: 12
+
+services:
+  app-db:
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_DB: ${APP_DB_NAME:?set in .env}
+      POSTGRES_USER: ${APP_DB_USER:?set in .env}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:?set in .env}
+      TELEGRAM_CHAT_ID_NEWS: ${TELEGRAM_CHAT_ID_NEWS:?set in .env}
+      TELEGRAM_CHAT_ID_FINANCE: ${TELEGRAM_CHAT_ID_FINANCE:?set in .env}
+      TELEGRAM_CHAT_ID_TECH: ${TELEGRAM_CHAT_ID_TECH:?set in .env}
+      TZ: UTC
+    volumes:
+      - app-db-data:/var/lib/postgresql  # Postgres 18+ images keep PGDATA under this path
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${APP_DB_HOST_PORT:?set in .env}:5432"
+    healthcheck:
+      # TCP check: the init-time temporary server listens on the socket only, so this turns
+      # healthy only after the init scripts have run and the real server is up.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  mail:
+    image: greenmail/standalone:2.1.15
+    environment:
+      # Same as the image default, except: real auth with one configured user (no auto-create).
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/home/greenmail/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.users=${IMAP_USER:?set in .env}:${IMAP_PASSWORD:?set in .env}@local.test
+    ports:
+      - "${MAIL_SMTP_HOST_PORT:?set in .env}:3025"
+      - "${MAIL_IMAP_HOST_PORT:?set in .env}:3143"
+      - "${MAIL_IMAPS_HOST_PORT:?set in .env}:3993"
+      - "${MAIL_API_HOST_PORT:?set in .env}:8080"
+    healthcheck:
+      # The image ships bash but no curl/wget/nc: read the IMAP greeting via /dev/tcp.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/3143 && read -t 3 -r line <&3 && [[ $$line == '* OK'* ]]"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  mock-telegram:
+    <<: *mocks-image
+    command: ["python", "-m", "mocks.telegram"]
+    environment:
+      MOCK_PORT: "8090"
+      MOCK_TELEGRAM_KNOWN_CHATS: >-
+        ${TELEGRAM_CHAT_ID_NEWS},${TELEGRAM_CHAT_ID_FINANCE},${TELEGRAM_CHAT_ID_TECH},${TELEGRAM_ALERT_CHAT_ID:?set in .env}
+    ports:
+      - "${MOCK_TELEGRAM_HOST_PORT:?set in .env}:8090"
+    healthcheck:
+      <<: *mock-health
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8090/_mock/health', timeout=2)"]
+
+  mock-gemini:
+    <<: *mocks-image
+    command: ["python", "-m", "mocks.gemini"]
+    environment:
+      MOCK_PORT: "8091"
+      MOCK_GEMINI_MODELS: ${GEMINI_MODEL:?set in .env},${GEMINI_MODEL_FALLBACK:?set in .env}
+    ports:
+      - "${MOCK_GEMINI_HOST_PORT:?set in .env}:8091"
+    healthcheck:
+      <<: *mock-health
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8091/_mock/health', timeout=2)"]
+
+  mail-seed:
+    <<: *mocks-image
+    profiles: ["tools"]
+    entrypoint: ["python", "/scripts/seed_mail.py", "--fixtures", "/fixtures/emails"]
+    command: []
+    environment:
+      IMAP_HOST: mail  # always the in-network GreenMail, whatever .env says for real mode
+      IMAP_PORT: "3143"
+      IMAP_SECURE: "false"
+      IMAP_USER: ${IMAP_USER}
+      IMAP_PASSWORD: ${IMAP_PASSWORD}
+      IMAP_MAILBOX: ${IMAP_MAILBOX:?set in .env}
+    volumes:
+      - ../fixtures:/fixtures:ro
+      - ../scripts:/scripts:ro
+    depends_on:
+      mail:
+        condition: service_healthy
+
+volumes:
+  app-db-data:
