@@ -120,5 +120,11 @@ Start every session by reading, in this order:
 | `make lint` | `ruff format --check` + `ruff check` (repo `ruff.toml`) | Phase 1 |
 | `make golden` | Regenerate `tests/golden/vectors/` by running the original n8n code (Docker; starts infra, reseeds mail) | Phase 2 |
 | `make golden-check` | `make golden`, then fail if the committed vectors changed | Phase 2 |
+| `make kestra-up` / `make kestra-down` | Build and start the Kestra stack (Kestra, its DB, the shared infra), wait for healthy, deploy / stop and delete volumes | Phase 3 |
+| `make kestra-deploy` | Push `kestra/flows` and the namespace files in `kestra/files` through the REST API (deletes flows not in the repo) | Phase 3 |
+| `make kestra-seed` / `make kestra-reset` | Load the fixtures into the Kestra stack's mailbox / down + up + seed | Phase 3 |
+| `make kestra-run [FLOW=email-ingest]` | Run a flow now, wait, print task states and error logs (default `email-summarize-send`) | Phase 3 |
+| `make kestra-ps` / `make kestra-logs` | Kestra stack status / follow the Kestra log | Phase 3 |
+| `make test-kestra` | pytest for the Kestra Python port: golden vectors, decoders, ING-1 against GreenMail when it's up | Phase 3 |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

@@ -1,0 +1,72 @@
+id: email-ingest
+namespace: experiment.email
+description: |
+  Workflow 1, n8n "EmailSummarizerMainUnique": read UNSEEN newsletters from the IMAP folder and
+  store one news_email row per email. Spec ING-1 to ING-4 (docs/baseline/workflow-spec.md).
+  Node mapping: docs/kestra/node-mapping.md.
+
+labels:
+  experiment: kestra-vs-prefect
+  baseline: EmailSummarizerMainUnique
+
+# Polling replaces n8n's IMAP IDLE (Q-8, D-019). Two overlapping polls would both read the same
+# UNSEEN mail before either marks it read, so while a poll is running the next one is cancelled.
+concurrency:
+  limit: 1
+  behavior: CANCEL
+
+triggers:
+  - id: fetch-n8n-inbox-poll
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "* * * * *"
+
+tasks:
+  # ING-1 fetch-n8n-inbox + ING-2 select-n8n-content-generic + ING-3 map-content.
+  # Kestra's MailReceivedTrigger can't reproduce ING-1 (docs/kestra/effort-log.md), so one script
+  # task reads the mailbox like n8n's trigger, marks the messages read, and writes the ING-4 rows.
+  - id: fetch-n8n-inbox
+    type: io.kestra.plugin.scripts.python.Commands
+    containerImage: python:3.12.16-slim-trixie
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: IF_NOT_PRESENT
+      networkMode: "{{ envs.docker_network }}"
+    namespaceFiles:
+      enabled: true
+      include:
+        - summarizer/**
+    env:
+      IMAP_HOST: "{{ envs.imap_host }}"
+      IMAP_PORT: "{{ envs.imap_port }}"
+      IMAP_SECURE: "{{ envs.imap_secure }}"
+      IMAP_USER: "{{ envs.imap_user }}"
+      IMAP_PASSWORD: "{{ secret('IMAP_PASSWORD') }}"
+      IMAP_MAILBOX: "{{ envs.imap_mailbox }}"
+    commands:
+      - python -m summarizer.task ingest
+    outputFiles:
+      - rows.ion
+
+  - id: has-new-mail
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs['fetch-n8n-inbox'].vars.count > 0 }}"
+    then:
+      # ING-4: one INSERT per email, as a parameterized batch. Other columns take DB defaults.
+      - id: insert_raw_news
+        type: io.kestra.plugin.jdbc.postgresql.Batch
+        url: "{{ envs.app_db_url }}"
+        username: "{{ envs.app_db_user }}"
+        password: "{{ secret('APP_DB_PASSWORD') }}"
+        from: "{{ outputs['fetch-n8n-inbox'].outputFiles['rows.ion'] }}"
+        sql: |
+          insert into public.news_email
+            (email_from, email_subject, email_date, email_raw_content, email_inbox_label, to_translate, email_category)
+          values (?, ?, ?, ?, ?, ?, ?::public.email_category)
+        columns:
+          - email_from
+          - email_subject
+          - email_date
+          - email_raw_content
+          - email_inbox_label
+          - to_translate
+          - email_category

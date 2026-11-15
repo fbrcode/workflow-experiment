@@ -38,6 +38,7 @@ then reconcile [comparison/criteria.md](comparison/criteria.md) with it.
 
 1. ~~**Phase 1: shared infra.**~~ Done 2026-11-14. See [infra.md](infra.md).
 2. ~~**Phase 2: golden vectors.**~~ Done 2026-11-14. See [golden.md](golden.md).
-3. **Phases 3 and 4: Kestra and Prefect OSS implementations**, independent of each other.
-4. **Phase 5: parity suite.** Happy path plus fault scenarios F-1 to F-7.
-5. **Phase 6: measurements and the final report.**
+3. ~~**Phase 3: Kestra.**~~ Done 2026-11-14. See [kestra/README.md](kestra/README.md).
+4. **Phase 4: Prefect OSS implementation**, independent of the Kestra one (ported from the spec and the golden vectors only).
+5. **Phase 5: parity suite.** Happy path plus fault scenarios F-1 to F-7.
+6. **Phase 6: measurements and the final report.**

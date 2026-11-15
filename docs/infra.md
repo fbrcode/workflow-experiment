@@ -32,6 +32,10 @@ make reset         # infra-down + infra-up + seed (about 11 s on the dev host)
 make infra-down    # stop and delete volumes
 ```
 
+Each tool stack (`make kestra-up`, later `make prefect-up`) pulls these services in with `include:`
+under its own project name, so it gets its own copy with fresh volumes. Run one stack at a time:
+they use the same host ports.
+
 Configuration comes from `.env` when it exists, otherwise from the committed `.env.example`
 (local-only placeholders). Every compose variable is required (`${VAR:?}`), so a missing value
 fails loudly instead of silently falling back to a default.

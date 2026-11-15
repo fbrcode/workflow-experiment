@@ -1,0 +1,75 @@
+# Kestra effort log
+
+Dated record of friction, errors, doc gaps and workarounds while building the Kestra
+implementation. It's primary evidence for C4 (authoring effort), C5 (developer loop) and C13
+(learning curve). Times are wall-clock on the dev host (Apple Silicon, Docker Desktop).
+
+## 2026-11-14: Phase 3 build
+
+**Time:** about 1 h of wall-clock time (19:45 to 20:46 -03), from the first version check to a
+verified clean run, with the happy path and the fault paths checked. Most of it went into finding out what Kestra 2.0 actually accepts, and into reading
+n8n's source for behavior the spec hadn't pinned down. The second part benefits Prefect too.
+
+### Versions and image
+
+| What happened | Detail |
+|---|---|
+| The current release is newer than what I knew | Kestra 2.0.10 (2026-11-10) is `latest` and `latest-lts`; 1.3.x is still maintained and 2.1 is in RC. 2.0 has breaking changes (RFC 9457 API errors, task outputs moved out of the execution JSON). Everything below was checked against the running 2.0.10, not memory. |
+| The full image is huge | `kestra/kestra:v2.0.10` is about 5 GB compressed (every plugin). `-no-plugins` is 243 MB. A custom image with 3 plugins is 830 MB, built in 2 min 12 s. `plugin-ai` alone is 291 MB. |
+| Plugin versions had to be discovered | Maven Central's search index stops at 0.23 (mid-2025); `maven-metadata.xml` per artifact is current. `kestra plugins install <plugin>:LATEST` resolves the newest version compatible with the running core, which gave the versions to pin. |
+| Plugin docs offline | `kestra plugins doc <dir>` writes Markdown docs for installed plugins. The REST API (`/api/v1/plugins/<class>`) returns the JSON schema of core tasks. Both were more reliable than memory. |
+
+### Choosing plugins: what couldn't be used, and why
+
+| Plugin / task | Problem | Used instead |
+|---|---|---|
+| `plugin-email` `MailReceivedTrigger` (native IMAP trigger) | Read its source at v1.6.8: `from` is only the bare address (`InternetAddress.getAddress()`), so the display name ING-3 needs is lost; `body` concatenates every text part; mail is selected by received date after the last check, in a READ_ONLY folder, never by UNSEEN and never marked read. | Schedule trigger + Python script task that reproduces n8n's IMAP read (`imap_simple.py`). |
+| `plugin-gemini` `ChatCompletion` | No base-URL property, so it can't target the mock. | `plugin-ai` `ChatCompletion` with the `GoogleGemini` provider, which has `baseUrl`. |
+| `plugin-ai` `Fallback` provider | Falls back only on connection failures, timeouts, 5xx and 429. n8n's agent falls back on any error, including 4xx (a retired model returns 404). | Two `ChatCompletion` tasks: primary with `allowFailure`, fallback with `runIf`. |
+| `plugin-telegram` `TelegramSend` | Returns no outputs (the send method is `void`), so SND-4 can't store Telegram's rendered `result.text`. It also can't send `disable_web_page_preview`, which n8n's node sends. | Core `io.kestra.plugin.core.http.Request` for both Telegram calls; plugin dropped from the image. |
+
+### Kestra 2.0 surprises (doc vs reality)
+
+| Surprise | Workaround |
+|---|---|
+| Flow-level `pluginDefaults` is rejected: `Unrecognized field "pluginDefaults"`. The 2.0 release notes and the UI's Blocks editor still mention it. | Each task carries its own settings (DB URL and credentials, task runner, container image). More YAML. |
+| Concurrency `behavior: SKIP` doesn't exist; the values are `QUEUE`, `CANCEL`, `FAIL`. | `CANCEL` for the ingest poll. |
+| Secrets in OSS are only `SECRET_<NAME>` environment variables, base64-encoded. Compose can't encode. | A 15-line entrypoint shim encodes the listed variables at start. |
+| JDBC `Query.parameters` rendered by Pebble bind as `varchar`: `operator does not exist: character varying = integer`. | Explicit casts in our SQL (`:news_id::bigint`, `?::public.email_category`). The verbatim baseline queries have no parameters. |
+| A JDBC `FETCH_ONE` row leaves NULL columns out entirely, and `toJson` drops null map entries. Python would then see `undefined` where n8n saw `null` (G-3). | `task.py` puts the expected columns back as `None`; tested with the vectors. |
+| Task outputs are no longer in `GET /executions/{id}` (`outputs: null`); they're at `/outputs/tasks/{executionId}/{taskRunId}`. | Noted for the parity suite. |
+| Pebble string literals don't interpret `\n`. The first alert had literal backslash-n sequences. | The alert template lives in a YAML block in `variables` and is rendered with `render()`. |
+| `outputs.<failed task> is defined` is true even for a failed task. | The fallback tests `outputs['gemini-flash'].textOutput is not defined` instead. |
+| Kestra's own compose bind-mounts `/tmp/kestra-wd` for the Docker task runner. In 2.0 the runner's default `fileHandlingStrategy` is `VOLUME`, so the mount isn't needed. | Not mounted; no host directory is left behind. Task containers and volumes are cleaned up after each run. |
+| An inline Python command containing `: ` broke YAML parsing (plain scalar). | Block scalars for commands. |
+| The HTTP task's default connect timeout is long: a stopped Telegram mock took 71 s to fail. | Left at the default; noted for C7. |
+
+### What went smoothly
+
+- `make kestra-up` reaches healthy in 12 s once the image exists; flows and namespace files deploy
+  through the REST API in about a second.
+- The REST API is complete enough for GitOps (`POST /flows/{namespace}?delete=true`), and
+  `POST /executions/{ns}/{id}?wait=true` runs a flow synchronously, which made testing quick.
+- `allowFailure`, `runIf`, `If` and `errorLogs()` were enough to express n8n's error outputs
+  exactly, including "an unhandled error stops the run".
+- The Python port passed all golden vectors on its first run (136 cases), and the IMAP port
+  matched n8n's ING-1 output for all 9 fixtures on its first run.
+- A scheduled poll overlapping a manual run is handled by the concurrency limit.
+
+### Developer loop (C5)
+
+- Logic changes: edit `kestra/files/summarizer/*.py`, run `make test-kestra` (0.1 s, no Kestra
+  needed), then `make kestra-deploy` (about 1 s).
+- Flow changes: edit the YAML, `make kestra-deploy`, then `make kestra-run` for a synchronous run
+  that prints each task's state and the error logs. A summarize tick takes 2 to 5 s, about 0.6 s
+  of it per Python task container start.
+- Pebble expressions can't be unit-tested outside Kestra. The SUM-7b template was checked end to
+  end against the golden vector.
+
+### Findings about n8n that the spec was missing (now in D-019)
+
+Reading the n8n 2.40.3 source while mapping nodes turned up: unhandled errors stop the run (the
+spec said branches were independent); the Telegram node's `disable_web_page_preview` and HTML
+attribution footer; how `sent_status` gets Telegram's description; the LangChain retry policy
+(6 retries with backoff); and single-transaction ingest batches, which make same-batch duplicates
+survive DUP-1 (Q-19).

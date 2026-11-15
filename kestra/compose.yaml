@@ -1,0 +1,110 @@
+# Kestra stack (Phase 3): Kestra OSS 2.0.10 in standalone mode with its own Postgres, plus the
+# shared infra (app-db, GreenMail, mocks) pulled in with `include:`. Start it with `make kestra-up`
+# (one stack at a time; ports in docs/plan.md). Architecture and versions: docs/kestra/README.md.
+
+include:
+  - ../infra/compose.yaml
+
+services:
+  kestra-db:
+    # Kestra's metadata store (flows, executions, queue). Not the app DB.
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: ${KESTRA_DB_PASSWORD:?set in .env}
+    volumes:
+      - kestra-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U kestra -d kestra"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  kestra:
+    image: wfx-kestra:local
+    build:
+      context: .
+    # Script tasks run in sibling containers through the Docker socket (Kestra's default task
+    # runner). Like Kestra's own docker-compose.yml, that needs root. Local development only.
+    user: root
+    command: ["server", "standalone"]
+    stop_grace_period: 30s
+    environment:
+      # Encoded into SECRET_<NAME> by secrets-entrypoint.sh; flows use {{ secret('NAME') }} (C8).
+      KESTRA_SECRET_NAMES: IMAP_PASSWORD APP_DB_PASSWORD GEMINI_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_ALERT_CHAT_ID
+      IMAP_PASSWORD: ${IMAP_PASSWORD:?set in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set in .env}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set in .env}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:?set in .env}
+      # Non-secret configuration: ENV_<NAME> is exposed to flows as {{ envs.<name> }}.
+      ENV_IMAP_HOST: ${IMAP_HOST:?set in .env}
+      ENV_IMAP_PORT: ${IMAP_PORT:?set in .env}
+      ENV_IMAP_SECURE: ${IMAP_SECURE:?set in .env}
+      ENV_IMAP_USER: ${IMAP_USER:?set in .env}
+      ENV_IMAP_MAILBOX: ${IMAP_MAILBOX:?set in .env}
+      ENV_APP_DB_URL: jdbc:postgresql://${APP_DB_HOST:?set in .env}:${APP_DB_PORT:?set in .env}/${APP_DB_NAME:?set in .env}
+      ENV_APP_DB_USER: ${APP_DB_USER:?set in .env}
+      ENV_GEMINI_BASE_URL: ${GEMINI_BASE_URL:?set in .env}
+      ENV_GEMINI_MODEL: ${GEMINI_MODEL:?set in .env}
+      ENV_GEMINI_MODEL_FALLBACK: ${GEMINI_MODEL_FALLBACK:?set in .env}
+      ENV_TELEGRAM_BASE_URL: ${TELEGRAM_BASE_URL:?set in .env}
+      ENV_DOCKER_NETWORK: wfx-kestra  # script-task containers join this network (see networks below)
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://kestra-db:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: ${KESTRA_DB_PASSWORD}
+        kestra:
+          server:
+            basic-auth:
+              username: ${KESTRA_ADMIN_USER:?set in .env}
+              password: ${KESTRA_ADMIN_PASSWORD:?set in .env}
+          repository:
+            type: postgres
+          queue:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: /app/storage
+          url: http://localhost:${KESTRA_HOST_PORT:?set in .env}/
+          tutorial-flows:
+            enabled: false
+          anonymous-usage-report:
+            enabled: false
+    volumes:
+      - kestra-storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      # No /tmp/kestra-wd bind mount (Kestra's own compose has one): the Docker task runner's
+      # default fileHandlingStrategy is VOLUME, which copies task files into a Docker volume.
+    ports:
+      - "${KESTRA_HOST_PORT:?set in .env}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+    depends_on:
+      kestra-db:
+        condition: service_healthy
+      app-db:
+        condition: service_healthy
+      mail:
+        condition: service_healthy
+      mock-gemini:
+        condition: service_healthy
+      mock-telegram:
+        condition: service_healthy
+
+networks:
+  default:
+    name: wfx-kestra  # fixed name, so the Docker task runner can attach script containers to it
+
+volumes:
+  kestra-db-data:
+  kestra-storage:
