@@ -4,7 +4,7 @@ A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefe
 as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
 with docker compose, and judged against one behavior spec and one scorecard.
 
-> **Status:** Phases 0 (foundations), 1 (shared local infrastructure) and 2 (golden vectors from the original n8n code) are done. Neither orchestrator is implemented yet. See [docs/plan.md](docs/plan.md).
+> **Status:** Phases 0 to 3 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, and the **Kestra** implementation. Prefect is next. See [docs/plan.md](docs/plan.md).
 
 ## The workflow under test
 
@@ -45,7 +45,7 @@ infra/        shared local services: app Postgres, GreenMail, mocks          (do
 fixtures/     synthetic newsletter emails + generator                        (done)
 scripts/      helper scripts (IMAP seeding)                                  (done)
 tests/        golden vectors from the original n8n code (done) + parity suite (Phase 5)
-kestra/       Kestra compose + YAML flows                                    (Phase 3)
+kestra/       Kestra compose, YAML flows, Python namespace files + tests      (done)
 prefect/      Prefect compose + Python flows + unit tests                    (Phase 4)
 ```
 
@@ -53,12 +53,12 @@ prefect/      Prefect compose + Python flows + unit tests                    (Ph
 
 - Docker Desktop with Compose v2.20 or later (for `include:`). Give Docker **at least 8 GB** of
   RAM, since Kestra runs on the JVM.
-- GNU Make, [uv](https://docs.astral.sh/uv/), and Node.js 20 or later (Node is only for generating golden vectors)
+- GNU Make and [uv](https://docs.astral.sh/uv/). Node.js isn't needed: the golden-vector generator runs in Docker.
 - Optional, for the real-service smoke test: a Gmail app password, a Gemini API key, and a Telegram test bot
 
 ## Getting started
 
-The shared infrastructure runs today. The orchestrator stacks (`make kestra-up`, `make prefect-up`)
+The shared infrastructure and the Kestra stack run today. The Prefect stack (`make prefect-up`)
 and the parity suite come in later phases.
 
 ```bash
@@ -70,6 +70,18 @@ make infra-down    # stop and remove everything
 
 No `.env` is needed: the Makefile falls back to `.env.example` (local-only placeholders).
 Details: [docs/infra.md](docs/infra.md).
+
+Kestra (one stack at a time; it brings its own copy of the infrastructure):
+
+```bash
+make kestra-up                     # Kestra + its DB + the infra, healthy, flows deployed (UI: localhost:8080)
+make kestra-seed                   # load the fixture emails
+make kestra-run FLOW=email-ingest  # ingest now (it also polls every minute)
+make kestra-run                    # one summarize-and-send tick (it also runs every 10 minutes)
+make kestra-down
+```
+
+Details: [docs/kestra/README.md](docs/kestra/README.md).
 
 ## Documentation
 

@@ -12,6 +12,8 @@
 | [baseline/prod-schema.md](baseline/prod-schema.md) | Owner-provided psql `\d+` output from production, verbatim |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |
 | [reference/](reference/) | External material provided by the owner (e.g. the original comparison doc) |
-| `kestra/` *(Phase 3)* | Setup, architecture, node mapping, effort log for Kestra |
+| [kestra/README.md](kestra/README.md) | Kestra: setup, architecture, versions, verification |
+| [kestra/node-mapping.md](kestra/node-mapping.md) | Kestra construct per n8n node, native or custom |
+| [kestra/effort-log.md](kestra/effort-log.md) | Kestra friction, doc gaps and workarounds |
 | `prefect/` *(Phase 4)* | Setup, architecture, node mapping, effort log for Prefect |
 | `comparison/results.md` *(Phase 6)* | Final scorecard and recommendation |

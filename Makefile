@@ -4,11 +4,13 @@ SHELL := /bin/bash
 # .env if present, otherwise the committed local-only defaults (one-command start from a clean clone).
 ENV_FILE ?= $(if $(wildcard .env),.env,.env.example)
 INFRA    := docker compose --env-file $(ENV_FILE) -f infra/compose.yaml -p wfx-infra
+KESTRA   := docker compose --env-file $(ENV_FILE) -f kestra/compose.yaml -p wfx-kestra
 MOCKS    := uv run --project infra/mocks
 
 .DEFAULT_GOAL := help
 .PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check schema-check reset \
-        golden golden-check fixtures test-mocks lint
+        golden golden-check fixtures test-mocks lint \
+        kestra-up kestra-down kestra-deploy kestra-seed kestra-reset kestra-ps kestra-logs kestra-run test-kestra
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
@@ -66,5 +68,37 @@ test-mocks: ## Run the mock services' unit tests
 	cd infra/mocks && uv run pytest -q
 
 lint: ## Ruff format check + lint for all Python in the repo
-	$(MOCKS) ruff format --check infra/mocks scripts fixtures
-	$(MOCKS) ruff check infra/mocks scripts fixtures
+	$(MOCKS) ruff format --check infra/mocks scripts fixtures kestra
+	$(MOCKS) ruff check infra/mocks scripts fixtures kestra
+
+# --- Kestra (Phase 3, docs/kestra/README.md). One stack at a time: it brings its own copy of infra/.
+KESTRA_API = set -a; source $(ENV_FILE); set +a; \
+	KESTRA_URL=http://localhost:$$KESTRA_HOST_PORT KESTRA_USER=$$KESTRA_ADMIN_USER KESTRA_PASSWORD=$$KESTRA_ADMIN_PASSWORD
+
+kestra-up: ## Build and start Kestra + its DB + the shared infra, wait until healthy, deploy flows
+	$(KESTRA) up -d --build --wait
+	@$(MAKE) --no-print-directory kestra-deploy
+
+kestra-deploy: ## Push kestra/flows and the namespace files in kestra/files to the running Kestra
+	@$(KESTRA_API) kestra/deploy.sh
+
+kestra-seed: ## Empty the Kestra stack's mailbox and load the fixture emails as UNSEEN
+	$(KESTRA) run --rm mail-seed --purge
+
+kestra-reset: kestra-down kestra-up kestra-seed ## Recreate the Kestra stack from scratch and load the fixtures
+
+kestra-down: ## Stop the Kestra stack and delete its volumes
+	$(KESTRA) down -v --remove-orphans
+
+kestra-ps: ## Kestra stack containers and health
+	$(KESTRA) ps
+
+kestra-logs: ## Follow the Kestra server log
+	$(KESTRA) logs -f kestra
+
+FLOW ?= email-summarize-send
+kestra-run: ## Run a flow now and wait for it: make kestra-run [FLOW=email-ingest]
+	@$(KESTRA_API) python3 scripts/kestra_run.py $(FLOW)
+
+test-kestra: ## Golden-vector tests for the Kestra Python port (ING-1 also needs make kestra-up + kestra-seed)
+	cd kestra && uv run pytest -q

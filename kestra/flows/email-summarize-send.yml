@@ -1,0 +1,303 @@
+id: email-summarize-send
+namespace: experiment.email
+description: |
+  Workflow 2, n8n "EmailSummarizerFromPgCron": every 10 minutes, summarize one stored email with
+  Gemini (primary, then fallback), delete duplicates, and send one summarized email to Telegram.
+  Spec SUM-*, DUP-1, SND-* (docs/baseline/workflow-spec.md). Node mapping: docs/kestra/node-mapping.md.
+
+  The three n8n branches run in canvas order (A, B, C). As in n8n, only the two failures n8n
+  handles (SUM-5 and SND-3) are caught; any other task failure ends the run, and the tasks after
+  it don't run until the next tick (D-019).
+
+labels:
+  experiment: kestra-vs-prefect
+  baseline: EmailSummarizerFromPgCron
+
+variables:
+  # $now.toISO() in the SUM-7b alert prints the n8n instance's time zone (not in the export, D-019).
+  timezone: America/Sao_Paulo
+  # SUM-7b telegram-send-failed-exec: the n8n template, with Pebble in place of n8n expressions.
+  # Rendered with render() where it's sent. Values are not HTML-escaped, as in n8n (Q-15).
+  failed_exec_text: |-
+    <b>Unable to summarize message</b>
+    <i>Attempted at {{ now() | date("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timeZone=vars.timezone) }}</i>
+
+    <b>Subject:</b> {{ outputs['transform-content'].vars.transform.subject }}
+    <b>From</b>: {{ outputs['transform-content'].vars.transform.from }}
+    <b>Date:</b> {{ outputs['transform-content'].vars.transform.date }}
+    <b>Model:</b> {{ outputs['transform-content'].vars.prompt.model }}
+    <b>Model fallback:</b> {{ outputs['transform-content'].vars.prompt.modelFallback }}
+
+    Execution error <b>{{ (errorLogs() | last).message }}</b>
+
+    <i>Retrying after 10 minutes</i>
+
+triggers:
+  - id: 10min-runner
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/10 * * * *"
+
+tasks:
+  # ---------------------------------------------------------------- Branch A: Summarizer (SUM-*)
+  - id: pg-get-dedup-raw-news  # SUM-1, verbatim
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    fetchType: FETCH_ONE
+    sql: |
+      with email_dups as (
+      	select
+      		rank() over (partition by n.email_inbox_label, n.email_subject, n.email_date order by n.email_consumed_at) as dup_rank,
+      		n.*
+      	from public.news_email n
+      )
+      select
+      	d.id, d.email_inbox_label, d.email_date, d.email_from, d.email_subject,
+      	d.to_translate, d.translate_language, d.email_raw_content, d.summary_retry
+      from email_dups d
+      where dup_rank = 1
+      and not d.is_summarized
+      and d.summary_retry < 5
+      order by id
+      limit 1
+
+  - id: results-not-empty  # SUM-2
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs['pg-get-dedup-raw-news'].size > 0 }}"
+    then:
+      - id: transform-content  # SUM-3 transform-content + SUM-4 prompt-builder
+        type: io.kestra.plugin.scripts.python.Commands
+        containerImage: python:3.12.16-slim-trixie
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          pullPolicy: IF_NOT_PRESENT
+        namespaceFiles:
+          enabled: true
+          include:
+            - summarizer/**
+        inputFiles:
+          row.json: "{{ outputs['pg-get-dedup-raw-news'].row | toJson }}"
+        env:
+          GEMINI_MODEL: "{{ envs.gemini_model }}"
+          GEMINI_MODEL_FALLBACK: "{{ envs.gemini_model_fallback }}"
+        commands:
+          - python -m summarizer.task transform
+
+      # SUM-5 ai-summary: primary model, then the fallback on any error, like the n8n agent.
+      # (plugin-ai's Fallback provider skips 4xx errors, so it isn't used: docs/kestra/effort-log.md.)
+      - id: gemini-flash
+        type: io.kestra.plugin.ai.completion.ChatCompletion
+        allowFailure: true
+        provider:
+          type: io.kestra.plugin.ai.provider.GoogleGemini
+          baseUrl: "{{ envs.gemini_base_url }}/v1beta"
+          apiKey: "{{ secret('GEMINI_API_KEY') }}"
+          modelName: "{{ outputs['transform-content'].vars.prompt.model | replace({'models/': ''}) }}"
+        messages:
+          - type: SYSTEM
+            content: You are a helpful assistant  # the n8n agent's default system message (Q-13)
+          - type: USER
+            content: "{{ outputs['transform-content'].vars.prompt.prompt }}"
+
+      - id: gemini-flash-fallback
+        type: io.kestra.plugin.ai.completion.ChatCompletion
+        runIf: "{{ outputs['gemini-flash'].textOutput is not defined }}"
+        allowFailure: true
+        provider:
+          type: io.kestra.plugin.ai.provider.GoogleGemini
+          baseUrl: "{{ envs.gemini_base_url }}/v1beta"
+          apiKey: "{{ secret('GEMINI_API_KEY') }}"
+          modelName: "{{ outputs['transform-content'].vars.prompt.modelFallback | replace({'models/': ''}) }}"
+        messages:
+          - type: SYSTEM
+            content: You are a helpful assistant  # the n8n agent's default system message (Q-13)
+          - type: USER
+            content: "{{ outputs['transform-content'].vars.prompt.prompt }}"
+
+      - id: ai-summary-ok
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs['gemini-flash'].textOutput is defined or outputs['gemini-flash-fallback'].textOutput is defined }}"
+        then:
+          - id: pg-update-ai-summary  # SUM-6 (combine-results + pg-update-ai-summary)
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.app_db_url }}"
+            username: "{{ envs.app_db_user }}"
+            password: "{{ secret('APP_DB_PASSWORD') }}"
+            sql: |
+              update public.news_email
+              set summary_status = 'OK',
+                  summary_content = :summary_content,
+                  summarized_at = now(),
+                  model_used = :model_used,
+                  is_summarized = true,
+                  summary_retry = :summary_retry::integer
+              where id = :news_id::bigint
+            parameters:
+              summary_content: "{{ outputs['gemini-flash'].textOutput ?? outputs['gemini-flash-fallback'].textOutput }}"
+              model_used: "{{ outputs['transform-content'].vars.prompt.model }}"  # always the primary (Q-2)
+              summary_retry: "{{ outputs['pg-get-dedup-raw-news'].row.summary_retry + 1 }}"  # successes count too (Q-11)
+              news_id: "{{ outputs['transform-content'].vars.transform.news_id }}"
+        else:
+          - id: pg-update-ai-error  # SUM-7a (get-error + pg-update-ai-error)
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.app_db_url }}"
+            username: "{{ envs.app_db_user }}"
+            password: "{{ secret('APP_DB_PASSWORD') }}"
+            sql: |
+              update public.news_email
+              set summarized_at = now(),
+                  model_used = :model_used,
+                  summary_status = :error,
+                  summary_content = null,
+                  summary_retry = :summary_retry::integer,
+                  is_summarized = false
+              where id = :news_id::bigint
+            parameters:
+              model_used: "{{ outputs['transform-content'].vars.prompt.model }}"  # primary model (D-008)
+              error: "{{ (errorLogs() | last).message }}"
+              summary_retry: "{{ outputs['pg-get-dedup-raw-news'].row.summary_retry + 1 }}"
+              news_id: "{{ outputs['transform-content'].vars.transform.news_id }}"
+
+          - id: telegram-send-failed-exec  # SUM-7b: text from vars.failed_exec_text
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            contentType: application/json
+            # allowFailed stays false: n8n doesn't handle a failed alert, so the run fails (D-019).
+            uri: "{{ envs.telegram_base_url }}/bot{{ secret('TELEGRAM_BOT_TOKEN') }}/sendMessage"
+            body: |
+              {{ {
+                "chat_id": secret('TELEGRAM_ALERT_CHAT_ID'),
+                "parse_mode": "HTML",
+                "disable_web_page_preview": true,
+                "text": render(vars.failed_exec_text)
+              } | toJson }}
+
+  # ------------------------------------------------------------ Branch B: Duplicate cleanup (DUP-1)
+  - id: pg-drop-dups  # DUP-1, verbatim
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    sql: |
+      with email_dups as (
+      	select
+      		rank() over (
+                partition by n.email_inbox_label, n.email_subject, n.email_date
+                order by n.email_consumed_at
+              ) as dup_rank,
+      		n.*
+      	from public.news_email n
+      )
+      delete from news_email
+      where id in (select id from email_dups where dup_rank > 1)
+
+  # ------------------------------------------------------------------- Branch C: Sender (SND-*)
+  - id: pg-get-summary  # SND-1, verbatim
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    fetchType: FETCH_ONE
+    sql: |
+      select
+      	ne.id,
+      	ne.email_inbox_label,
+      	tc.chat_id as telegram_chat_id,
+      	ne.email_category,
+      	initcap(ne.email_from) as email_from,
+      	initcap(ne.email_subject) as email_subject,
+      	ne.email_date,
+      	case when ne.to_translate then 'translated to ' else 'original on ' end || ne.translate_language as translated,
+      	ne.model_used,
+      	ne.summary_content,
+      	ne.sent_retry
+      from public.news_email ne
+      inner join public.telegram_chat tc on tc.email_category = ne.email_category
+      where ne.is_summarized
+      and not ne.was_sent
+      and ne.sent_retry < 5
+      order by ne.id
+      limit 1;
+
+  - id: has-summary  # SND-1a: no row, no send (n8n runs nothing without input items, Q-7)
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs['pg-get-summary'].size > 0 }}"
+    then:
+      - id: format-as-markdown  # SND-2
+        type: io.kestra.plugin.scripts.python.Commands
+        containerImage: python:3.12.16-slim-trixie
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          pullPolicy: IF_NOT_PRESENT
+        namespaceFiles:
+          enabled: true
+          include:
+            - summarizer/**
+        inputFiles:
+          row.json: "{{ outputs['pg-get-summary'].row | toJson }}"
+        commands:
+          - python -m summarizer.task format
+
+      - id: telegram-send-summary-markdown  # SND-3: same request body as n8n's Telegram node v1.2
+        type: io.kestra.plugin.core.http.Request
+        method: POST
+        contentType: application/json
+        options:
+          allowFailed: true  # a Telegram rejection is data for SND-5, not a task failure
+        allowFailure: true  # like n8n's error output, a network error also goes to SND-5
+        uri: "{{ envs.telegram_base_url }}/bot{{ secret('TELEGRAM_BOT_TOKEN') }}/sendMessage"
+        body: |
+          {{ {
+            "chat_id": outputs['pg-get-summary'].row.telegram_chat_id,
+            "text": outputs['format-as-markdown'].vars.telegramMessage,
+            "parse_mode": "MarkdownV2",
+            "disable_web_page_preview": true
+          } | toJson }}
+
+      - id: telegram-sent
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ (outputs['telegram-send-summary-markdown'].code ?? 0) == 200 }}"
+        then:
+          - id: pg-update-summary-sent  # SND-4
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.app_db_url }}"
+            username: "{{ envs.app_db_user }}"
+            password: "{{ secret('APP_DB_PASSWORD') }}"
+            sql: |
+              update public.news_email
+              set sent_at = now(),
+                  was_sent = true,
+                  formatted_length = :formatted_length::integer,
+                  formatted_summary = :formatted_summary,
+                  sent_status = 'OK',
+                  sent_retry = :sent_retry::integer
+              where id = :news_id::bigint
+            parameters:
+              formatted_length: "{{ outputs['format-as-markdown'].vars.finalMessageLength }}"
+              formatted_summary: "{{ fromJson(outputs['telegram-send-summary-markdown'].body).result.text }}"  # Telegram's rendered text
+              sent_retry: "{{ outputs['pg-get-summary'].row.sent_retry + 1 }}"
+              news_id: "{{ outputs['format-as-markdown'].vars.news_id }}"
+        else:
+          - id: pg-update-sent-error  # SND-5: the email gets summarized again (Q-12)
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.app_db_url }}"
+            username: "{{ envs.app_db_user }}"
+            password: "{{ secret('APP_DB_PASSWORD') }}"
+            sql: |
+              update public.news_email
+              set sent_retry = :sent_retry::integer,
+                  sent_at = now(),
+                  sent_status = :sent_status,
+                  was_sent = false,
+                  formatted_summary = :formatted_summary,
+                  formatted_length = :formatted_length::integer,
+                  is_summarized = false
+              where id = :news_id::bigint
+            parameters:
+              sent_retry: "{{ outputs['pg-get-summary'].row.sent_retry + 1 }}"
+              # n8n stores NodeApiError.description: Telegram's `description`, else the error message.
+              sent_status: "{{ outputs['telegram-send-summary-markdown'].body is defined ? fromJson(outputs['telegram-send-summary-markdown'].body).description : (errorLogs() | last).message }}"
+              formatted_summary: "{{ outputs['format-as-markdown'].vars.telegramMessage }}"
+              formatted_length: "{{ outputs['format-as-markdown'].vars.finalMessageLength }}"
+              news_id: "{{ outputs['format-as-markdown'].vars.news_id }}"
