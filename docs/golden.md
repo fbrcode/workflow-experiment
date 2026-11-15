@@ -85,7 +85,7 @@ Fixture `03-the-news-duplicate` stops after ING-4, because DUP-1 deletes it befo
 
 - `id` is stable and unique within a file. The prefix is `fixture:` or `edge:`. **IDs are append-only.** Never renumber them or reuse one.
 - `tags`: `fixture`, `edge`, and `quirk:Q-n` where a case shows a quirk.
-- `mock_telegram` appears only on the files that send to Telegram. When `ok` is true, `result_text` is what SND-4 stores as `formatted_summary`. When `ok` is false, the send fails and SND-5 applies (the `description` becomes `sent_status`).
+- `mock_telegram` appears only on the files that send to Telegram. When `ok` is true, `result_text` is what SND-4 stores as `formatted_summary`. When `ok` is false, the send fails and SND-5 applies (the `description` becomes `sent_status`, which n8n's Telegram node confirms: D-019).
 
 ### How implementations use them
 

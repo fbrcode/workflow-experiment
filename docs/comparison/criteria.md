@@ -57,7 +57,7 @@ It isn't averaged in.
 | F-2 | Both models fail | SUM-7a row update + SUM-7b alert |
 | F-3 | Telegram rejects the MarkdownV2 message (400) | SND-5; row is summarized again on the next tick |
 | F-4 | Postgres unavailable during a tick | Run fails visibly; next tick recovers; no partial writes |
-| F-5 | Duplicate email ingested | DUP-1 deletes it; only one Telegram message |
+| F-5 | Duplicate email ingested in a **later** ingest run | DUP-1 deletes it; only one Telegram message. (Duplicates in the same batch tie and both are sent, Q-19.) |
 | F-6 | Empty queue | No writes, no Telegram calls (SUM-2, SND-1a) |
 | F-7 | 6 failures in a row | Row stops being retried: the counter goes from -1 to 5, and `*_retry < 5` excludes it (Q-17) |
 

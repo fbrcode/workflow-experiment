@@ -51,8 +51,11 @@ Data model: [`data-model.md`](data-model.md).
   - `textPlain` / `textHtml` are transfer-decoded and converted to UTF-8, with the original **CRLF**
     line endings kept. A missing part is `''`.
 - n8n keeps a persistent IMAP connection (IDLE), so ingestion is close to real time.
-  Implementations may poll on an interval instead. Record the interval and the extra latency as a
-  deviation.
+  Implementations may poll on an interval instead. Both tools poll **every minute** (Q-8,
+  [D-019](../decisions.md)).
+- All messages read in one pass reach ING-4 together and are inserted in **one transaction**
+  (n8n's Postgres node v2.6 defaults to `queryBatching: 'single'`), so they share one
+  `email_consumed_at` (Q-19).
 
 ### ING-2 Content selection (`select-n8n-content-generic`)
 
@@ -115,7 +118,11 @@ dedup; workflow 2 handles that (DUP-1).
   1. **A. Summarizer** (`pg-get-dedup-raw-news`, y=560)
   2. **B. Duplicate cleanup** (`pg-drop-dups`, y=832)
   3. **C. Sender** (`pg-get-summary`, y=1184)
-- A failure in one branch doesn't stop the others. Each is wired with error outputs or runs on its own.
+- Only two failures are handled: SUM-5 (to SUM-7) and SND-3 (to SND-5), the two nodes with
+  `onError: continueErrorOutput`. **Any other node error ends the run**: n8n stops the execution,
+  and the nodes after it, including the later branches, don't run until the next tick. For
+  example, if the SUM-7b alert fails (Q-15), DUP-1 and branch C are skipped. ([D-019](../decisions.md)
+  corrected this line, which said a failure in one branch doesn't stop the others.)
 - Each branch handles **at most one row** per run. Throughput is therefore capped at 6 summaries
   and 6 sends per hour.
 - Execution data is saved for every run (`saveDataSuccessExecution: all`, `saveExecutionProgress: true`).
@@ -172,8 +179,14 @@ If no row comes back, branch A ends quietly with no writes and no alerts.
 - n8n LangChain Agent with no tools, no memory and empty options. n8n's default system message
   ("You are a helpful assistant") therefore applies. Send it as the system instruction for parity.
 - Call the primary model first. **If it throws, call the fallback model** with the same input.
+  Any error counts, including 4xx responses.
 - If both fail, take the error path (SUM-7). The node has `onError: continueErrorOutput`, so the
   failure is handled and the run doesn't fail.
+- No sampling options are set (the model nodes have `options: {}`), so Gemini's defaults apply.
+- Retries inside the model client are **not part of the contract** ([D-019](../decisions.md)).
+  For the record, n8n 2.40.3 (`@langchain/core` 1.2.8) retries a model up to 6 times with
+  exponential backoff (about 1 to 2 minutes), except for HTTP 400 to 409, before it gives up on
+  that model.
 
 #### SUM-6 Success path (`combine-results` then `pg-update-ai-summary`)
 
@@ -194,8 +207,10 @@ If no row comes back, branch A ends quietly with no writes and no alerts.
   `summarized_at = now`, `model_used = <primary model>` (n8n wrote the probably-empty model on the error item; changed by Q-3 / [D-008](../decisions.md)),
   `summary_status = <error message>`, `summary_content = NULL`,
   `summary_retry = summary_retry + 1` and `is_summarized = false`.
+- SUM-7a runs **before** SUM-7b (canvas order), so the row is updated even when the alert fails.
 - **SUM-7b** (`telegram-send-failed-exec`): send a Telegram alert to the **admin chat**. That chat
-  ID is hard-coded in n8n; use `TELEGRAM_ALERT_CHAT_ID`. Use `parse_mode=HTML` and this template:
+  ID is hard-coded in n8n; use `TELEGRAM_ALERT_CHAT_ID`. Send `parse_mode=HTML`,
+  `disable_web_page_preview=true` and this template:
   ```html
   <b>Unable to summarize message</b>
   <i>Attempted at {now ISO-8601}</i>
@@ -210,7 +225,13 @@ If no row comes back, branch A ends quietly with no writes and no alerts.
 
   <i>Retrying after 10 minutes</i>
   ```
-  The values are **not** HTML-escaped in n8n (Q-15).
+  The values are **not** HTML-escaped in n8n (Q-15). `{now ISO-8601}` is `$now.toISO()`: local
+  time with milliseconds and offset, e.g. `2026-11-14T12:00:00.000-03:00`, in America/Sao_Paulo
+  ([D-019](../decisions.md)). `{error}` is the error message of the last failed model call; its
+  wording depends on the tool's client library.
+  n8n's Telegram node v1.2 also appends an "This message was sent automatically with n8n" footer
+  with a link to the HTML alert. Both tools leave it out (deviation, [D-019](../decisions.md)).
+  A failed alert isn't handled: the run fails (see execution order).
 
 ### Branch B: Duplicate cleanup
 
@@ -286,8 +307,10 @@ Port the original code **exactly**. The golden vectors in `tests/golden/` are th
 
 #### SND-3 Send (`telegram-send-summary-markdown`)
 
-Call Telegram `sendMessage` with `chat_id = telegram_chat_id`, `text = telegramMessage` and
-`parse_mode = MarkdownV2`. On an error, go to SND-5 (`onError: continueErrorOutput`).
+Call Telegram `sendMessage` with `chat_id = telegram_chat_id`, `text = telegramMessage`,
+`parse_mode = MarkdownV2` and `disable_web_page_preview = true` (set by the node, typeVersion 1.2).
+n8n adds no attribution footer in MarkdownV2 mode. On any error, a Telegram rejection or a network
+failure, go to SND-5 (`onError: continueErrorOutput`).
 
 #### SND-4 Success path (`pg-update-summary-sent`)
 
@@ -310,7 +333,7 @@ Call Telegram `sendMessage` with `chat_id = telegram_chat_id`, `text = telegramM
 |---|---|
 | `sent_retry` | `sent_retry + 1` |
 | `sent_at` | now |
-| `sent_status` | error message |
+| `sent_status` | Telegram's `description` (e.g. `Bad Request: can't parse entities: …`). n8n stores `error.description ?? error.message` of its `NodeApiError`, and for a Telegram error response the description is that field. Without a response (network error), the tool's error message. |
 | `was_sent` | `false` |
 | `formatted_summary` | the escaped `telegramMessage` that was sent |
 | `formatted_length` | `finalMessageLength` |
@@ -367,6 +390,7 @@ Default policy: **keep the baseline behavior.** Any change is a deviation. Log i
 | Q-16 | No protection against overlapping runs. n8n can start a tick while the last one is still running. | Note what each tool offers (concurrency limits). Single-flight is allowed as a documented improvement. |
 | Q-17 | The retry counters default to -1, so `*_retry < 5` allows 6 attempts, not 5 | Keep. The schema supplies it ([D-018](../decisions.md)). F-7 expects 6. |
 | Q-18 | SND-1 joins `telegram_chat` on `email_category` only, but that table's primary key is `(email_category, environment)`. A second environment makes the destination chat arbitrary. | Keep the SQL. Seed one row per category, as production presumably does (to be confirmed). |
+| Q-19 | Duplicates that arrive in the **same ingest batch** get the same `email_consumed_at`, so `rank()` ties, DUP-1 deletes neither, and both are summarized and sent. | Keep (parity). F-5 must ingest the duplicate in a later run to exercise DUP-1. |
 
 ---
 

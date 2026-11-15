@@ -147,3 +147,40 @@ Three pieces aren't in the output, so they stay as they were:
 None of them changes a workflow output, except that the locale can affect `initcap()` on non-ASCII
 text (G-9). The golden generator now reads a fresh row's defaults from app-db instead of
 hard-coding them, so the vectors follow the schema.
+
+### D-019: Behavior details from the n8n source, and how both tools handle them · `accepted`
+
+Building the Kestra flows (Phase 3) meant reading the n8n 2.40.3 code behind each node. These
+findings correct or extend the spec. The JSON and the n8n runtime win over the spec, and every
+choice below applies to **both** tools.
+
+**Corrections and additions, verified in the n8n source at tag `n8n@2.40.3`:**
+
+- **Unhandled errors end the run.** Only `ai-summary` (SUM-5) and `telegram-send-summary-markdown`
+  (SND-3) have `onError: continueErrorOutput`. If any other node fails, n8n stops the execution,
+  and the later branches don't run that tick. The spec said the opposite. Fixed.
+- **SUM-7a runs before SUM-7b** (canvas order), so a failed alert still records the error.
+- **Telegram node v1.2** sends `disable_web_page_preview: true` on every `sendMessage`, and
+  appends a "sent automatically with n8n" footer in HTML or Markdown mode, which covers the
+  SUM-7b alert but not the MarkdownV2 summary.
+- **SND-5 `sent_status`** is `error.description ?? error.message` of n8n's `NodeApiError`. For a
+  Telegram error response that's Telegram's `description` field, as golden.md assumed.
+- **The model nodes set no sampling options** (`options: {}`), so Gemini's defaults apply.
+- **One ingest batch is one transaction.** The Postgres node v2.6 defaults to
+  `queryBatching: 'single'`, so emails read together share `email_consumed_at`, and duplicates
+  within a batch tie in DUP-1's `rank()` (new quirk Q-19; F-5 updated).
+
+**Choices, the same in both tools:**
+
+- **Ingest polls every minute** (Q-8). n8n used IMAP IDLE.
+- **The n8n attribution footer is left out of the alert** (deviation). It's n8n branding with the
+  n8n instance ID in a link, not workflow logic.
+- **The alert's `$now` uses America/Sao_Paulo.** The workflows don't set a time zone, so n8n used
+  its instance setting, which isn't in the export. GMT-3 matches the newsletters' date logic and
+  the golden vector's frozen `$now`. The owner can correct this.
+- **Retries inside the model client aren't part of parity.** n8n's LangChain client retries a
+  model up to 6 times with backoff (not on 400 to 409) before falling back. Each tool keeps its
+  own client's default, and the comparison records it (C7, C10).
+- **Error texts aren't compared byte for byte** where they come from a client library: SUM-7a's
+  `summary_status`, the alert's `{error}`, and SND-5's `sent_status` after a network failure.
+  Telegram's `description` (SND-5 after a rejection) is compared.
