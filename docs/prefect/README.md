@@ -170,7 +170,8 @@ Compose 5.7.0), schedules paused for the scenario runs.
 
 End-to-end latency of a manually triggered run is 5 to 15 s, almost all of it the worker's 10 s
 polling interval and the subprocess start; the tasks of a tick take about 0.5 s together.
-The full parity suite (F-1 to F-7 against both tools) is Phase 5.
+The parity suite ([parity.md](../parity.md)) now runs these checks, plus F-4 and F-7, automatically:
+`make parity-prefect` passed 13 of 13 on 2026-11-15.
 
 ## Known differences from n8n
 

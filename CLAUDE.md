@@ -132,5 +132,6 @@ Start every session by reading, in this order:
 | `make prefect-run [FLOW=email-ingest]` | Run a deployment now from the host, wait, print task states and warning/error logs (default `email-summarize-send`) | Phase 4 |
 | `make prefect-ps` / `make prefect-logs` | Prefect stack status / follow the worker log | Phase 4 |
 | `make test-prefect` | pytest for the Prefect package: golden vectors, decoders, verbatim SQL, ING-1 against GreenMail when it's up | Phase 4 |
+| `make parity-kestra` / `make parity-prefect` | Start the stack if needed, pause its schedules, run the parity suite (`tests/parity`), resume the schedules. `PARITY_ARGS` goes to pytest (`-k f2`, `--results PATH`) | Phase 5 |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

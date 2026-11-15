@@ -1,0 +1,29 @@
+[project]
+name = "parity"
+version = "0.1.0"
+description = "Tool-agnostic end-to-end parity suite for the Kestra and Prefect stacks (workflow-experiment, Phase 5)"
+requires-python = "==3.12.*"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "httpx>=0.28.1,<1",  # both tools' REST APIs and the mocks' control API
+    "psycopg[binary]==3.3.9",  # app-db on the host port
+    "ruff>=0.17.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+extend = "../../ruff.toml"
+
+[tool.ruff.lint.extend-per-file-ignores]
+# `docker` with fixed argument lists: stop/start a service (F-4, SND-5 outage), read Docker's memory
+"harness/world.py" = ["S603", "S607"]
+"conftest.py" = ["S603", "S607"]

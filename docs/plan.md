@@ -49,7 +49,7 @@ Done 2026-11-14. Details are in [golden.md](golden.md).
 
 ## Phase 3: Kestra (`kestra/`)
 
-Done 2026-11-14, apart from the formal parity suite (Phase 5). Details are in [kestra/README.md](kestra/README.md).
+Done 2026-11-14. Details are in [kestra/README.md](kestra/README.md).
 
 - [x] `kestra/compose.yaml`: Kestra OSS 2.0.10 (custom image from `v2.0.10-no-plugins` with 3 pinned plugins) and its own Postgres, plus the shared infra via `include`
 - [x] Flow `email-ingest`: ING-1 to ING-4 (polling every minute, D-019)
@@ -58,11 +58,11 @@ Done 2026-11-14, apart from the formal parity suite (Phase 5). Details are in [k
 - [x] Flows and namespace files deployed from the repo through the REST API (`make kestra-deploy`, deletes flows not in the repo)
 - [x] `docs/kestra/`: [README.md](kestra/README.md), [node-mapping.md](kestra/node-mapping.md), [effort-log.md](kestra/effort-log.md)
 - **Verified:** `make test-kestra`: 142 passed (all golden vectors for ING-2 to SND-2, ING-1 against GreenMail for all 9 fixtures). `make lint`: clean. Against the running stack: the 9 ingested rows equal the ING-4 vector byte for byte; a happy tick sends the SND-2 vector's message and stores the expected row; F-1, F-2 (alert equals the SUM-7b vector), F-3, an SND-3 network error, Q-15 and Q-19 behave as n8n does. See the README's verification table.
-- [ ] Parity scenarios as an automated suite: Phase 5
+- [x] Parity scenarios as an automated suite: 13 of 13 pass (Phase 5, [parity.md](parity.md))
 
 ## Phase 4: Prefect (`prefect/`)
 
-Done 2026-11-15, apart from the formal parity suite (Phase 5). Details are in [prefect/README.md](prefect/README.md).
+Done 2026-11-15. Details are in [prefect/README.md](prefect/README.md).
 
 - [x] `prefect/compose.yaml`: Prefect OSS 3.9.3 server (official image, pinned by digest) with its own Postgres, a process worker (`wfx-prefect:local`, the package installed from `uv.lock`), plus the shared infra via `include`
 - [x] Python package `prefect/src/email_summarizer/` with flows `email-ingest` and `email-summarize-send`; each n8n node is a task with the node's name; n8n's error semantics (D-019)
@@ -71,17 +71,19 @@ Done 2026-11-15, apart from the formal parity suite (Phase 5). Details are in [p
 - [x] Unit tests (pytest) against the golden vectors, runnable without the server (`make test-prefect`)
 - [x] `docs/prefect/`: [README.md](prefect/README.md), [node-mapping.md](prefect/node-mapping.md), [effort-log.md](prefect/effort-log.md)
 - **Verified:** `make test-prefect`: 128 passed (all golden vectors for ING-2 to SND-2 and SUM-7b, ING-1 on the fixture files and against GreenMail for all 9 fixtures, verbatim SQL). `make lint`: clean. `make prefect-up` from a clean state: 21 s. Against the running stack: the 9 ingested rows equal the ING-4 vector byte for byte; a happy tick passes 22 checks against the SUM-4 and SND-2 vectors; F-1, F-2 (alert equals the SUM-7b vector), F-3, an SND-3 network error, Q-15, F-5, F-6 and the ingest concurrency limit behave as n8n does; the scheduled runs work with no manual trigger. See the README's verification table.
-- [ ] Parity scenarios as an automated suite: Phase 5
+- [x] Parity scenarios as an automated suite: 13 of 13 pass (Phase 5, [parity.md](parity.md))
 
 > Phases 3 and 4 are independent. Neither implementation may copy logic from the other. Both port from the spec and the golden vectors.
 
 ## Phase 5: Parity suite (`tests/parity/`)
 
-- [ ] A tool-agnostic scenario runner: reset the infra, seed the mail, trigger ingest and N ticks
-  through each tool's API, then assert the final `news_email` state and the recorded Telegram calls
-- [ ] Scenarios: happy path, F-1 to F-7 from criteria.md
-- [ ] `make parity-kestra` and `make parity-prefect`
-- **Verify:** both are green, or the failures are documented with requirement IDs
+Done 2026-11-15. Details are in [parity.md](parity.md).
+
+- [x] A tool-agnostic scenario runner: before each test it empties `news_email` and its audit log, the mailbox and both mocks; it seeds mail with IMAP APPEND, triggers ingest and ticks through each tool's REST API, and asserts on the rows, the audit log (one UPDATE per step, the baseline's columns), the Gemini and Telegram calls, the mailbox and the run's outcome. Expected values come from the golden vectors. The only tool-specific code is one HTTP driver per tool (run and wait, pause schedules, cancel leftovers).
+- [x] Scenarios: ingest (2), the happy path over all 9 fixtures, F-1 to F-7, SND-5 without a response, Q-15 with the skipped branches, and the declared schedules: 13 tests
+- [x] `make parity-kestra` and `make parity-prefect` (each starts its stack first; `PARITY_ARGS` goes to pytest)
+- [x] Judging rules that the spec leaves open recorded as [D-020](decisions.md)
+- **Verified:** from a stopped stack, `make parity-kestra` passed 13 of 13 in 3 min 42 s and `make parity-prefect` 13 of 13 in 7 min 54 s, one stack at a time, with no leftover runs to cancel (recorded runs in [comparison/data/](comparison/data/)). Each had also passed one full development run earlier that day. Two deliberate deviations built into the Prefect image (a changed system message, an HTML-escaped alert) made the happy path, F-1 and Q-15 fail; they were then reverted. `make lint`: clean. After the runs, `make kestra-down` and `make prefect-down` left no containers, volumes or networks.
 
 ## Phase 6: Measurements and report (`docs/comparison/`)
 

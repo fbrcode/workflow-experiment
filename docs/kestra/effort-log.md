@@ -73,3 +73,19 @@ spec said branches were independent); the Telegram node's `disable_web_page_prev
 attribution footer; how `sent_status` gets Telegram's description; the LangChain retry policy
 (6 retries with backoff); and single-transaction ingest batches, which make same-batch duplicates
 survive DUP-1 (Q-19).
+
+## 2026-11-15: Parity suite (Phase 5)
+
+`make parity-kestra` passes all 13 scenarios ([parity.md](../parity.md); the recorded run is in
+[comparison/data/](../comparison/data/)). Driving Kestra from the suite took about 75 lines of
+HTTP calls. What the suite showed about Kestra:
+
+| Observation | Detail |
+|---|---|
+| A failed DNS lookup outlives the outage | The image's JVM (OpenJDK 25.0.5) keeps a failed lookup for 10 s (`networkaddress.cache.negative.ttl=10` in `java.security`). Measured over 4 trials (app-db stopped, one tick, app-db restarted and healthy 3.5 s later, then ticks back to back): when the failed tick took 10 s, every run failed with `The connection attempt failed` / `app-db` until 9.8 s after it ended (55 runs in a row), then worked; when it took 20 s, the first run 3.5 s later worked. So the window ends 10 s after the last failed lookup. In the suite's first development session, F-4's recovery tick and the four scenarios after it (each failing in about 0.1 s) all ran inside that window. A real tick comes 10 minutes later, so the suite lets an outage settle for 15 s (D-020). |
+| Telegram unreachable takes 73 to 74 s | With mock-telegram stopped, SND-5 stored `No route to host (connect failed)` after 73 to 74 s (71 s in Phase 3). "No route" means the client still had an address, most likely the JVM's cached lookup from an earlier call (successful lookups are kept 30 s by default). Prefect failed the same call at name resolution. |
+| Database down | The tick failed after 13 to 20 s, with no writes and no calls. |
+| Retries and error text | 3 attempts per model before the fallback or the error path. `summary_status` and the alert's error are the response's whole JSON body (`{"error": {"code": 500, ...}}`), not its message. Both are allowed (D-019). |
+| Run states | `WARNING` when a Gemini call or the Telegram connection failed and the flow carried on; `SUCCESS` when Telegram answered 400 (F-3). The suite counts both as n8n's success (D-020). |
+| Pausing the schedules | `PUT /api/v1/main/triggers/set-disabled` per trigger. Re-enabling without `recoverMissedSchedules` skips the ticks missed meanwhile (stated in the API description), so a parity session doesn't cause a burst of catch-up runs. |
+| Run time | A summarize tick takes 1.5 to 4 s from the API call to the end state; an ingest about 1 s. |

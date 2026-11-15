@@ -4,7 +4,7 @@ A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefe
 as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
 with docker compose, and judged against one behavior spec and one scorecard.
 
-> **Status:** Phases 0 to 4 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, and both implementations, **Kestra** and **Prefect**. The automated parity suite is next. See [docs/plan.md](docs/plan.md).
+> **Status:** Phases 0 to 5 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, both implementations (**Kestra** and **Prefect**), and the parity suite, which both pass (13 of 13 scenarios). Measurements and the final report are next. See [docs/plan.md](docs/plan.md).
 
 ## The workflow under test
 
@@ -44,7 +44,7 @@ docs/         all documentation: spec, plan, decisions, per-tool docs, compariso
 infra/        shared local services: app Postgres, GreenMail, mocks          (done)
 fixtures/     synthetic newsletter emails + generator                        (done)
 scripts/      helper scripts (IMAP seeding)                                  (done)
-tests/        golden vectors from the original n8n code (done) + parity suite (Phase 5)
+tests/        golden vectors from the original n8n code + end-to-end parity suite   (done)
 kestra/       Kestra compose, YAML flows, Python namespace files + tests      (done)
 prefect/      Prefect compose, deployments, Python flows + tests              (done)
 ```
@@ -58,7 +58,7 @@ prefect/      Prefect compose, deployments, Python flows + tests              (d
 
 ## Getting started
 
-The shared infrastructure and both tool stacks run today. The parity suite comes in Phase 5.
+The shared infrastructure, both tool stacks and the parity suite run today.
 
 ```bash
 make infra-up      # Postgres, GreenMail (IMAP), mock Telegram, mock Gemini, all healthy
@@ -93,6 +93,15 @@ make prefect-down
 ```
 
 Details: [docs/prefect/README.md](docs/prefect/README.md).
+
+Parity suite (the same 13 scenarios against either stack, one at a time; it starts the stack if needed):
+
+```bash
+make parity-kestra    # about 4 min from a stopped stack
+make parity-prefect   # about 8 min (each run waits for the worker's 10 s poll)
+```
+
+Details: [docs/parity.md](docs/parity.md).
 
 ## Documentation
 

@@ -1,0 +1,359 @@
+{
+  "date": "2026-11-15T14:53:39+00:00",
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "docker_memory": "7.65 GiB"
+  },
+  "tool": {
+    "name": "prefect",
+    "version": "3.9.3"
+  },
+  "leftover_runs_cancelled": [],
+  "command": "make parity-prefect --results ../../docs/comparison/data/parity-prefect-2026-11-15.json",
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tests": {
+    "test_faults.py::test_f1_primary_model_fails_and_the_fallback_answers": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 4.21
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.83
+        }
+      ],
+      "notes": {
+        "primary_attempts": 1
+      },
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f2_both_models_fail_so_the_error_is_stored_and_alerted": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.55
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.87
+        }
+      ],
+      "notes": {
+        "attempts_per_model": {
+          "gemini-flash-lite-latest": 1,
+          "gemini-2.5-flash": 1
+        },
+        "summary_status": "Mock fault 500 for models/gemini-2.5-flash"
+      },
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f3_telegram_rejects_the_message_so_it_is_summarized_again": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 9.94
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.95
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.63
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_faults.py::test_snd5_telegram_unreachable_is_handled_like_a_rejection": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.39
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.35
+        }
+      ],
+      "notes": {
+        "sent_status": "[Errno -2] Name or service not known"
+      },
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f4_database_down_fails_the_tick_and_the_next_tick_recovers": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.9
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Failed",
+          "outcome": "failed",
+          "seconds": 9.93
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 13.1
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f5_a_duplicate_from_a_later_ingest_is_deleted": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 11.49
+        },
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.54
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 13.08
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.31
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f6_an_empty_queue_calls_nothing_and_writes_nothing": {
+      "runs": [
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.06
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_faults.py::test_f7_a_row_is_left_alone_after_six_failed_attempts": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.85
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 9.92
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 13.07
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.8
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 13.1
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.02
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.93
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.89
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_faults.py::test_q15_an_alert_telegram_rejects_fails_the_tick_and_skips_the_rest": {
+      "runs": [
+        {
+          "flow": "email-summarize-send",
+          "state": "Failed",
+          "outcome": "failed",
+          "seconds": 10.98
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 11.43
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_happy_path.py::test_each_tick_summarizes_and_sends_one_email": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.85
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.87
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.47
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.82
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.56
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.92
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.38
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 7.87
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 10.94
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.92
+        },
+        {
+          "flow": "email-summarize-send",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 12.57
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_ingest.py::test_ingest_inserts_every_fixture_as_n8n_would": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 11.1
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_ingest.py::test_ingest_without_new_mail_changes_nothing": {
+      "runs": [
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 8.38
+        },
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 10.43
+        },
+        {
+          "flow": "email-ingest",
+          "state": "Completed",
+          "outcome": "completed",
+          "seconds": 9.4
+        }
+      ],
+      "notes": {},
+      "outcome": "passed"
+    },
+    "test_schedules.py::test_schedules_match_the_baseline": {
+      "runs": [],
+      "outcome": "passed"
+    }
+  }
+}

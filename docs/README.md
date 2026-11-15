@@ -7,10 +7,12 @@
 | [decisions.md](decisions.md) | Decision log: assumptions, scope, deviations from the baseline |
 | [infra.md](infra.md) | Shared local infra: services, mock APIs and fault injection, fixtures matrix |
 | [golden.md](golden.md) | Golden vectors: provenance, file format, how ports use them, findings G-1 to G-9 |
+| [parity.md](parity.md) | Parity suite: how it runs both stacks, the scenarios, results, and where the tools differ within the contract |
 | [baseline/workflow-spec.md](baseline/workflow-spec.md) | **The contract.** Behavior spec derived from the n8n exports |
 | [baseline/data-model.md](baseline/data-model.md) | The production Postgres schema and what its defaults mean for behavior |
 | [baseline/prod-schema.md](baseline/prod-schema.md) | Owner-provided psql `\d+` output from production, verbatim |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |
+| [comparison/data/](comparison/data/) | Raw evidence with date, host, versions and command: the parity runs now, C2/C3 measurements in Phase 6 |
 | [reference/](reference/) | External material provided by the owner (e.g. the original comparison doc) |
 | [kestra/README.md](kestra/README.md) | Kestra: setup, architecture, versions, verification |
 | [kestra/node-mapping.md](kestra/node-mapping.md) | Kestra construct per n8n node, native or custom |

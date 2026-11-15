@@ -90,3 +90,18 @@ None new. Phase 3 had already corrected the spec from the n8n source (D-019), an
 found nothing that contradicts it. Reading `@n8n/imap`'s `PartData` and `uudecode.js` again
 added one detail the Prefect port now follows: a `UUENCODE` part drops its first line and last
 three before decoding.
+
+## 2026-11-15: Parity suite (Phase 5)
+
+`make parity-prefect` passes all 13 scenarios ([parity.md](../parity.md); the recorded run is in
+[comparison/data/](../comparison/data/)). Driving Prefect from the suite took about 75 lines of
+HTTP calls against the server's REST API, with no Prefect SDK. What the suite showed about Prefect:
+
+| Observation | Detail |
+|---|---|
+| A run orphaned by a worker restart stays `Running` | The suite resumes the schedules when it ends. A scheduled ingest started at 14:35:00.50, and `make prefect-up` replaced the worker container 0.1 s later to install a new image. The run's process died with it, and the server kept the run `Running`; the next session's idle check timed out on it after 5 minutes. Prefect 3.9.3 emits a heartbeat every 180 s by default (`PREFECT_FLOWS_HEARTBEAT_FREQUENCY`), but nothing acts on missing heartbeats until you create an automation. Prefect Cloud has a one-click "unresponsive run detection" policy; self-hosted servers need the automation from the docs ([detect zombie flows](https://www.prefect.io/docs/v3/advanced/detect-zombie-flows)). This stack doesn't configure one; the suite now cancels such leftovers at session start (D-020). Evidence for C12. |
+| Pausing the schedules | `PATCH /api/deployments/{id}/schedules/{schedule_id}` with `{"active": false}` deleted the 68 runs booked ahead at once, so nothing scheduled starts during a session. |
+| Run time | Each run takes 4 to 13 s from the API call to the end state, almost all of it waiting for the worker's 10 s poll, so the suite takes about twice as long as on Kestra. |
+| Failures fail fast | Database down: the tick is `Failed` about 10 s after the trigger, including the poll. Telegram unreachable: SND-5 stored `[Errno -2] Name or service not known`, since the stopped container's name no longer resolves. |
+| Retries and error text | One attempt per model. `summary_status` and the alert's error are the API's message (`Mock fault 500 for models/gemini-2.5-flash`). |
+| Run states | `Completed` whenever n8n's execution would succeed, including handled failures; `Failed` for F-4 and Q-15. |

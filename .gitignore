@@ -20,5 +20,6 @@ __pycache__/
 node_modules/
 
 # Local run artifacts
+tests/parity/results/
 *.log
 tmp/
