@@ -105,3 +105,19 @@ HTTP calls against the server's REST API, with no Prefect SDK. What the suite sh
 | Failures fail fast | Database down: the tick is `Failed` about 10 s after the trigger, including the poll. Telegram unreachable: SND-5 stored `[Errno -2] Name or service not known`, since the stopped container's name no longer resolves. |
 | Retries and error text | One attempt per model. `summary_status` and the alert's error are the API's message (`Mock fault 500 for models/gemini-2.5-flash`). |
 | Run states | `Completed` whenever n8n's execution would succeed, including handled failures; `Failed` for F-4 and Q-15. |
+
+## 2026-11-15: Measurements and screenshots (Phase 6)
+
+The numbers and scores are in [comparison/results.md](../comparison/results.md); the raw data is
+in [comparison/data/](../comparison/data/). What the measurements and the UI walkthrough showed:
+
+| Observation | Detail |
+|---|---|
+| Clean build | With an empty BuildKit builder, the build (base images, the locked dependencies, the mocks) takes 29 s; a clean clone reaches a green run in 85 s, 41 s of it the first start (the worker's polls). |
+| Memory | Server 193 MiB, worker 144 MiB (about 320 MiB while a flow run's process exists), `prefect-db` 80 MiB: 416 MiB at idle, 530 MiB at peak. Idle CPU is about 20% of a core, mostly the worker and the ingest run once a minute. |
+| Speed | A tick runs in 7 to 12 s end to end, almost all of it waiting for the worker's 10 s poll; the same workload took 114 s against Kestra's 21.5 s. |
+| Edit loop | A changed module needs `make prefect-up`: a rebuild, a new worker container and a redeploy, 10 to 20 s. Then a run: 23 s from edit to a sent email. `up --build` also recreates the shared mock containers every time (see [infra.md](../infra.md)). |
+| Two UIs | 3.9 serves a new UI under `/v2` by default, with a "Switch to V1 UI" link. The old UI opens with a community sign-up dialog. |
+| Task data | A task's inputs show as references to upstream task runs, not values. Outputs aren't kept unless result storage is configured: the blocks page shows "Default result storage: Not configured". |
+| Metrics | `/api/metrics` answers 404 by default (after basic auth: it answers 401 without credentials). Run metrics need the separate `prometheus-prefect-exporter`. |
+| UI and the internet | The UI requests a config from Amplitude (`sr-client-cfg.amplitude.com`), images from a CMS CDN and a file from GitHub, although the server runs with `PREFECT_SERVER_ANALYTICS_ENABLED=false`. The screenshot browser blocked them, so block icons show as broken images. |

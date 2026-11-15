@@ -1,0 +1,2045 @@
+{
+  "date": "2026-11-15T16:00:22-03:00",
+  "host": {
+    "os": "macOS 26.6.2",
+    "machine": "arm64",
+    "cpu": "Apple M1 Pro",
+    "memory_gib": 16.0,
+    "docker": "Docker Desktop 4.99.0 (245822), engine 29.9.3",
+    "compose": "5.7.0",
+    "docker_vm": {
+      "cpus": 10,
+      "memory_gib": 7.65,
+      "storage_driver": "overlay2"
+    }
+  },
+  "tool": {
+    "name": "prefect",
+    "version": "3.9.3"
+  },
+  "commit": "63a984c (with uncommitted changes)",
+  "env_file": ".env.example",
+  "command": "make measure-prefect --cold",
+  "protocol": "D-021 in docs/decisions.md",
+  "setup": {
+    "services": {
+      "app-db": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "postgres:18.7-alpine3.24",
+        "built": false
+      },
+      "golden": {
+        "part": "shared infra",
+        "profiles": [
+          "tools"
+        ],
+        "image": "wfx-golden:local",
+        "built": true
+      },
+      "mail": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "greenmail/standalone:2.1.15",
+        "built": false
+      },
+      "mail-seed": {
+        "part": "shared infra",
+        "profiles": [
+          "tools"
+        ],
+        "image": "wfx-mocks:local",
+        "built": true
+      },
+      "mock-gemini": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "wfx-mocks:local",
+        "built": true
+      },
+      "mock-telegram": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "wfx-mocks:local",
+        "built": true
+      },
+      "prefect-db": {
+        "part": "tool",
+        "profiles": [],
+        "image": "postgres:18.7-alpine3.24",
+        "built": false
+      },
+      "prefect-deploy": {
+        "part": "tool",
+        "profiles": [
+          "tools"
+        ],
+        "image": "wfx-prefect:local",
+        "built": false
+      },
+      "prefect-server": {
+        "part": "tool",
+        "profiles": [],
+        "image": "prefecthq/prefect:3.9.3-python3.12@sha256:1f32e854effefa290527f87a0a10346f6f84ce31047d0e3e5a4d4210d6450a30",
+        "built": false
+      },
+      "prefect-worker": {
+        "part": "tool",
+        "profiles": [],
+        "image": "wfx-prefect:local",
+        "built": true
+      }
+    },
+    "always_on": {
+      "tool": 3,
+      "shared infra": 4
+    },
+    "compose_lines": {
+      "prefect/compose.yaml": 107,
+      "infra/compose.yaml": 154
+    },
+    "images": {
+      "images": {
+        "greenmail/standalone:2.1.15": {
+          "mb": 332,
+          "digest": "greenmail/standalone@sha256:309ba544ea482e5d4265d09921cdab07c8dad2cc4481d715c9b8ff5d3f0a149f",
+          "base_of_another": false
+        },
+        "postgres:18.7-alpine3.24": {
+          "mb": 298,
+          "digest": "postgres@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015",
+          "base_of_another": false
+        },
+        "prefecthq/prefect:3.9.3-python3.12@sha256:1f32e854effefa290527f87a0a10346f6f84ce31047d0e3e5a4d4210d6450a30": {
+          "mb": 787,
+          "digest": "prefecthq/prefect@sha256:1f32e854effefa290527f87a0a10346f6f84ce31047d0e3e5a4d4210d6450a30",
+          "base_of_another": true
+        },
+        "wfx-mocks:local": {
+          "mb": 145,
+          "digest": null,
+          "base_of_another": false
+        },
+        "wfx-prefect:local": {
+          "mb": 917,
+          "digest": null,
+          "base_of_another": false
+        }
+      },
+      "total_mb": 2479,
+      "distinct_mb": 1692
+    }
+  },
+  "phases": {
+    "tests": {
+      "started": "2026-11-15T19:00:23+00:00",
+      "result": {
+        "command": "make test-prefect",
+        "wall_s": 1.15,
+        "pytest": [
+          "127 passed, 1 skipped in 0.08s"
+        ]
+      }
+    },
+    "cold": {
+      "started": "2026-11-15T19:00:24+00:00",
+      "result": {
+        "removed_images": [
+          "greenmail/standalone:2.1.15",
+          "postgres:18.7-alpine3.24",
+          "prefecthq/prefect:3.9.3-python3.12@sha256:1f32e854effefa290527f87a0a10346f6f84ce31047d0e3e5a4d4210d6450a30",
+          "python:3.12.16-slim-trixie",
+          "wfx-mocks:local",
+          "wfx-prefect:local"
+        ],
+        "builder": "moby/buildkit:v0.34.1",
+        "pull_s": 14.85,
+        "build_s": 29.04,
+        "first_start": {
+          "down_s": 0.12,
+          "up_wait_s": 16.34,
+          "healthy_after_s": {
+            "app-db": 5.7,
+            "mail": 5.7,
+            "prefect-db": 5.7,
+            "mock-gemini": 8.2,
+            "mock-telegram": 8.2,
+            "prefect-server": 13.0,
+            "prefect-worker": 16.1
+          },
+          "deploy_s": 4.52,
+          "make_up_s": 20.95,
+          "seed_s": 0.9,
+          "ingest_s": 13.38,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest run intelligent-hoatzin (f0bdbd7e-a261-4ec8-ae33-0eb87de7ca60): Completed in 12.4s"
+          ],
+          "tick_s": 6.06,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send run significant-bat (e84b90ee-40da-45e4-ad7b-fc025560c2aa): Completed in 5.2s"
+          ],
+          "first_green_s": 41.29,
+          "telegram_messages": 1,
+          "green": true
+        },
+        "total_s": 85.18
+      }
+    },
+    "starts": {
+      "started": "2026-11-15T19:01:57+00:00",
+      "result": [
+        {
+          "down_s": 4.15,
+          "up_wait_s": 15.99,
+          "healthy_after_s": {
+            "app-db": 5.0,
+            "mail": 5.6,
+            "prefect-db": 5.6,
+            "mock-gemini": 7.4,
+            "mock-telegram": 7.4,
+            "prefect-server": 12.3,
+            "prefect-worker": 16.0
+          },
+          "deploy_s": 4.29,
+          "make_up_s": 20.37,
+          "seed_s": 0.9,
+          "ingest_s": 6.16,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest run private-ringtail (cbe941ff-f9da-4f9e-a57a-09729fb25fac): Completed in 5.2s"
+          ],
+          "tick_s": 6.02,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send run lush-wolverine (e9c29875-a37a-4441-87b0-d6330be6f609): Completed in 5.1s"
+          ],
+          "first_green_s": 33.44,
+          "telegram_messages": 1,
+          "green": true
+        },
+        {
+          "down_s": 4.01,
+          "up_wait_s": 15.88,
+          "healthy_after_s": {
+            "mail": 5.2,
+            "app-db": 5.8,
+            "prefect-db": 5.8,
+            "mock-gemini": 7.6,
+            "mock-telegram": 7.6,
+            "prefect-server": 12.5,
+            "prefect-worker": 15.5
+          },
+          "deploy_s": 4.53,
+          "make_up_s": 20.51,
+          "seed_s": 0.97,
+          "ingest_s": 6.15,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest run rigorous-panda (ef991657-fb42-46de-8d04-88324574841f): Completed in 5.2s"
+          ],
+          "tick_s": 11.11,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send run huge-potoo (172b931e-c04b-4c9e-af32-eefcd306ca64): Completed in 10.2s"
+          ],
+          "first_green_s": 38.75,
+          "telegram_messages": 1,
+          "green": true
+        },
+        {
+          "down_s": 4.08,
+          "up_wait_s": 16.07,
+          "healthy_after_s": {
+            "app-db": 5.2,
+            "mail": 5.8,
+            "prefect-db": 5.8,
+            "mock-gemini": 7.6,
+            "mock-telegram": 7.6,
+            "prefect-server": 12.5,
+            "prefect-worker": 16.2
+          },
+          "deploy_s": 4.31,
+          "make_up_s": 20.49,
+          "seed_s": 0.91,
+          "ingest_s": 11.19,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest run cunning-hoatzin (4f7a4374-391a-43ce-8c18-4d18e5fb26f8): Completed in 10.2s"
+          ],
+          "tick_s": 6.04,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send run sympathetic-fennec (d8a79eed-2dbe-4468-85fe-2eaebe49c1f1): Completed in 5.2s"
+          ],
+          "first_green_s": 38.63,
+          "telegram_messages": 1,
+          "green": true
+        }
+      ]
+    },
+    "idle": {
+      "started": "2026-11-15T19:04:00+00:00",
+      "result": {
+        "start": {
+          "down_s": 4.01,
+          "up_wait_s": 16.18,
+          "healthy_after_s": {
+            "app-db": 5.7,
+            "mail": 5.7,
+            "prefect-db": 5.7,
+            "mock-gemini": 7.5,
+            "mock-telegram": 8.1,
+            "prefect-server": 12.4,
+            "prefect-worker": 16.0
+          },
+          "deploy_s": 4.5,
+          "make_up_s": 20.78
+        },
+        "waited_s": 300,
+        "frames": 117,
+        "seconds": 57.9,
+        "groups": {
+          "tool": {
+            "cpu_percent": {
+              "mean": 20.9,
+              "max": 212.3
+            },
+            "memory_mib": {
+              "mean": 416.1,
+              "max": 593.8
+            }
+          },
+          "shared infra": {
+            "cpu_percent": {
+              "mean": 9.7,
+              "max": 44.3
+            },
+            "memory_mib": {
+              "mean": 209.6,
+              "max": 228.0
+            }
+          },
+          "all": {
+            "cpu_percent": {
+              "mean": 30.5,
+              "max": 215.2
+            },
+            "memory_mib": {
+              "mean": 625.7,
+              "max": 816.0
+            }
+          }
+        },
+        "containers": {
+          "wfx-prefect-app-db-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 1.0,
+              "max": 4.4
+            },
+            "memory_mib": {
+              "mean": 31.9,
+              "max": 37.5
+            }
+          },
+          "wfx-prefect-mail-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 1.2,
+              "max": 10.7
+            },
+            "memory_mib": {
+              "mean": 139.9,
+              "max": 149.9
+            }
+          },
+          "wfx-prefect-mock-gemini-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 3.7,
+              "max": 20.1
+            },
+            "memory_mib": {
+              "mean": 19.1,
+              "max": 26.4
+            }
+          },
+          "wfx-prefect-mock-telegram-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 3.8,
+              "max": 20.6
+            },
+            "memory_mib": {
+              "mean": 18.6,
+              "max": 26.9
+            }
+          },
+          "wfx-prefect-prefect-db-1": {
+            "part": "tool",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 1.9,
+              "max": 17.2
+            },
+            "memory_mib": {
+              "mean": 79.9,
+              "max": 82.5
+            }
+          },
+          "wfx-prefect-prefect-server-1": {
+            "part": "tool",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 7.2,
+              "max": 27.2
+            },
+            "memory_mib": {
+              "mean": 192.7,
+              "max": 193.8
+            }
+          },
+          "wfx-prefect-prefect-worker-1": {
+            "part": "tool",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 11.8,
+              "max": 198.9
+            },
+            "memory_mib": {
+              "mean": 143.5,
+              "max": 319.6
+            }
+          }
+        }
+      }
+    },
+    "workload": {
+      "started": "2026-11-15T19:10:25+00:00",
+      "result": {
+        "command": "cd tests/parity && uv run --quiet pytest --tool prefect -k test_each_tick_summarizes_and_sends_one_email",
+        "seconds": 113.7,
+        "parity": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "runs": [
+          {
+            "flow": "email-ingest",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 11.99
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 9.97
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 8.03
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 12.06
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 11.57
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 8.88
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 11.53
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 10.97
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 7.32
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 9.45
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "Completed",
+            "outcome": "completed",
+            "seconds": 10.98
+          }
+        ],
+        "frames": 229,
+        "groups": {
+          "tool": {
+            "cpu_percent": {
+              "mean": 36.8,
+              "max": 130.1
+            },
+            "memory_mib": {
+              "mean": 422.4,
+              "max": 530.4
+            }
+          },
+          "shared infra": {
+            "cpu_percent": {
+              "mean": 10.2,
+              "max": 47.8
+            },
+            "memory_mib": {
+              "mean": 216.3,
+              "max": 239.8
+            }
+          },
+          "all": {
+            "cpu_percent": {
+              "mean": 47.0,
+              "max": 174.7
+            },
+            "memory_mib": {
+              "mean": 638.6,
+              "max": 754.5
+            }
+          }
+        },
+        "containers": {
+          "wfx-prefect-app-db-1": {
+            "part": "shared infra",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 1.4,
+              "max": 6.0
+            },
+            "memory_mib": {
+              "mean": 33.1,
+              "max": 33.9
+            }
+          },
+          "wfx-prefect-mail-1": {
+            "part": "shared infra",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 1.0,
+              "max": 16.1
+            },
+            "memory_mib": {
+              "mean": 144.9,
+              "max": 145.7
+            }
+          },
+          "wfx-prefect-mock-gemini-1": {
+            "part": "shared infra",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 3.9,
+              "max": 22.9
+            },
+            "memory_mib": {
+              "mean": 19.4,
+              "max": 31.3
+            }
+          },
+          "wfx-prefect-mock-telegram-1": {
+            "part": "shared infra",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 3.9,
+              "max": 22.8
+            },
+            "memory_mib": {
+              "mean": 18.8,
+              "max": 31.0
+            }
+          },
+          "wfx-prefect-prefect-db-1": {
+            "part": "tool",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 2.2,
+              "max": 9.5
+            },
+            "memory_mib": {
+              "mean": 86.9,
+              "max": 99.6
+            }
+          },
+          "wfx-prefect-prefect-server-1": {
+            "part": "tool",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 11.3,
+              "max": 42.6
+            },
+            "memory_mib": {
+              "mean": 195.4,
+              "max": 204.7
+            }
+          },
+          "wfx-prefect-prefect-worker-1": {
+            "part": "tool",
+            "frames": 229,
+            "cpu_percent": {
+              "mean": 23.4,
+              "max": 105.5
+            },
+            "memory_mib": {
+              "mean": 140.0,
+              "max": 240.3
+            }
+          }
+        },
+        "series": {
+          "columns": [
+            "s",
+            "tool_mib",
+            "all_mib",
+            "tool_cpu_percent"
+          ],
+          "points": [
+            [
+              0.0,
+              390,
+              602,
+              2
+            ],
+            [
+              0.5,
+              390,
+              602,
+              2
+            ],
+            [
+              1.0,
+              389,
+              604,
+              10
+            ],
+            [
+              1.5,
+              389,
+              604,
+              10
+            ],
+            [
+              2.0,
+              390,
+              605,
+              28
+            ],
+            [
+              2.5,
+              390,
+              605,
+              28
+            ],
+            [
+              3.0,
+              390,
+              606,
+              6
+            ],
+            [
+              3.5,
+              390,
+              606,
+              6
+            ],
+            [
+              4.0,
+              389,
+              605,
+              5
+            ],
+            [
+              4.5,
+              389,
+              605,
+              5
+            ],
+            [
+              5.0,
+              391,
+              606,
+              23
+            ],
+            [
+              5.5,
+              391,
+              606,
+              23
+            ],
+            [
+              6.0,
+              390,
+              605,
+              6
+            ],
+            [
+              6.5,
+              390,
+              605,
+              6
+            ],
+            [
+              7.0,
+              390,
+              626,
+              10
+            ],
+            [
+              7.5,
+              390,
+              626,
+              10
+            ],
+            [
+              8.0,
+              390,
+              605,
+              21
+            ],
+            [
+              8.5,
+              390,
+              605,
+              21
+            ],
+            [
+              9.0,
+              390,
+              605,
+              7
+            ],
+            [
+              9.5,
+              390,
+              605,
+              7
+            ],
+            [
+              10.0,
+              451,
+              665,
+              75
+            ],
+            [
+              10.5,
+              451,
+              665,
+              75
+            ],
+            [
+              11.0,
+              480,
+              694,
+              118
+            ],
+            [
+              11.5,
+              480,
+              694,
+              118
+            ],
+            [
+              12.0,
+              504,
+              718,
+              56
+            ],
+            [
+              12.5,
+              504,
+              718,
+              56
+            ],
+            [
+              13.0,
+              393,
+              607,
+              45
+            ],
+            [
+              13.5,
+              393,
+              607,
+              45
+            ],
+            [
+              14.0,
+              394,
+              608,
+              20
+            ],
+            [
+              14.5,
+              394,
+              608,
+              20
+            ],
+            [
+              15.0,
+              394,
+              608,
+              11
+            ],
+            [
+              15.5,
+              394,
+              608,
+              11
+            ],
+            [
+              16.0,
+              394,
+              609,
+              5
+            ],
+            [
+              16.5,
+              394,
+              609,
+              5
+            ],
+            [
+              17.0,
+              393,
+              608,
+              21
+            ],
+            [
+              17.5,
+              393,
+              608,
+              21
+            ],
+            [
+              18.0,
+              395,
+              610,
+              8
+            ],
+            [
+              18.5,
+              395,
+              610,
+              8
+            ],
+            [
+              19.0,
+              393,
+              609,
+              7
+            ],
+            [
+              19.5,
+              393,
+              609,
+              7
+            ],
+            [
+              20.0,
+              426,
+              642,
+              48
+            ],
+            [
+              20.5,
+              426,
+              642,
+              48
+            ],
+            [
+              21.0,
+              447,
+              663,
+              104
+            ],
+            [
+              21.5,
+              447,
+              663,
+              104
+            ],
+            [
+              22.0,
+              514,
+              729,
+              117
+            ],
+            [
+              22.5,
+              514,
+              729,
+              117
+            ],
+            [
+              23.0,
+              412,
+              628,
+              88
+            ],
+            [
+              23.5,
+              412,
+              628,
+              88
+            ],
+            [
+              24.0,
+              398,
+              614,
+              13
+            ],
+            [
+              24.5,
+              398,
+              614,
+              13
+            ],
+            [
+              25.0,
+              398,
+              614,
+              9
+            ],
+            [
+              25.5,
+              398,
+              614,
+              9
+            ],
+            [
+              26.0,
+              407,
+              623,
+              10
+            ],
+            [
+              26.5,
+              407,
+              623,
+              10
+            ],
+            [
+              27.0,
+              398,
+              614,
+              16
+            ],
+            [
+              27.5,
+              398,
+              614,
+              16
+            ],
+            [
+              28.0,
+              418,
+              633,
+              32
+            ],
+            [
+              28.5,
+              418,
+              633,
+              32
+            ],
+            [
+              29.0,
+              460,
+              675,
+              105
+            ],
+            [
+              29.5,
+              460,
+              675,
+              105
+            ],
+            [
+              30.0,
+              516,
+              731,
+              120
+            ],
+            [
+              30.5,
+              516,
+              731,
+              120
+            ],
+            [
+              31.0,
+              400,
+              616,
+              34
+            ],
+            [
+              31.5,
+              400,
+              616,
+              34
+            ],
+            [
+              32.0,
+              401,
+              617,
+              9
+            ],
+            [
+              32.5,
+              401,
+              617,
+              9
+            ],
+            [
+              33.0,
+              401,
+              616,
+              16
+            ],
+            [
+              33.5,
+              400,
+              616,
+              23
+            ],
+            [
+              34.0,
+              400,
+              616,
+              23
+            ],
+            [
+              34.5,
+              400,
+              616,
+              6
+            ],
+            [
+              35.0,
+              400,
+              616,
+              6
+            ],
+            [
+              35.5,
+              400,
+              616,
+              12
+            ],
+            [
+              36.0,
+              400,
+              616,
+              12
+            ],
+            [
+              36.5,
+              401,
+              616,
+              21
+            ],
+            [
+              37.0,
+              401,
+              616,
+              21
+            ],
+            [
+              37.5,
+              400,
+              616,
+              8
+            ],
+            [
+              38.0,
+              400,
+              616,
+              8
+            ],
+            [
+              38.5,
+              401,
+              616,
+              9
+            ],
+            [
+              39.0,
+              401,
+              616,
+              9
+            ],
+            [
+              39.5,
+              401,
+              616,
+              18
+            ],
+            [
+              40.0,
+              401,
+              616,
+              18
+            ],
+            [
+              40.5,
+              453,
+              668,
+              59
+            ],
+            [
+              41.0,
+              453,
+              668,
+              59
+            ],
+            [
+              41.5,
+              483,
+              698,
+              105
+            ],
+            [
+              42.0,
+              483,
+              698,
+              105
+            ],
+            [
+              42.5,
+              520,
+              734,
+              121
+            ],
+            [
+              43.0,
+              520,
+              734,
+              121
+            ],
+            [
+              43.5,
+              403,
+              619,
+              17
+            ],
+            [
+              44.0,
+              403,
+              619,
+              17
+            ],
+            [
+              44.5,
+              403,
+              619,
+              11
+            ],
+            [
+              45.0,
+              403,
+              619,
+              11
+            ],
+            [
+              45.5,
+              403,
+              618,
+              20
+            ],
+            [
+              46.0,
+              403,
+              618,
+              20
+            ],
+            [
+              46.5,
+              403,
+              618,
+              7
+            ],
+            [
+              47.0,
+              403,
+              618,
+              7
+            ],
+            [
+              47.5,
+              403,
+              618,
+              9
+            ],
+            [
+              48.0,
+              403,
+              618,
+              9
+            ],
+            [
+              48.5,
+              402,
+              642,
+              24
+            ],
+            [
+              49.0,
+              402,
+              642,
+              24
+            ],
+            [
+              49.5,
+              402,
+              619,
+              5
+            ],
+            [
+              50.0,
+              402,
+              619,
+              5
+            ],
+            [
+              50.5,
+              403,
+              619,
+              11
+            ],
+            [
+              51.0,
+              403,
+              619,
+              11
+            ],
+            [
+              51.5,
+              419,
+              635,
+              42
+            ],
+            [
+              52.0,
+              419,
+              635,
+              42
+            ],
+            [
+              52.5,
+              462,
+              676,
+              105
+            ],
+            [
+              53.0,
+              462,
+              676,
+              105
+            ],
+            [
+              53.5,
+              520,
+              755,
+              118
+            ],
+            [
+              54.0,
+              520,
+              755,
+              118
+            ],
+            [
+              54.5,
+              404,
+              620,
+              49
+            ],
+            [
+              55.0,
+              404,
+              620,
+              49
+            ],
+            [
+              55.5,
+              404,
+              620,
+              7
+            ],
+            [
+              56.0,
+              404,
+              620,
+              7
+            ],
+            [
+              56.5,
+              405,
+              621,
+              10
+            ],
+            [
+              57.0,
+              405,
+              621,
+              10
+            ],
+            [
+              57.5,
+              405,
+              621,
+              10
+            ],
+            [
+              58.0,
+              405,
+              621,
+              19
+            ],
+            [
+              58.5,
+              405,
+              621,
+              19
+            ],
+            [
+              59.0,
+              405,
+              621,
+              9
+            ],
+            [
+              59.5,
+              405,
+              621,
+              9
+            ],
+            [
+              60.0,
+              404,
+              621,
+              7
+            ],
+            [
+              60.5,
+              404,
+              621,
+              7
+            ],
+            [
+              61.0,
+              427,
+              642,
+              46
+            ],
+            [
+              61.5,
+              427,
+              642,
+              46
+            ],
+            [
+              62.0,
+              463,
+              679,
+              103
+            ],
+            [
+              62.5,
+              463,
+              679,
+              103
+            ],
+            [
+              63.0,
+              521,
+              737,
+              120
+            ],
+            [
+              63.5,
+              521,
+              737,
+              120
+            ],
+            [
+              64.0,
+              405,
+              621,
+              55
+            ],
+            [
+              64.5,
+              405,
+              621,
+              55
+            ],
+            [
+              65.0,
+              404,
+              621,
+              7
+            ],
+            [
+              65.5,
+              404,
+              621,
+              7
+            ],
+            [
+              66.0,
+              405,
+              621,
+              11
+            ],
+            [
+              66.5,
+              405,
+              621,
+              11
+            ],
+            [
+              67.0,
+              405,
+              621,
+              21
+            ],
+            [
+              67.5,
+              405,
+              621,
+              21
+            ],
+            [
+              68.0,
+              405,
+              621,
+              7
+            ],
+            [
+              68.5,
+              405,
+              621,
+              7
+            ],
+            [
+              69.0,
+              405,
+              621,
+              11
+            ],
+            [
+              69.5,
+              405,
+              621,
+              11
+            ],
+            [
+              70.0,
+              405,
+              621,
+              17
+            ],
+            [
+              70.5,
+              405,
+              621,
+              17
+            ],
+            [
+              71.0,
+              404,
+              621,
+              6
+            ],
+            [
+              71.5,
+              404,
+              621,
+              6
+            ],
+            [
+              72.0,
+              405,
+              622,
+              9
+            ],
+            [
+              72.5,
+              405,
+              622,
+              9
+            ],
+            [
+              73.0,
+              441,
+              657,
+              122
+            ],
+            [
+              73.5,
+              441,
+              657,
+              122
+            ],
+            [
+              74.0,
+              524,
+              740,
+              113
+            ],
+            [
+              74.5,
+              524,
+              740,
+              113
+            ],
+            [
+              75.0,
+              408,
+              625,
+              64
+            ],
+            [
+              75.5,
+              408,
+              625,
+              64
+            ],
+            [
+              76.0,
+              408,
+              624,
+              20
+            ],
+            [
+              76.5,
+              408,
+              624,
+              20
+            ],
+            [
+              77.0,
+              408,
+              624,
+              6
+            ],
+            [
+              77.5,
+              408,
+              624,
+              6
+            ],
+            [
+              78.0,
+              408,
+              625,
+              9
+            ],
+            [
+              78.5,
+              408,
+              625,
+              9
+            ],
+            [
+              79.0,
+              409,
+              625,
+              21
+            ],
+            [
+              79.5,
+              409,
+              625,
+              21
+            ],
+            [
+              80.0,
+              409,
+              626,
+              7
+            ],
+            [
+              80.5,
+              409,
+              626,
+              7
+            ],
+            [
+              81.0,
+              409,
+              625,
+              8
+            ],
+            [
+              81.5,
+              409,
+              625,
+              8
+            ],
+            [
+              82.0,
+              408,
+              624,
+              25
+            ],
+            [
+              82.5,
+              408,
+              624,
+              25
+            ],
+            [
+              83.0,
+              408,
+              624,
+              25
+            ],
+            [
+              83.5,
+              418,
+              635,
+              25
+            ],
+            [
+              84.0,
+              418,
+              635,
+              25
+            ],
+            [
+              84.5,
+              465,
+              681,
+              106
+            ],
+            [
+              85.0,
+              465,
+              681,
+              106
+            ],
+            [
+              85.5,
+              527,
+              742,
+              130
+            ],
+            [
+              86.0,
+              527,
+              742,
+              130
+            ],
+            [
+              86.5,
+              410,
+              626,
+              41
+            ],
+            [
+              87.0,
+              410,
+              626,
+              41
+            ],
+            [
+              87.5,
+              411,
+              627,
+              10
+            ],
+            [
+              88.0,
+              411,
+              627,
+              10
+            ],
+            [
+              88.5,
+              411,
+              627,
+              20
+            ],
+            [
+              89.0,
+              411,
+              627,
+              20
+            ],
+            [
+              89.5,
+              411,
+              627,
+              8
+            ],
+            [
+              90.0,
+              411,
+              627,
+              8
+            ],
+            [
+              90.5,
+              411,
+              627,
+              11
+            ],
+            [
+              91.0,
+              411,
+              627,
+              11
+            ],
+            [
+              91.5,
+              469,
+              684,
+              76
+            ],
+            [
+              92.0,
+              469,
+              684,
+              76
+            ],
+            [
+              92.5,
+              503,
+              719,
+              103
+            ],
+            [
+              93.0,
+              503,
+              719,
+              103
+            ],
+            [
+              93.5,
+              413,
+              628,
+              101
+            ],
+            [
+              94.0,
+              413,
+              628,
+              101
+            ],
+            [
+              94.5,
+              412,
+              628,
+              19
+            ],
+            [
+              95.0,
+              412,
+              628,
+              19
+            ],
+            [
+              95.5,
+              412,
+              645,
+              10
+            ],
+            [
+              96.0,
+              412,
+              645,
+              10
+            ],
+            [
+              96.5,
+              412,
+              628,
+              7
+            ],
+            [
+              97.0,
+              412,
+              628,
+              7
+            ],
+            [
+              97.5,
+              413,
+              628,
+              22
+            ],
+            [
+              98.0,
+              413,
+              628,
+              22
+            ],
+            [
+              98.5,
+              413,
+              629,
+              6
+            ],
+            [
+              99.0,
+              413,
+              629,
+              6
+            ],
+            [
+              99.5,
+              414,
+              629,
+              12
+            ],
+            [
+              100.0,
+              414,
+              629,
+              12
+            ],
+            [
+              100.5,
+              461,
+              676,
+              65
+            ],
+            [
+              101.0,
+              461,
+              676,
+              65
+            ],
+            [
+              101.5,
+              475,
+              692,
+              104
+            ],
+            [
+              102.0,
+              475,
+              692,
+              104
+            ],
+            [
+              102.5,
+              530,
+              747,
+              109
+            ],
+            [
+              103.0,
+              530,
+              747,
+              109
+            ],
+            [
+              103.5,
+              415,
+              630,
+              46
+            ],
+            [
+              104.0,
+              415,
+              630,
+              46
+            ],
+            [
+              104.5,
+              414,
+              629,
+              10
+            ],
+            [
+              105.0,
+              414,
+              629,
+              10
+            ],
+            [
+              105.5,
+              415,
+              630,
+              10
+            ],
+            [
+              106.0,
+              415,
+              630,
+              10
+            ],
+            [
+              106.5,
+              415,
+              630,
+              19
+            ],
+            [
+              107.0,
+              415,
+              630,
+              19
+            ],
+            [
+              107.5,
+              414,
+              630,
+              7
+            ],
+            [
+              108.0,
+              414,
+              630,
+              7
+            ],
+            [
+              108.5,
+              414,
+              629,
+              7
+            ],
+            [
+              109.0,
+              414,
+              629,
+              11
+            ],
+            [
+              109.5,
+              414,
+              629,
+              11
+            ],
+            [
+              110.0,
+              414,
+              629,
+              21
+            ],
+            [
+              110.5,
+              414,
+              629,
+              21
+            ],
+            [
+              111.0,
+              420,
+              635,
+              11
+            ],
+            [
+              111.5,
+              420,
+              635,
+              11
+            ],
+            [
+              112.0,
+              459,
+              674,
+              48
+            ],
+            [
+              112.5,
+              459,
+              674,
+              48
+            ],
+            [
+              113.0,
+              484,
+              699,
+              115
+            ],
+            [
+              113.5,
+              484,
+              699,
+              115
+            ],
+            [
+              113.7,
+              422,
+              637,
+              108
+            ]
+          ]
+        }
+      }
+    },
+    "loop": {
+      "started": "2026-11-15T19:15:18+00:00",
+      "result": {
+        "edited": "prefect/src/email_summarizer/summarize.py",
+        "redeploy": "make prefect-up",
+        "run": "make prefect-run",
+        "cycles": [
+          {
+            "redeploy_s": 19.75,
+            "tick_s": 6.13,
+            "total_s": 25.89,
+            "emails_sent": 1
+          },
+          {
+            "redeploy_s": 9.88,
+            "tick_s": 11.1,
+            "total_s": 20.98,
+            "emails_sent": 1
+          },
+          {
+            "redeploy_s": 9.84,
+            "tick_s": 12.88,
+            "total_s": 22.71,
+            "emails_sent": 1
+          }
+        ]
+      }
+    }
+  },
+  "updates": [
+    {
+      "date": "2026-11-15T16:15:17-03:00",
+      "commit": "63a984c (with uncommitted changes)",
+      "command": "make measure-prefect --phases loop --update",
+      "phases": [
+        "loop"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 # Comparison framework: Kestra vs Prefect
 
 How the two implementations of the [baseline spec](../baseline/workflow-spec.md) are judged.
-Results go in `docs/comparison/results.md` (created in Phase 6). Raw measurements go in
-`docs/comparison/data/`.
+Results are in [results.md](results.md) (Phase 6). Raw measurements are in [data/](data/), and
+[D-021](../decisions.md) describes how they were taken.
 
 > The external reference doc linked by the project owner couldn't be fetched (it renders
 > client-side). If it defines criteria, paste its content into `docs/reference/` and reconcile

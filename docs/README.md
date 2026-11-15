@@ -12,7 +12,8 @@
 | [baseline/data-model.md](baseline/data-model.md) | The production Postgres schema and what its defaults mean for behavior |
 | [baseline/prod-schema.md](baseline/prod-schema.md) | Owner-provided psql `\d+` output from production, verbatim |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |
-| [comparison/data/](comparison/data/) | Raw evidence with date, host, versions and command: the parity runs now, C2/C3 measurements in Phase 6 |
+| [comparison/results.md](comparison/results.md) | **The result.** Scorecard, measurements, evidence per dimension, recommendation |
+| [comparison/data/](comparison/data/) | Raw evidence with date, host, versions and command: parity runs, measurements, line counts, UI screenshots |
 | [reference/](reference/) | External material provided by the owner (e.g. the original comparison doc) |
 | [kestra/README.md](kestra/README.md) | Kestra: setup, architecture, versions, verification |
 | [kestra/node-mapping.md](kestra/node-mapping.md) | Kestra construct per n8n node, native or custom |
@@ -20,4 +21,3 @@
 | [prefect/README.md](prefect/README.md) | Prefect: setup, architecture, versions, verification |
 | [prefect/node-mapping.md](prefect/node-mapping.md) | Prefect construct per n8n node: native, library or custom |
 | [prefect/effort-log.md](prefect/effort-log.md) | Prefect friction, doc gaps and workarounds |
-| `comparison/results.md` *(Phase 6)* | Final scorecard and recommendation |

@@ -87,10 +87,25 @@ Done 2026-11-15. Details are in [parity.md](parity.md).
 
 ## Phase 6: Measurements and report (`docs/comparison/`)
 
-- [ ] Scripts that capture C2/C3 numbers into `docs/comparison/data/` (with timestamp, host and versions)
-- [ ] UI walkthrough screenshots for C9
-- [ ] `docs/comparison/results.md`: scorecard, evidence links, recommendation
-- **Verify:** every score links to evidence
+Done 2026-11-15. The result is in [comparison/results.md](comparison/results.md); the protocol is [D-021](decisions.md).
+
+- [x] [`scripts/measure.py`](../scripts/measure.py) (`make measure-kestra` / `make measure-prefect`) captures C2, C3 and C5 into `docs/comparison/data/`, with date, host, versions and command:
+  - images
+  - a cold pull and build in a throwaway BuildKit builder
+  - three starts with per-service time to healthy and the first green run
+  - idle and peak `docker stats`
+  - unit tests
+  - an edit-redeploy-run loop
+
+  [`scripts/loc.py`](../scripts/loc.py) (`make loc`) counts code lines by role for C4.
+- [x] UI walkthrough screenshots for C9: [`scripts/screenshots.py`](../scripts/screenshots.py) (`make screenshots-<tool>`) runs in the pinned Playwright image and captures the same parity runs (F-1, Q-15) in each UI. It also saves a sample of each tool's metrics endpoint.
+- [x] [`docs/comparison/results.md`](comparison/results.md): verdict, scorecard with evidence links, measurements, one section per dimension, weight sensitivity, limits, recommendation
+- **Verified:**
+  - `make measure-kestra MEASURE_ARGS="--cold"` and `make measure-prefect MEASURE_ARGS="--cold"` ran one stack at a time, with nothing else in Docker. Every start reached a green run (Telegram accepted the tick's message), and every loop cycle sent one email. Some phases were re-run with `--update` after script fixes; each results file lists those runs.
+  - Both stacks passed the parity suite again (13 of 13) before their screenshots.
+  - A link check of `results.md` and `decisions.md` found every relative link and anchor resolving. Every score links to evidence.
+  - `make lint`: clean.
+  - Teardown left no containers, volumes, networks or buildx builders.
 
 ## Phase 7 (optional): Real-service smoke test
 

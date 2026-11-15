@@ -206,3 +206,45 @@ out. They apply to both tools the same way, and none of them changes either impl
   file lists them. In practice that's a run whose worker process was replaced mid-run (Prefect
   leaves it `Running`; see its effort log).
 - **Recorded, not compared:** client retries, client error texts (D-019), and run durations.
+
+### D-021: How the stacks are measured (Phase 6) · `accepted`
+
+The C2, C3 and C5 numbers in [comparison/results.md](comparison/results.md) come from
+[`scripts/measure.py`](../scripts/measure.py) (`make measure-kestra`, `make measure-prefect`),
+one stack at a time, on the same host and Docker Desktop VM (10 CPUs, 7.65 GiB), with the mocks
+from `.env.example`. The script refuses to start while any other container runs. Each results
+file in [comparison/data/](comparison/data/) records the date, host, versions and command.
+
+- **Cold start (C2).** The stack's images are removed. `docker compose pull` fetches the pulled
+  images, then `docker compose build --no-cache --pull` runs in a new, empty BuildKit builder
+  (pinned `moby/buildkit:v0.34.1`, deleted afterwards). Removing images alone isn't enough: the
+  first attempt reused base layers from BuildKit's cache and built Kestra's image in 12 s. Then
+  one start to the first green run, as below. Downloads use this host's network on that day.
+- **Start and first green run (C2, C3).** `make <tool>-down`, then the two commands of
+  `make <tool>-up` with the images present. Each service's time to healthy comes from polling
+  `docker compose ps` every 0.5 s. The first green run is the time from `up` to the end of the
+  first tick that Telegram accepted a message from, through `make <tool>-seed`,
+  `make <tool>-run FLOW=email-ingest` and `make <tool>-run`. Three starts; the median is reported.
+- **Idle (C3).** A fresh start, deployed, schedules on, no mail: what the stack does between
+  emails. After 5 minutes, `docker stats` is streamed for 60 s. The ingest schedule fires once a
+  minute, so the window holds one ingest run.
+- **Peak (C3).** `docker stats` streamed while the parity suite's happy path runs (9 emails
+  ingested, 10 ticks). Memory is `docker stats` MEM USAGE; CPU is % of one core, summed over
+  containers per refresh. "Tool" means the tool's own containers (Kestra: `kestra`, `kestra-db`
+  and its script-task containers; Prefect: `prefect-server`, `prefect-worker`, `prefect-db`).
+  The shared infra is reported separately; it is the same in both stacks. `docker stats`
+  refreshes about twice a second, so Kestra's script-task containers, which live about a second,
+  are mostly missed. Each uses about 16 MiB, so the memory figures are barely affected.
+- **Developer loop (C5).** 9 emails queued (untimed), then three times: append a comment to a
+  module of the ported logic, put it into the running stack the documented way
+  (`make kestra-deploy`; `make prefect-up`, which rebuilds the worker image), and run one tick
+  that summarizes and sends an email with that module. The unit tests are timed with the stack
+  down.
+- **Lines of code (C4).** [`scripts/loc.py`](../scripts/loc.py) (`make loc`) counts code lines
+  (no blanks, comments or docstrings) by role. The file lists which file goes in which role.
+- **Screenshots (C9).** [`scripts/screenshots.py`](../scripts/screenshots.py)
+  (`make screenshots-<tool>`, after `make parity-<tool>`) captures the same kinds of pages in each
+  UI, for the same parity runs, with requests outside the stack blocked.
+- **Scoring.** Each criterion gets 1 to 5 per tool, with the weights in
+  [criteria.md](comparison/criteria.md) unchanged and C1 as a gate. One run per stack, so small
+  differences (a second here, 50 MiB there) aren't treated as meaningful.

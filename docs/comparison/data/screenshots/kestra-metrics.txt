@@ -1,0 +1,18 @@
+GET http://kestra:8081/prometheus -> 5576 lines; 17 kept, first 60 below
+kestra_executor_execution_duration_seconds_count{flow_id="email-ingest",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 23
+kestra_executor_execution_duration_seconds_sum{flow_id="email-ingest",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 32.237779878
+kestra_executor_execution_duration_seconds_count{flow_id="email-summarize-send",namespace_id="experiment.email",state="FAILED",tenant_id="main"} 2
+kestra_executor_execution_duration_seconds_sum{flow_id="email-summarize-send",namespace_id="experiment.email",state="FAILED",tenant_id="main"} 24.13741734
+kestra_executor_execution_duration_seconds_count{flow_id="email-summarize-send",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 19
+kestra_executor_execution_duration_seconds_sum{flow_id="email-summarize-send",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 25.981568964
+kestra_executor_execution_duration_seconds_count{flow_id="email-summarize-send",namespace_id="experiment.email",state="WARNING",tenant_id="main"} 9
+kestra_executor_execution_duration_seconds_sum{flow_id="email-summarize-send",namespace_id="experiment.email",state="WARNING",tenant_id="main"} 71.843849147
+kestra_executor_execution_duration_seconds_max{flow_id="email-ingest",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 1.125748717
+kestra_executor_execution_duration_seconds_max{flow_id="email-summarize-send",namespace_id="experiment.email",state="FAILED",tenant_id="main"} 0.0
+kestra_executor_execution_duration_seconds_max{flow_id="email-summarize-send",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 0.0
+kestra_executor_execution_duration_seconds_max{flow_id="email-summarize-send",namespace_id="experiment.email",state="WARNING",tenant_id="main"} 0.0
+kestra_executor_taskrun_ended_count_total{flow_id="email-ingest",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 58.0
+kestra_executor_taskrun_ended_count_total{flow_id="email-summarize-send",namespace_id="experiment.email",state="FAILED",tenant_id="main"} 4.0
+kestra_executor_taskrun_ended_count_total{flow_id="email-summarize-send",namespace_id="experiment.email",state="SKIPPED",tenant_id="main"} 16.0
+kestra_executor_taskrun_ended_count_total{flow_id="email-summarize-send",namespace_id="experiment.email",state="SUCCESS",tenant_id="main"} 298.0
+kestra_executor_taskrun_ended_count_total{flow_id="email-summarize-send",namespace_id="experiment.email",state="WARNING",tenant_id="main"} 27.0

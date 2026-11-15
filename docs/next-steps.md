@@ -41,4 +41,5 @@ then reconcile [comparison/criteria.md](comparison/criteria.md) with it.
 3. ~~**Phase 3: Kestra.**~~ Done 2026-11-14. See [kestra/README.md](kestra/README.md).
 4. ~~**Phase 4: Prefect.**~~ Done 2026-11-15. See [prefect/README.md](prefect/README.md).
 5. ~~**Phase 5: parity suite.**~~ Done 2026-11-15. Both tools pass 13 of 13. See [parity.md](parity.md).
-6. **Phase 6: measurements and the final report.**
+6. ~~**Phase 6: measurements and the final report.**~~ Done 2026-11-15. See [comparison/results.md](comparison/results.md).
+7. **Phase 7 (optional): smoke test against the real Gmail, Gemini and Telegram.** Needs the owner's test credentials in `.env`.
