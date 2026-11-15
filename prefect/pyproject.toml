@@ -1,0 +1,34 @@
+[project]
+name = "email-summarizer"
+version = "0.1.0"
+description = "The n8n Email Summarizer on Prefect OSS (workflow-experiment, Phase 4)"
+requires-python = "==3.12.*"
+dependencies = [
+    "prefect==3.9.3",
+    "prefect-sqlalchemy==0.6.1",  # SqlAlchemyConnector block for app-db
+    "psycopg[binary]==3.3.9",  # SQLAlchemy driver postgresql+psycopg
+    "google-genai==3.3.0",  # Gemini (SUM-5)
+    "httpx>=0.28.1,<1",  # Telegram (SUM-7b, SND-3); already a Prefect dependency
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/email_summarizer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+extend = "../ruff.toml"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"src/email_summarizer/sql.py" = ["E501"]  # baseline SQL is kept verbatim, long lines included

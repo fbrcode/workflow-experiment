@@ -15,5 +15,7 @@
 | [kestra/README.md](kestra/README.md) | Kestra: setup, architecture, versions, verification |
 | [kestra/node-mapping.md](kestra/node-mapping.md) | Kestra construct per n8n node, native or custom |
 | [kestra/effort-log.md](kestra/effort-log.md) | Kestra friction, doc gaps and workarounds |
-| `prefect/` *(Phase 4)* | Setup, architecture, node mapping, effort log for Prefect |
+| [prefect/README.md](prefect/README.md) | Prefect: setup, architecture, versions, verification |
+| [prefect/node-mapping.md](prefect/node-mapping.md) | Prefect construct per n8n node: native, library or custom |
+| [prefect/effort-log.md](prefect/effort-log.md) | Prefect friction, doc gaps and workarounds |
 | `comparison/results.md` *(Phase 6)* | Final scorecard and recommendation |

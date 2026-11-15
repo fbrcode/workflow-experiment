@@ -126,5 +126,11 @@ Start every session by reading, in this order:
 | `make kestra-run [FLOW=email-ingest]` | Run a flow now, wait, print task states and error logs (default `email-summarize-send`) | Phase 3 |
 | `make kestra-ps` / `make kestra-logs` | Kestra stack status / follow the Kestra log | Phase 3 |
 | `make test-kestra` | pytest for the Kestra Python port: golden vectors, decoders, ING-1 against GreenMail when it's up | Phase 3 |
+| `make prefect-up` / `make prefect-down` | Build and start the Prefect stack (server, worker, their DB, the shared infra), wait for healthy, deploy / stop and delete volumes | Phase 4 |
+| `make prefect-deploy` | Create the work pool, write blocks and variables from the env file, deploy `prefect/prefect.yaml` (also re-activates paused schedules) | Phase 4 |
+| `make prefect-seed` / `make prefect-reset` | Load the fixtures into the Prefect stack's mailbox / down + up + seed | Phase 4 |
+| `make prefect-run [FLOW=email-ingest]` | Run a deployment now from the host, wait, print task states and warning/error logs (default `email-summarize-send`) | Phase 4 |
+| `make prefect-ps` / `make prefect-logs` | Prefect stack status / follow the worker log | Phase 4 |
+| `make test-prefect` | pytest for the Prefect package: golden vectors, decoders, verbatim SQL, ING-1 against GreenMail when it's up | Phase 4 |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

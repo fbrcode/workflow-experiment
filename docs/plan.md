@@ -38,7 +38,7 @@ Done 2026-11-14. Details are in [golden.md](golden.md).
 - [x] ING-1 reference captured from GreenMail with **n8n's own IMAP code** (`@n8n/imap@0.26.0`, glue matching production `n8n@2.40.3`; D-017), so ports have a referee for email decoding too (D-015)
 - [x] 8 vector files in `tests/golden/vectors/`: 115 cases (62 from fixtures, 53 edge cases). They cover MarkdownV2 specials, nested bullets, literal `\n`, headings, `---`, quotes, emoji, the length limit, date and `From` corner cases, and nulls.
 - [x] Runs in the pinned `node:26.7.0-alpine3.24` (the Node version of n8n 2.40.3) with a locked `package-lock.json`. `make golden` and `make golden-check` added.
-- [~] Both implementations reproduce these outputs **byte for byte**. Kestra: done (Phase 3). Prefect: Phase 4.
+- [x] Both implementations reproduce these outputs **byte for byte**: Kestra (Phase 3) and Prefect (Phase 4).
 - **Verified:** 3 runs, one against freshly recreated infra and DB, gave identical files. Every fixture's SND-2 message is valid MarkdownV2 per mock-telegram. The only rejections are the deliberate edge cases `too-long-after-escaping` and Q-15.
 - **Regenerated 2026-11-14 for D-018.**
   - ING-1 to ING-4: unchanged.
@@ -62,13 +62,16 @@ Done 2026-11-14, apart from the formal parity suite (Phase 5). Details are in [k
 
 ## Phase 4: Prefect (`prefect/`)
 
-- [ ] `prefect/compose.yaml`: Prefect server (pinned) with its own Postgres, a worker, and the shared infra via `include`
-- [ ] Python package `prefect/src/email_summarizer/` with flows `email_ingest` and `email_summarize_send`
-- [ ] Deployments with schedules defined as code (`prefect.yaml` or `serve`/`deploy`)
-- [ ] Secrets and config through Prefect blocks or env; base-URL overrides for the mocks
-- [ ] Unit tests (pytest) against the golden vectors, runnable without the server
-- [ ] `docs/prefect/`: `README.md`, node mapping table, `effort-log.md`
-- **Verify:** pytest is green; parity scenario passes (Phase 5)
+Done 2026-11-15, apart from the formal parity suite (Phase 5). Details are in [prefect/README.md](prefect/README.md).
+
+- [x] `prefect/compose.yaml`: Prefect OSS 3.9.3 server (official image, pinned by digest) with its own Postgres, a process worker (`wfx-prefect:local`, the package installed from `uv.lock`), plus the shared infra via `include`
+- [x] Python package `prefect/src/email_summarizer/` with flows `email-ingest` and `email-summarize-send`; each n8n node is a task with the node's name; n8n's error semantics (D-019)
+- [x] Deployments with schedules defined as code in `prefect/prefect.yaml` (`* * * * *` with a concurrency limit and `CANCEL_NEW`; `*/10 * * * *`), applied by `make prefect-deploy`
+- [x] Secrets and config through Prefect: `Secret` blocks and a `SqlAlchemyConnector` block for credentials, variables for the rest, written from `.env` at deploy time; base-URL overrides for the mocks
+- [x] Unit tests (pytest) against the golden vectors, runnable without the server (`make test-prefect`)
+- [x] `docs/prefect/`: [README.md](prefect/README.md), [node-mapping.md](prefect/node-mapping.md), [effort-log.md](prefect/effort-log.md)
+- **Verified:** `make test-prefect`: 128 passed (all golden vectors for ING-2 to SND-2 and SUM-7b, ING-1 on the fixture files and against GreenMail for all 9 fixtures, verbatim SQL). `make lint`: clean. `make prefect-up` from a clean state: 21 s. Against the running stack: the 9 ingested rows equal the ING-4 vector byte for byte; a happy tick passes 22 checks against the SUM-4 and SND-2 vectors; F-1, F-2 (alert equals the SUM-7b vector), F-3, an SND-3 network error, Q-15, F-5, F-6 and the ingest concurrency limit behave as n8n does; the scheduled runs work with no manual trigger. See the README's verification table.
+- [ ] Parity scenarios as an automated suite: Phase 5
 
 > Phases 3 and 4 are independent. Neither implementation may copy logic from the other. Both port from the spec and the golden vectors.
 
@@ -102,7 +105,7 @@ Done 2026-11-14, apart from the formal parity suite (Phase 5). Details are in [k
 | 4 | Run n8n as a third contestant? | No. See [D-009](decisions.md). |
 | 5 | The external reference doc (Gemini share link) | Still open. Tracked in [next-steps.md](next-steps.md). |
 | 6 | Production n8n version? | 2.40.3. See [D-017](decisions.md). |
-| 7 | D-019 choices: alert time zone (America/Sao_Paulo assumed), dropping n8n's alert footer, 1-minute ingest polling | Applied in Kestra; the owner can change any of them before Phase 4. |
+| 7 | D-019 choices: alert time zone (America/Sao_Paulo assumed), dropping n8n's alert footer, 1-minute ingest polling | Applied in both Kestra and Prefect. The owner can still change any of them; both tools would then change the same way. |
 
 ## Planned layout and ports
 

@@ -1,0 +1,33 @@
+# Deployments of the two flows, applied by `make prefect-deploy` (prefect --no-prompt deploy --all).
+# The code is installed in the worker image (Dockerfile), so there is nothing to build, push or pull.
+name: email-summarizer
+prefect-version: 3.9.3
+
+build: null
+push: null
+pull: []
+
+deployments:
+  # Workflow 1 (ING-1 to ING-4). n8n reads the mailbox with IMAP IDLE; this polls every minute
+  # (Q-8, D-019). One run at a time: a tick that finds the previous one still running is cancelled.
+  - name: email-ingest
+    description: Read UNSEEN newsletters from the IMAP folder and store them in news_email.
+    entrypoint: email_summarizer.flows.email_ingest
+    schedules:
+      - cron: "* * * * *"
+        timezone: UTC
+    concurrency_limit:
+      limit: 1
+      collision_strategy: CANCEL_NEW
+    work_pool:
+      name: email-summarizer
+
+  # Workflow 2 (SUM, DUP, SND). n8n's `10min-runner`; no concurrency limit, as in n8n (Q-16).
+  - name: email-summarize-send
+    description: Summarize one stored email with Gemini, drop duplicates, send one summary to Telegram.
+    entrypoint: email_summarizer.flows.email_summarize_send
+    schedules:
+      - cron: "*/10 * * * *"
+        timezone: UTC
+    work_pool:
+      name: email-summarizer
