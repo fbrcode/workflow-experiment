@@ -1,0 +1,107 @@
+# Prefect stack (Phase 4, docs/prefect/README.md): Prefect server + its own Postgres + a process
+# worker, plus the shared infra. `make prefect-up` builds, waits until healthy and deploys.
+# Run one stack at a time: this one brings its own copy of infra/ on the same host ports.
+# Variables are required and come from .env (or .env.example): see the Makefile.
+
+include:
+  - ../infra/compose.yaml
+
+x-prefect-image: &prefect-image prefecthq/prefect:3.9.3-python3.12@sha256:1f32e854effefa290527f87a0a10346f6f84ce31047d0e3e5a4d4210d6450a30
+
+x-prefect-client: &prefect-client
+  PREFECT_API_URL: http://prefect-server:4200/api
+  PREFECT_API_AUTH_STRING: ${PREFECT_ADMIN_USER:?set in .env}:${PREFECT_ADMIN_PASSWORD:?set in .env}
+
+services:
+  prefect-db:
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_DB: prefect
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: ${PREFECT_DB_PASSWORD:?set in .env}
+    volumes:
+      - prefect-db-data:/var/lib/postgresql  # Postgres 18+ images keep PGDATA under this path
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U prefect -d prefect"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  prefect-server:
+    # API, UI, scheduler and the other background services in one process (`prefect server start`).
+    image: *prefect-image
+    command: ["prefect", "server", "start"]
+    environment:
+      PREFECT_SERVER_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:${PREFECT_DB_PASSWORD}@prefect-db:5432/prefect
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_SERVER_UI_API_URL: http://localhost:${PREFECT_HOST_PORT:?set in .env}/api
+      PREFECT_SERVER_API_AUTH_STRING: ${PREFECT_ADMIN_USER}:${PREFECT_ADMIN_PASSWORD}
+      PREFECT_SERVER_ANALYTICS_ENABLED: "false"
+    ports:
+      - "${PREFECT_HOST_PORT}:4200"
+    depends_on:
+      prefect-db:
+        condition: service_healthy
+    healthcheck:
+      # /api/health answers without credentials, even with basic auth on.
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:4200/api/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  prefect-worker:
+    # Polls the `email-summarizer` work pool and runs each flow run in a subprocess.
+    image: wfx-prefect:local
+    build:
+      context: .
+    command: ["prefect", "worker", "start", "--pool", "email-summarizer", "--type", "process", "--with-healthcheck"]
+    environment:
+      <<: *prefect-client
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+      app-db:
+        condition: service_healthy
+      mail:
+        condition: service_healthy
+      mock-gemini:
+        condition: service_healthy
+      mock-telegram:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  prefect-deploy:
+    # [profile: tools] `make prefect-deploy`: work pool, blocks and variables from .env, deployments.
+    image: wfx-prefect:local
+    profiles: ["tools"]
+    command: ["sh", "deploy.sh"]
+    environment:
+      <<: *prefect-client
+      APP_DB_HOST: ${APP_DB_HOST:?set in .env}
+      APP_DB_PORT: ${APP_DB_PORT:?set in .env}
+      APP_DB_NAME: ${APP_DB_NAME:?set in .env}
+      APP_DB_USER: ${APP_DB_USER:?set in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set in .env}
+      IMAP_HOST: ${IMAP_HOST:?set in .env}
+      IMAP_PORT: ${IMAP_PORT:?set in .env}
+      IMAP_SECURE: ${IMAP_SECURE:?set in .env}
+      IMAP_USER: ${IMAP_USER:?set in .env}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:?set in .env}
+      IMAP_MAILBOX: ${IMAP_MAILBOX:?set in .env}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:?set in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set in .env}
+      GEMINI_MODEL: ${GEMINI_MODEL:?set in .env}
+      GEMINI_MODEL_FALLBACK: ${GEMINI_MODEL_FALLBACK:?set in .env}
+      TELEGRAM_BASE_URL: ${TELEGRAM_BASE_URL:?set in .env}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set in .env}
+      TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:?set in .env}
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+
+volumes:
+  prefect-db-data:
