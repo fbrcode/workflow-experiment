@@ -12,7 +12,8 @@ MOCKS    := uv run --project infra/mocks
 .PHONY: help infra-up infra-down infra-ps infra-logs seed seed-check infra-check schema-check reset \
         golden golden-check fixtures test-mocks lint \
         kestra-up kestra-down kestra-deploy kestra-seed kestra-reset kestra-ps kestra-logs kestra-run test-kestra \
-        prefect-up prefect-down prefect-deploy prefect-seed prefect-reset prefect-ps prefect-logs prefect-run test-prefect
+        prefect-up prefect-down prefect-deploy prefect-seed prefect-reset prefect-ps prefect-logs prefect-run test-prefect \
+        parity-kestra parity-prefect
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
@@ -70,8 +71,8 @@ test-mocks: ## Run the mock services' unit tests
 	cd infra/mocks && uv run pytest -q
 
 lint: ## Ruff format check + lint for all Python in the repo
-	$(MOCKS) ruff format --check infra/mocks scripts fixtures kestra prefect
-	$(MOCKS) ruff check infra/mocks scripts fixtures kestra prefect
+	$(MOCKS) ruff format --check infra/mocks scripts fixtures kestra prefect tests/parity
+	$(MOCKS) ruff check infra/mocks scripts fixtures kestra prefect tests/parity
 
 # --- Kestra (Phase 3, docs/kestra/README.md). One stack at a time: it brings its own copy of infra/.
 KESTRA_API = set -a; source $(ENV_FILE); set +a; \
@@ -136,3 +137,16 @@ prefect-run: ## Run a deployment now and wait for it: make prefect-run [FLOW=ema
 
 test-prefect: ## Golden-vector and unit tests for the Prefect port (ING-1 also needs make prefect-up + prefect-seed)
 	cd prefect && uv run pytest -q
+
+# --- Parity suite (Phase 5, docs/parity.md). The same scenarios against either stack, one at a time.
+# Starts (or redeploys) the stack first, pauses its schedules for the run, leaves it running.
+# PARITY_ARGS goes to pytest, e.g. PARITY_ARGS="-k f2" or PARITY_ARGS="--results path.json".
+PARITY_ARGS ?=
+PARITY = set -a; source $(ENV_FILE); set +a; export PARITY_COMMAND="make $@ $(PARITY_ARGS)"; \
+	cd tests/parity && uv run --quiet pytest
+
+parity-kestra: kestra-up ## Run the parity suite against the Kestra stack (starts it if needed)
+	@$(PARITY) --tool kestra $(PARITY_ARGS)
+
+parity-prefect: prefect-up ## Run the parity suite against the Prefect stack (starts it if needed)
+	@$(PARITY) --tool prefect $(PARITY_ARGS)

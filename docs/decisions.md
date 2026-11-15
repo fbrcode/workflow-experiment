@@ -184,3 +184,25 @@ choice below applies to **both** tools.
 - **Error texts aren't compared byte for byte** where they come from a client library: SUM-7a's
   `summary_status`, the alert's `{error}`, and SND-5's `sent_status` after a network failure.
   Telegram's `description` (SND-5 after a rejection) is compared.
+
+### D-020: How the parity suite judges a run · `accepted`
+
+The parity suite (Phase 5, [parity.md](parity.md)) needs a few rules that the spec doesn't spell
+out. They apply to both tools the same way, and none of them changes either implementation.
+
+- **Outcome.** n8n reports an execution as succeeded or failed. Kestra's `SUCCESS` and `WARNING`,
+  and Prefect's `Completed`, count as succeeded. Kestra uses `WARNING` when a task failed and the
+  flow carried on, which is exactly the handled-error case (SUM-5, SND-3) that n8n reports as a
+  success. `FAILED`/`KILLED` and `Failed`/`Crashed` count as failed.
+- **F-4 takes app-db away before the tick starts.** "Unavailable during a tick" isn't
+  deterministic at any finer grain, and a tick isn't atomic in n8n either.
+- **An outage settles for 15 s before the next run.** It stands in for the 10 minutes until the
+  next real tick. Kestra's JVM caches a failed DNS lookup for 10 s, so a run right after a
+  restart can still fail, which no real tick would see.
+- **Q-15 and the skipped branches are set up in app-db directly.** The alert needs a subject
+  with `<`, and the skip needs a later duplicate and a row ready to send. No fixture has them,
+  and the database is the state the two workflows share by design (Q-9).
+- **Runs left over from before a session are cancelled** after two minutes, and the results
+  file lists them. In practice that's a run whose worker process was replaced mid-run (Prefect
+  leaves it `Running`; see its effort log).
+- **Recorded, not compared:** client retries, client error texts (D-019), and run durations.

@@ -22,7 +22,7 @@ Results go in `docs/comparison/results.md` (created in Phase 6). Raw measurement
 
 | # | Dimension | What we measure / observe | Method |
 |---|---|---|---|
-| C1 | **Behavioral parity** | Share of spec requirements met (`ING-*`, `SUM-*`, `DUP-*`, `SND-*`); deviations needed | Parity suite + golden vectors; deviations from `decisions.md` |
+| C1 | **Behavioral parity** | Share of spec requirements met (`ING-*`, `SUM-*`, `DUP-*`, `SND-*`); deviations needed | [Parity suite](../parity.md) + golden vectors; deviations from `decisions.md` |
 | C2 | **Local setup** | Number of compose services, compose LOC, images and their total size, time from clean clone to first green run | `docker compose config`, `docker image ls`, timed `make <tool>-up` from a clean state |
 | C3 | **Resource footprint** | Idle RAM/CPU after 5 min; peak during a scenario run; time to healthy | `docker stats --no-stream` sampled; healthcheck timing |
 | C4 | **Authoring effort** | LOC of flow definitions and glue code; native plugin vs. custom script per n8n node; implementation time and friction log | `cloc`/`wc`; [node mapping table](#node-mapping-template); per-tool `effort-log.md` |
@@ -56,7 +56,7 @@ It isn't averaged in.
 | F-1 | Primary model returns an error, fallback succeeds | SUM-6, `model_used` = primary (Q-2) |
 | F-2 | Both models fail | SUM-7a row update + SUM-7b alert |
 | F-3 | Telegram rejects the MarkdownV2 message (400) | SND-5; row is summarized again on the next tick |
-| F-4 | Postgres unavailable during a tick | Run fails visibly; next tick recovers; no partial writes |
+| F-4 | Postgres unavailable during a tick (the parity suite stops app-db before the tick starts, [D-020](../decisions.md)) | Run fails visibly; next tick recovers; no partial writes |
 | F-5 | Duplicate email ingested in a **later** ingest run | DUP-1 deletes it; only one Telegram message. (Duplicates in the same batch tie and both are sent, Q-19.) |
 | F-6 | Empty queue | No writes, no Telegram calls (SUM-2, SND-1a) |
 | F-7 | 6 failures in a row | Row stops being retried: the counter goes from -1 to 5, and `*_retry < 5` excludes it (Q-17) |

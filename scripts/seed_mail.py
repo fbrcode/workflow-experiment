@@ -25,9 +25,10 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 
-def connect() -> imaplib.IMAP4:
-    host = os.environ.get("IMAP_HOST", "localhost")
-    port = int(os.environ.get("IMAP_PORT", "3143"))
+def connect(host: str | None = None, port: int | None = None) -> imaplib.IMAP4:
+    """Log in with the IMAP_* settings. ``host``/``port`` override them (the parity suite runs on the host)."""
+    host = host or os.environ.get("IMAP_HOST", "localhost")
+    port = port or int(os.environ.get("IMAP_PORT", "3143"))
     secure = os.environ.get("IMAP_SECURE", "false").lower() == "true"
     conn: imaplib.IMAP4 = imaplib.IMAP4_SSL(host, port) if secure else imaplib.IMAP4(host, port)
     conn.login(os.environ["IMAP_USER"], os.environ["IMAP_PASSWORD"])
@@ -65,6 +66,16 @@ def purge(conn: imaplib.IMAP4, mailbox: str) -> None:
     conn.close()
 
 
+def append(conn: imaplib.IMAP4, mailbox: str, path: Path) -> None:
+    """APPEND one .eml with no flags (UNSEEN) and its Date header as INTERNALDATE."""
+    raw = path.read_bytes()
+    date = BytesHeaderParser().parsebytes(raw)["Date"]
+    internal = imaplib.Time2Internaldate(parsedate_to_datetime(date)) if date else None
+    status, data = conn.append(quoted(mailbox), None, internal, raw)  # no flags -> UNSEEN
+    if status != "OK":
+        raise SystemExit(f"APPEND {path.name} failed: {data}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--fixtures", default=os.environ.get("FIXTURES_DIR", "fixtures/emails"))
@@ -91,12 +102,7 @@ def main() -> int:
             )
             return 1
         for path in files:
-            raw = path.read_bytes()
-            date = BytesHeaderParser().parsebytes(raw)["Date"]
-            internal = imaplib.Time2Internaldate(parsedate_to_datetime(date)) if date else None
-            status, data = conn.append(quoted(mailbox), None, internal, raw)  # no flags -> UNSEEN
-            if status != "OK":
-                raise SystemExit(f"APPEND {path.name} failed: {data}")
+            append(conn, mailbox, path)
             print(f"appended {path.name}")
         total, unseen = counts(conn, mailbox)
         print(f"mailbox={mailbox} messages={total} unseen={unseen}")

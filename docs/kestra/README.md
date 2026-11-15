@@ -148,7 +148,8 @@ Run against the mocks with `.env.example`, on the dev host (Apple Silicon, Docke
 | Q-19, duplicate fixture 03 seeded in the same batch as 02 | Same `email_consumed_at`, so DUP-1 deletes neither, as n8n would. |
 | Cleanup | Task containers and their volumes are removed after each run. |
 
-The full parity suite (fault scenarios F-1 to F-7 against both tools) is Phase 5.
+The parity suite ([parity.md](../parity.md)) now runs these checks, and F-4, F-5, F-6 and F-7, automatically:
+`make parity-kestra` passed 13 of 13 on 2026-11-15.
 
 ## Known differences from n8n
 

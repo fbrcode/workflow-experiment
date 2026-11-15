@@ -40,5 +40,5 @@ then reconcile [comparison/criteria.md](comparison/criteria.md) with it.
 2. ~~**Phase 2: golden vectors.**~~ Done 2026-11-14. See [golden.md](golden.md).
 3. ~~**Phase 3: Kestra.**~~ Done 2026-11-14. See [kestra/README.md](kestra/README.md).
 4. ~~**Phase 4: Prefect.**~~ Done 2026-11-15. See [prefect/README.md](prefect/README.md).
-5. **Phase 5: parity suite.** Happy path plus fault scenarios F-1 to F-7.
+5. ~~**Phase 5: parity suite.**~~ Done 2026-11-15. Both tools pass 13 of 13. See [parity.md](parity.md).
 6. **Phase 6: measurements and the final report.**
