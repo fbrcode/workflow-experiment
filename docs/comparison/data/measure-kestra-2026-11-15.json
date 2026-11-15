@@ -1,0 +1,921 @@
+{
+  "date": "2026-11-15T15:33:52-03:00",
+  "host": {
+    "os": "macOS 26.6.2",
+    "machine": "arm64",
+    "cpu": "Apple M1 Pro",
+    "memory_gib": 16.0,
+    "docker": "Docker Desktop 4.99.0 (245822), engine 29.9.3",
+    "compose": "5.7.0",
+    "docker_vm": {
+      "cpus": 10,
+      "memory_gib": 7.65,
+      "storage_driver": "overlay2"
+    }
+  },
+  "tool": {
+    "name": "kestra",
+    "version": "2.0.10"
+  },
+  "commit": "63a984c (with uncommitted changes)",
+  "env_file": ".env.example",
+  "command": "make measure-kestra --cold",
+  "protocol": "D-021 in docs/decisions.md",
+  "setup": {
+    "services": {
+      "app-db": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "postgres:18.7-alpine3.24",
+        "built": false
+      },
+      "golden": {
+        "part": "shared infra",
+        "profiles": [
+          "tools"
+        ],
+        "image": "wfx-golden:local",
+        "built": true
+      },
+      "kestra": {
+        "part": "tool",
+        "profiles": [],
+        "image": "wfx-kestra:local",
+        "built": true
+      },
+      "kestra-db": {
+        "part": "tool",
+        "profiles": [],
+        "image": "postgres:18.7-alpine3.24",
+        "built": false
+      },
+      "mail": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "greenmail/standalone:2.1.15",
+        "built": false
+      },
+      "mail-seed": {
+        "part": "shared infra",
+        "profiles": [
+          "tools"
+        ],
+        "image": "wfx-mocks:local",
+        "built": true
+      },
+      "mock-gemini": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "wfx-mocks:local",
+        "built": true
+      },
+      "mock-telegram": {
+        "part": "shared infra",
+        "profiles": [],
+        "image": "wfx-mocks:local",
+        "built": true
+      }
+    },
+    "always_on": {
+      "tool": 2,
+      "shared infra": 4
+    },
+    "compose_lines": {
+      "kestra/compose.yaml": 110,
+      "infra/compose.yaml": 154
+    },
+    "images": {
+      "images": {
+        "greenmail/standalone:2.1.15": {
+          "mb": 332,
+          "digest": "greenmail/standalone@sha256:309ba544ea482e5d4265d09921cdab07c8dad2cc4481d715c9b8ff5d3f0a149f",
+          "base_of_another": false
+        },
+        "postgres:18.7-alpine3.24": {
+          "mb": 298,
+          "digest": "postgres@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015",
+          "base_of_another": false
+        },
+        "python:3.12.16-slim-trixie": {
+          "mb": 145,
+          "digest": "python@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b",
+          "base_of_another": true
+        },
+        "wfx-kestra:local": {
+          "mb": 830,
+          "digest": null,
+          "base_of_another": false
+        },
+        "wfx-mocks:local": {
+          "mb": 145,
+          "digest": null,
+          "base_of_another": false
+        }
+      },
+      "total_mb": 1750,
+      "distinct_mb": 1605
+    }
+  },
+  "phases": {
+    "tests": {
+      "started": "2026-11-15T18:45:58+00:00",
+      "result": {
+        "command": "make test-kestra",
+        "wall_s": 0.3,
+        "pytest": [
+          "141 passed, 1 skipped in 0.07s"
+        ]
+      }
+    },
+    "cold": {
+      "started": "2026-11-15T18:46:05+00:00",
+      "result": {
+        "removed_images": [
+          "greenmail/standalone:2.1.15",
+          "postgres:18.7-alpine3.24",
+          "python:3.12.16-slim-trixie",
+          "wfx-kestra:local",
+          "wfx-mocks:local"
+        ],
+        "builder": "moby/buildkit:v0.34.1",
+        "pull_s": 11.35,
+        "build_s": 34.05,
+        "first_start": {
+          "down_s": 0.11,
+          "up_wait_s": 13.69,
+          "healthy_after_s": {
+            "app-db": 5.7,
+            "kestra-db": 5.7,
+            "mail": 5.7,
+            "mock-gemini": 8.2,
+            "mock-telegram": 8.2,
+            "kestra": 13.8
+          },
+          "deploy_s": 1.0,
+          "make_up_s": 14.78,
+          "seed_s": 0.97,
+          "ingest_s": 5.76,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest 5fnIOPZkJdsntVhRPkk6Zz: SUCCESS in 5.5s"
+          ],
+          "tick_s": 2.3,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send 7D75d1SFEahUkcQTAuXLPp: SUCCESS in 2.1s"
+          ],
+          "first_green_s": 23.81,
+          "telegram_messages": 1,
+          "green": true
+        },
+        "total_s": 69.21
+      }
+    },
+    "starts": {
+      "started": "2026-11-15T18:44:09+00:00",
+      "result": [
+        {
+          "down_s": 7.84,
+          "up_wait_s": 13.48,
+          "healthy_after_s": {
+            "app-db": 5.7,
+            "kestra-db": 5.7,
+            "mail": 5.7,
+            "mock-telegram": 7.5,
+            "mock-gemini": 8.1,
+            "kestra": 13.5
+          },
+          "deploy_s": 0.99,
+          "make_up_s": 14.62,
+          "seed_s": 0.93,
+          "ingest_s": 2.97,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest 62uMEvesfUf4RweNG2eaji: SUCCESS in 2.7s"
+          ],
+          "tick_s": 2.24,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send 3MJAkqfhPPu77G2MeoEwkr: SUCCESS in 2.1s"
+          ],
+          "first_green_s": 20.75,
+          "telegram_messages": 1,
+          "green": true
+        },
+        {
+          "down_s": 6.09,
+          "up_wait_s": 13.11,
+          "healthy_after_s": {
+            "app-db": 5.2,
+            "kestra-db": 5.2,
+            "mail": 5.2,
+            "mock-gemini": 7.0,
+            "mock-telegram": 7.6,
+            "kestra": 13.2
+          },
+          "deploy_s": 0.96,
+          "make_up_s": 14.16,
+          "seed_s": 0.91,
+          "ingest_s": 3.05,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest 3ChoAXsO6PodnnXKP0trL4: SUCCESS in 2.8s"
+          ],
+          "tick_s": 2.16,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send 3uG5OkUQZBHKabs0qvOLPY: SUCCESS in 2.0s"
+          ],
+          "first_green_s": 20.28,
+          "telegram_messages": 1,
+          "green": true
+        },
+        {
+          "down_s": 6.09,
+          "up_wait_s": 13.06,
+          "healthy_after_s": {
+            "app-db": 5.0,
+            "kestra-db": 5.0,
+            "mail": 5.0,
+            "mock-gemini": 7.7,
+            "mock-telegram": 7.7,
+            "kestra": 13.1
+          },
+          "deploy_s": 0.98,
+          "make_up_s": 14.15,
+          "seed_s": 0.92,
+          "ingest_s": 3.07,
+          "ingest_exit": 0,
+          "ingest_output": [
+            "email-ingest 6Cb0PEYMHIqpGrpQjzk1ny: SUCCESS in 2.8s"
+          ],
+          "tick_s": 2.26,
+          "tick_exit": 0,
+          "tick_output": [
+            "email-summarize-send 3iHhAf5Dopnk9bG1vCi5KO: SUCCESS in 2.1s"
+          ],
+          "first_green_s": 20.39,
+          "telegram_messages": 1,
+          "green": true
+        }
+      ]
+    },
+    "idle": {
+      "started": "2026-11-15T18:36:35+00:00",
+      "result": {
+        "start": {
+          "down_s": 6.04,
+          "up_wait_s": 12.91,
+          "healthy_after_s": {
+            "app-db": 5.0,
+            "kestra-db": 5.0,
+            "mail": 5.0,
+            "mock-gemini": 6.9,
+            "mock-telegram": 7.5,
+            "kestra": 12.9
+          },
+          "deploy_s": 0.98,
+          "make_up_s": 13.89
+        },
+        "waited_s": 300,
+        "frames": 117,
+        "seconds": 57.9,
+        "groups": {
+          "tool": {
+            "cpu_percent": {
+              "mean": 19.9,
+              "max": 64.7
+            },
+            "memory_mib": {
+              "mean": 698.6,
+              "max": 699.5
+            }
+          },
+          "shared infra": {
+            "cpu_percent": {
+              "mean": 9.8,
+              "max": 44.6
+            },
+            "memory_mib": {
+              "mean": 214.8,
+              "max": 230.9
+            }
+          },
+          "all": {
+            "cpu_percent": {
+              "mean": 29.7,
+              "max": 107.7
+            },
+            "memory_mib": {
+              "mean": 913.4,
+              "max": 929.5
+            }
+          }
+        },
+        "containers": {
+          "wfx-kestra-app-db-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 0.8,
+              "max": 2.7
+            },
+            "memory_mib": {
+              "mean": 32.4,
+              "max": 32.8
+            }
+          },
+          "wfx-kestra-kestra-1": {
+            "part": "tool",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 11.6,
+              "max": 49.2
+            },
+            "memory_mib": {
+              "mean": 601.4,
+              "max": 602.1
+            }
+          },
+          "wfx-kestra-kestra-db-1": {
+            "part": "tool",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 8.3,
+              "max": 17.8
+            },
+            "memory_mib": {
+              "mean": 97.1,
+              "max": 97.8
+            }
+          },
+          "wfx-kestra-mail-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 0.9,
+              "max": 3.7
+            },
+            "memory_mib": {
+              "mean": 145.2,
+              "max": 145.8
+            }
+          },
+          "wfx-kestra-mock-gemini-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 4.1,
+              "max": 20.8
+            },
+            "memory_mib": {
+              "mean": 19.0,
+              "max": 27.3
+            }
+          },
+          "wfx-kestra-mock-telegram-1": {
+            "part": "shared infra",
+            "frames": 117,
+            "cpu_percent": {
+              "mean": 4.0,
+              "max": 21.4
+            },
+            "memory_mib": {
+              "mean": 18.2,
+              "max": 26.1
+            }
+          }
+        }
+      }
+    },
+    "workload": {
+      "started": "2026-11-15T18:42:55+00:00",
+      "result": {
+        "command": "cd tests/parity && uv run --quiet pytest --tool kestra -k test_each_tick_summarizes_and_sends_one_email",
+        "seconds": 21.5,
+        "parity": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "runs": [
+          {
+            "flow": "email-ingest",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 2.95
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.88
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.65
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.63
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.68
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.84
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.64
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.62
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.64
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 1.62
+          },
+          {
+            "flow": "email-summarize-send",
+            "state": "SUCCESS",
+            "outcome": "completed",
+            "seconds": 0.22
+          }
+        ],
+        "frames": 44,
+        "groups": {
+          "tool": {
+            "cpu_percent": {
+              "mean": 95.0,
+              "max": 215.9
+            },
+            "memory_mib": {
+              "mean": 790.1,
+              "max": 824.5
+            }
+          },
+          "shared infra": {
+            "cpu_percent": {
+              "mean": 12.7,
+              "max": 57.2
+            },
+            "memory_mib": {
+              "mean": 215.8,
+              "max": 237.9
+            }
+          },
+          "all": {
+            "cpu_percent": {
+              "mean": 107.7,
+              "max": 273.1
+            },
+            "memory_mib": {
+              "mean": 1005.9,
+              "max": 1057.5
+            }
+          }
+        },
+        "containers": {
+          "nice_blackburn": {
+            "part": "tool",
+            "frames": 2,
+            "cpu_percent": {
+              "mean": 0.0,
+              "max": 0.0
+            },
+            "memory_mib": {
+              "mean": 15.8,
+              "max": 15.8
+            }
+          },
+          "wfx-kestra-app-db-1": {
+            "part": "shared infra",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 3.3,
+              "max": 6.6
+            },
+            "memory_mib": {
+              "mean": 32.7,
+              "max": 33.6
+            }
+          },
+          "wfx-kestra-kestra-1": {
+            "part": "tool",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 76.3,
+              "max": 180.1
+            },
+            "memory_mib": {
+              "mean": 682.8,
+              "max": 713.2
+            }
+          },
+          "wfx-kestra-kestra-db-1": {
+            "part": "tool",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 18.7,
+              "max": 35.8
+            },
+            "memory_mib": {
+              "mean": 106.6,
+              "max": 111.3
+            }
+          },
+          "wfx-kestra-mail-1": {
+            "part": "shared infra",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 1.7,
+              "max": 12.6
+            },
+            "memory_mib": {
+              "mean": 146.0,
+              "max": 147.1
+            }
+          },
+          "wfx-kestra-mock-gemini-1": {
+            "part": "shared infra",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 3.8,
+              "max": 21.2
+            },
+            "memory_mib": {
+              "mean": 18.8,
+              "max": 29.0
+            }
+          },
+          "wfx-kestra-mock-telegram-1": {
+            "part": "shared infra",
+            "frames": 44,
+            "cpu_percent": {
+              "mean": 3.8,
+              "max": 21.3
+            },
+            "memory_mib": {
+              "mean": 18.2,
+              "max": 29.7
+            }
+          }
+        },
+        "series": {
+          "columns": [
+            "s",
+            "tool_mib",
+            "all_mib",
+            "tool_cpu_percent"
+          ],
+          "points": [
+            [
+              0.0,
+              699,
+              913,
+              8
+            ],
+            [
+              0.5,
+              699,
+              913,
+              8
+            ],
+            [
+              1.0,
+              705,
+              920,
+              58
+            ],
+            [
+              1.5,
+              705,
+              920,
+              58
+            ],
+            [
+              2.0,
+              735,
+              950,
+              119
+            ],
+            [
+              2.5,
+              735,
+              950,
+              119
+            ],
+            [
+              3.0,
+              753,
+              969,
+              216
+            ],
+            [
+              3.5,
+              753,
+              969,
+              216
+            ],
+            [
+              4.0,
+              770,
+              985,
+              51
+            ],
+            [
+              4.5,
+              770,
+              985,
+              51
+            ],
+            [
+              5.0,
+              754,
+              969,
+              40
+            ],
+            [
+              5.5,
+              754,
+              969,
+              40
+            ],
+            [
+              6.0,
+              766,
+              980,
+              136
+            ],
+            [
+              6.5,
+              766,
+              980,
+              136
+            ],
+            [
+              7.0,
+              778,
+              993,
+              163
+            ],
+            [
+              7.5,
+              778,
+              993,
+              163
+            ],
+            [
+              8.0,
+              797,
+              1013,
+              144
+            ],
+            [
+              8.5,
+              797,
+              1013,
+              144
+            ],
+            [
+              9.0,
+              807,
+              1020,
+              105
+            ],
+            [
+              9.5,
+              807,
+              1020,
+              105
+            ],
+            [
+              10.0,
+              812,
+              1027,
+              111
+            ],
+            [
+              10.5,
+              812,
+              1027,
+              111
+            ],
+            [
+              11.0,
+              813,
+              1029,
+              99
+            ],
+            [
+              11.5,
+              813,
+              1029,
+              99
+            ],
+            [
+              12.0,
+              819,
+              1034,
+              92
+            ],
+            [
+              12.5,
+              819,
+              1034,
+              92
+            ],
+            [
+              13.0,
+              822,
+              1037,
+              73
+            ],
+            [
+              13.5,
+              822,
+              1037,
+              73
+            ],
+            [
+              14.0,
+              814,
+              1029,
+              103
+            ],
+            [
+              14.5,
+              814,
+              1029,
+              103
+            ],
+            [
+              15.0,
+              815,
+              1028,
+              61
+            ],
+            [
+              15.5,
+              815,
+              1028,
+              61
+            ],
+            [
+              16.0,
+              817,
+              1030,
+              71
+            ],
+            [
+              16.5,
+              817,
+              1030,
+              71
+            ],
+            [
+              17.0,
+              818,
+              1033,
+              90
+            ],
+            [
+              17.5,
+              818,
+              1033,
+              90
+            ],
+            [
+              18.0,
+              820,
+              1058,
+              106
+            ],
+            [
+              18.5,
+              820,
+              1058,
+              106
+            ],
+            [
+              19.0,
+              822,
+              1038,
+              110
+            ],
+            [
+              19.5,
+              822,
+              1038,
+              110
+            ],
+            [
+              20.0,
+              824,
+              1037,
+              60
+            ],
+            [
+              20.5,
+              824,
+              1037,
+              60
+            ],
+            [
+              21.0,
+              824,
+              1039,
+              76
+            ],
+            [
+              21.5,
+              824,
+              1039,
+              76
+            ]
+          ]
+        }
+      }
+    },
+    "loop": {
+      "started": "2026-11-15T19:28:34+00:00",
+      "result": {
+        "edited": "kestra/files/summarizer/ported.py",
+        "redeploy": "make kestra-deploy",
+        "run": "make kestra-run",
+        "cycles": [
+          {
+            "redeploy_s": 0.35,
+            "tick_s": 2.33,
+            "total_s": 2.69,
+            "emails_sent": 1
+          },
+          {
+            "redeploy_s": 0.27,
+            "tick_s": 1.74,
+            "total_s": 2.0,
+            "emails_sent": 1
+          },
+          {
+            "redeploy_s": 0.37,
+            "tick_s": 2.01,
+            "total_s": 2.37,
+            "emails_sent": 1
+          }
+        ]
+      }
+    }
+  },
+  "updates": [
+    {
+      "date": "2026-11-15T15:44:08-03:00",
+      "commit": "63a984c (with uncommitted changes)",
+      "command": "make measure-kestra --phases starts,loop --update",
+      "phases": [
+        "starts",
+        "loop"
+      ]
+    },
+    {
+      "date": "2026-11-15T15:45:57-03:00",
+      "commit": "63a984c (with uncommitted changes)",
+      "command": "make measure-kestra --cold --phases tests --update",
+      "phases": [
+        "cold",
+        "tests"
+      ]
+    },
+    {
+      "date": "2026-11-15T16:28:33-03:00",
+      "commit": "63a984c (with uncommitted changes)",
+      "command": "make measure-kestra --phases loop --update",
+      "phases": [
+        "loop"
+      ]
+    }
+  ]
+}

@@ -10,5 +10,7 @@ select = ["E", "F", "W", "I", "UP", "B", "S", "N", "A", "SIM", "RUF"]
 "**/tests/**" = ["S101", "S105", "S310"]
 # Local dev tooling: talks to local services only.
 "scripts/**" = ["S310"]
+# The measurement scripts drive docker, make and git with fixed argument lists.
+"scripts/{measure,loc}.py" = ["S603", "S607"]
 # Fixture prose: a line break would change the generated email content.
 "fixtures/generate.py" = ["E501"]

@@ -4,7 +4,9 @@ A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefe
 as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
 with docker compose, and judged against one behavior spec and one scorecard.
 
-> **Status:** Phases 0 to 5 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, both implementations (**Kestra** and **Prefect**), and the parity suite, which both pass (13 of 13 scenarios). Measurements and the final report are next. See [docs/plan.md](docs/plan.md).
+> **Status:** Phases 0 to 6 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, both implementations (**Kestra** and **Prefect**), the parity suite (both pass 13 of 13 scenarios), and the measurements and final report. Phase 7, a smoke test against the real services, is optional. See [docs/plan.md](docs/plan.md).
+>
+> **Result:** both tools reproduce the workflow. On the weighted scorecard Kestra leads slightly, 3.8 against 3.6 out of 5, a lean rather than a clear win. Kestra is ahead on observability, speed and native tasks; Prefect on footprint, secrets and Python testability. The recommendation and evidence are in [docs/comparison/results.md](docs/comparison/results.md).
 
 ## The workflow under test
 
@@ -43,7 +45,7 @@ baseline/     n8n exports (read-only source of truth)
 docs/         all documentation: spec, plan, decisions, per-tool docs, comparison
 infra/        shared local services: app Postgres, GreenMail, mocks          (done)
 fixtures/     synthetic newsletter emails + generator                        (done)
-scripts/      helper scripts (IMAP seeding)                                  (done)
+scripts/      helper scripts: IMAP seeding, run helpers, measurements, screenshots (done)
 tests/        golden vectors from the original n8n code + end-to-end parity suite   (done)
 kestra/       Kestra compose, YAML flows, Python namespace files + tests      (done)
 prefect/      Prefect compose, deployments, Python flows + tests              (done)
@@ -103,6 +105,17 @@ make parity-prefect   # about 8 min (each run waits for the worker's 10 s poll)
 
 Details: [docs/parity.md](docs/parity.md).
 
+Measurements (Phase 6; one stack at a time, with nothing else running in Docker):
+
+```bash
+make measure-kestra       # C2, C3, C5 numbers into docs/comparison/data (about 10 min; MEASURE_ARGS="--cold" adds a clean build)
+make measure-prefect      # the same for Prefect (about 15 min)
+make loc                  # lines of code by role (C4)
+make screenshots-kestra   # UI walkthrough (C9), after make parity-kestra; screenshots-prefect likewise
+```
+
+Details: [docs/comparison/results.md](docs/comparison/results.md) and [D-021](docs/decisions.md).
+
 ## Documentation
 
 Start at [docs/README.md](docs/README.md). The key files:
@@ -110,7 +123,7 @@ Start at [docs/README.md](docs/README.md). The key files:
 - [docs/plan.md](docs/plan.md): phases, checklist, **open questions for the owner**
 - [docs/decisions.md](docs/decisions.md): assumptions and deviations
 - [docs/baseline/](docs/baseline/): spec and data model
-- [docs/comparison/](docs/comparison/): criteria now, results at the end
+- [docs/comparison/results.md](docs/comparison/results.md): **the scorecard, the evidence and the recommendation**
 
 ## Working with Claude
 

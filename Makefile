@@ -13,7 +13,8 @@ MOCKS    := uv run --project infra/mocks
         golden golden-check fixtures test-mocks lint \
         kestra-up kestra-down kestra-deploy kestra-seed kestra-reset kestra-ps kestra-logs kestra-run test-kestra \
         prefect-up prefect-down prefect-deploy prefect-seed prefect-reset prefect-ps prefect-logs prefect-run test-prefect \
-        parity-kestra parity-prefect
+        parity-kestra parity-prefect measure-kestra measure-prefect loc \
+        screenshots-kestra screenshots-prefect
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
@@ -150,3 +151,32 @@ parity-kestra: kestra-up ## Run the parity suite against the Kestra stack (start
 
 parity-prefect: prefect-up ## Run the parity suite against the Prefect stack (starts it if needed)
 	@$(PARITY) --tool prefect $(PARITY_ARGS)
+
+# --- Measurements (Phase 6, docs/comparison/results.md). One stack at a time, nothing else running in Docker.
+# MEASURE_ARGS goes to scripts/measure.py, e.g. MEASURE_ARGS="--cold" or MEASURE_ARGS="--phases idle".
+MEASURE_ARGS ?=
+MEASURE = set -a; source $(ENV_FILE); set +a; export ENV_FILE=$(ENV_FILE) MEASURE_COMMAND="make $@ $(MEASURE_ARGS)"; \
+	uv run --quiet --no-project --python 3.12 scripts/measure.py
+
+measure-kestra: ## Measure the Kestra stack (C2, C3, C5) into docs/comparison/data (about 15 min; leaves it running)
+	@$(MEASURE) kestra $(MEASURE_ARGS)
+
+measure-prefect: ## Measure the Prefect stack (C2, C3, C5) into docs/comparison/data (about 15 min; leaves it running)
+	@$(MEASURE) prefect $(MEASURE_ARGS)
+
+loc: ## Count each implementation's lines by role (C4) into docs/comparison/data
+	@uv run --quiet --no-project --python 3.12 scripts/loc.py
+
+# UI walkthrough (C9): scripts/screenshots.py in the pinned Playwright image, on the stack's network.
+# $(1) = the stack's Docker network, $(2) = the tool. Run the parity suite first, for the run history.
+SCREENSHOTS = set -a; source $(ENV_FILE); set +a; \
+	docker build -q -t wfx-screenshots:local -f scripts/screenshots.Dockerfile scripts > /dev/null && \
+	docker run --rm --network $(1) -e KESTRA_ADMIN_USER -e KESTRA_ADMIN_PASSWORD -e PREFECT_ADMIN_USER -e PREFECT_ADMIN_PASSWORD \
+	  -v "$(CURDIR)/scripts/screenshots.py:/screenshots.py:ro" -v "$(CURDIR)/docs/comparison/data/screenshots:/out" \
+	  wfx-screenshots:local python /screenshots.py $(2)
+
+screenshots-kestra: ## C9: screenshots of the running Kestra UI into docs/comparison/data/screenshots (after parity-kestra)
+	@$(call SCREENSHOTS,wfx-kestra,kestra)
+
+screenshots-prefect: ## C9: screenshots of the running Prefect UI into docs/comparison/data/screenshots (after parity-prefect)
+	@$(call SCREENSHOTS,wfx-prefect_default,prefect)

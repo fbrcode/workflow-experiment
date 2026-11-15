@@ -87,6 +87,11 @@ folder, has no flags (so it's UNSEEN, as ING-1 needs), and keeps its original `D
 | `GET /_mock/faults` / `DELETE /_mock/faults` | List or clear queued faults |
 | `POST /_mock/reset` | Clear both calls and faults |
 
+Calls and faults live in memory. Any `docker compose up --build` (`make infra-up`, `make kestra-up`,
+`make prefect-up`) recreates both mock containers, even when nothing changed, because the two
+services share one built image tag. So a redeploy also clears the recorded calls. Found in
+Phase 6, where the Prefect edit loop counts sent emails in app-db instead.
+
 `when` is matched against request attributes. An empty `when` matches everything, and
 `count: -1` makes the fault permanent. Telegram matches on `method` and `chat_id`. Gemini matches
 on `model` (no `models/` prefix), `action` and `api_version`.

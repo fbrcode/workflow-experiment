@@ -89,3 +89,20 @@ HTTP calls. What the suite showed about Kestra:
 | Run states | `WARNING` when a Gemini call or the Telegram connection failed and the flow carried on; `SUCCESS` when Telegram answered 400 (F-3). The suite counts both as n8n's success (D-020). |
 | Pausing the schedules | `PUT /api/v1/main/triggers/set-disabled` per trigger. Re-enabling without `recoverMissedSchedules` skips the ticks missed meanwhile (stated in the API description), so a parity session doesn't cause a burst of catch-up runs. |
 | Run time | A summarize tick takes 1.5 to 4 s from the API call to the end state; an ingest about 1 s. |
+
+## 2026-11-15: Measurements and screenshots (Phase 6)
+
+The numbers and scores are in [comparison/results.md](../comparison/results.md); the raw data is
+in [comparison/data/](../comparison/data/). What the measurements and the UI walkthrough showed:
+
+| Observation | Detail |
+|---|---|
+| Clean build | With an empty BuildKit builder, the build (base images, the three plugins, the mocks) takes 34 s; a clean clone reaches a green run in 69 s. Phase 3's 2 min 12 s build included the first downloads on that day's network. |
+| Memory | The JVM holds about 600 MiB at idle and 710 MiB at peak; with `kestra-db`, 699 and 825 MiB. Idle CPU is about 20% of a core: the JVM and its queue polling Postgres. |
+| Speed | A tick runs in 1.6 to 1.9 s end to end. A changed namespace file is live after a 0.3 s deploy. |
+| Topology view | The execution overview fits the whole flow into the pane, so a 20-task flow is too small to read until you zoom in (mouse wheel) and turn on "Show more details". |
+| Client retries are invisible | plugin-ai retries a model call inside one task attempt, so the UI shows one failed attempt where the mock saw three calls. |
+| Outputs | Every task output is browsable, including the model's answer and token use, with an expression debugger next to it. |
+| Metrics | `:8081/prometheus` is on by default, with per-flow execution durations and task-run counts (`kestra_executor_*`). |
+| UI and the internet | The UI calls `api.kestra.io` and keeps PostHog analytics keys in the browser's local storage, although the server has anonymous usage reporting off. The screenshot browser blocked every outside request. |
+| Logging in from a script | The login form ignores Playwright's `fill()`; it needs real keystrokes (`press_sequentially`). |

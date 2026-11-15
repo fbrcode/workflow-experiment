@@ -133,5 +133,8 @@ Start every session by reading, in this order:
 | `make prefect-ps` / `make prefect-logs` | Prefect stack status / follow the worker log | Phase 4 |
 | `make test-prefect` | pytest for the Prefect package: golden vectors, decoders, verbatim SQL, ING-1 against GreenMail when it's up | Phase 4 |
 | `make parity-kestra` / `make parity-prefect` | Start the stack if needed, pause its schedules, run the parity suite (`tests/parity`), resume the schedules. `PARITY_ARGS` goes to pytest (`-k f2`, `--results PATH`) | Phase 5 |
+| `make measure-kestra` / `make measure-prefect` | Measure one stack (C2, C3, C5) into `docs/comparison/data/measure-<tool>-<date>.json`; nothing else may run in Docker. `MEASURE_ARGS`: `--cold` (clean pull and build in a throwaway builder), `--phases`, `--update` (D-021) | Phase 6 |
+| `make loc` | Count each implementation's code lines by role (C4) into `docs/comparison/data/loc-<date>.json` | Phase 6 |
+| `make screenshots-kestra` / `make screenshots-prefect` | UI walkthrough (C9) of the running stack into `docs/comparison/data/screenshots/`, in the pinned Playwright image; run the parity suite first | Phase 6 |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

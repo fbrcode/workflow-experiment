@@ -1,0 +1,400 @@
+{
+  "date": "2026-11-15T16:29:11-03:00",
+  "commit": "63a984c",
+  "command": "make loc",
+  "method": [
+    "    make loc     # writes docs/comparison/data/loc-<date>.json and prints a table",
+    "",
+    "Code lines exclude blank lines, comments and Python docstrings (found with `tokenize` and `ast`).",
+    "In YAML, shell, Dockerfiles and TOML a comment is a line that starts with `#`; block scalars",
+    "(SQL and commands inside the Kestra flows) count as code. The buckets are defined below, so a",
+    "reader can check what was put where."
+  ],
+  "buckets": {
+    "kestra": {
+      "orchestration": [
+        "kestra/flows/*.yml"
+      ],
+      "ported n8n logic": [
+        "kestra/files/summarizer/imap_simple.py",
+        "kestra/files/summarizer/ported.py",
+        "kestra/files/summarizer/jscompat.py"
+      ],
+      "glue": [
+        "kestra/files/summarizer/task.py",
+        "kestra/files/summarizer/__init__.py"
+      ],
+      "stack and deployment": [
+        "kestra/compose.yaml",
+        "kestra/Dockerfile",
+        "kestra/deploy.sh",
+        "kestra/secrets-entrypoint.sh"
+      ],
+      "unit tests": [
+        "kestra/tests/**/*.py"
+      ],
+      "run helper": [
+        "scripts/kestra_run.py"
+      ]
+    },
+    "prefect": {
+      "orchestration": [
+        "prefect/src/email_summarizer/flows.py",
+        "prefect/src/email_summarizer/sql.py",
+        "prefect/src/email_summarizer/clients.py"
+      ],
+      "ported n8n logic": [
+        "prefect/src/email_summarizer/imap.py",
+        "prefect/src/email_summarizer/ingest.py",
+        "prefect/src/email_summarizer/summarize.py",
+        "prefect/src/email_summarizer/markdown.py",
+        "prefect/src/email_summarizer/js.py"
+      ],
+      "glue": [
+        "prefect/src/email_summarizer/config.py",
+        "prefect/src/email_summarizer/bootstrap.py",
+        "prefect/src/email_summarizer/__init__.py"
+      ],
+      "stack and deployment": [
+        "prefect/compose.yaml",
+        "prefect/Dockerfile",
+        "prefect/deploy.sh",
+        "prefect/prefect.yaml"
+      ],
+      "unit tests": [
+        "prefect/tests/**/*.py"
+      ],
+      "run helper": [
+        "scripts/prefect_run.py"
+      ]
+    }
+  },
+  "counts": {
+    "kestra": {
+      "orchestration": {
+        "lines": 375,
+        "code": 336,
+        "comment": 16,
+        "blank": 23,
+        "files": {
+          "kestra/flows/email-ingest.yml": {
+            "lines": 72,
+            "code": 61,
+            "comment": 6,
+            "blank": 5
+          },
+          "kestra/flows/email-summarize-send.yml": {
+            "lines": 303,
+            "code": 275,
+            "comment": 10,
+            "blank": 18
+          }
+        }
+      },
+      "ported n8n logic": {
+        "lines": 767,
+        "code": 569,
+        "comment": 74,
+        "blank": 131,
+        "files": {
+          "kestra/files/summarizer/imap_simple.py": {
+            "lines": 388,
+            "code": 296,
+            "comment": 35,
+            "blank": 61
+          },
+          "kestra/files/summarizer/jscompat.py": {
+            "lines": 133,
+            "code": 85,
+            "comment": 23,
+            "blank": 27
+          },
+          "kestra/files/summarizer/ported.py": {
+            "lines": 246,
+            "code": 188,
+            "comment": 16,
+            "blank": 43
+          }
+        }
+      },
+      "glue": {
+        "lines": 133,
+        "code": 81,
+        "comment": 30,
+        "blank": 28,
+        "files": {
+          "kestra/files/summarizer/__init__.py": {
+            "lines": 13,
+            "code": 0,
+            "comment": 13,
+            "blank": 3
+          },
+          "kestra/files/summarizer/task.py": {
+            "lines": 120,
+            "code": 81,
+            "comment": 17,
+            "blank": 25
+          }
+        }
+      },
+      "stack and deployment": {
+        "lines": 182,
+        "code": 140,
+        "comment": 29,
+        "blank": 13,
+        "files": {
+          "kestra/Dockerfile": {
+            "lines": 19,
+            "code": 10,
+            "comment": 6,
+            "blank": 3
+          },
+          "kestra/compose.yaml": {
+            "lines": 110,
+            "code": 95,
+            "comment": 10,
+            "blank": 5
+          },
+          "kestra/deploy.sh": {
+            "lines": 35,
+            "code": 24,
+            "comment": 8,
+            "blank": 3
+          },
+          "kestra/secrets-entrypoint.sh": {
+            "lines": 18,
+            "code": 11,
+            "comment": 5,
+            "blank": 2
+          }
+        }
+      },
+      "unit tests": {
+        "lines": 140,
+        "code": 83,
+        "comment": 15,
+        "blank": 44,
+        "files": {
+          "kestra/tests/test_golden.py": {
+            "lines": 71,
+            "code": 39,
+            "comment": 8,
+            "blank": 25
+          },
+          "kestra/tests/test_imap_simple.py": {
+            "lines": 69,
+            "code": 44,
+            "comment": 7,
+            "blank": 19
+          }
+        }
+      },
+      "run helper": {
+        "lines": 50,
+        "code": 33,
+        "comment": 6,
+        "blank": 12,
+        "files": {
+          "scripts/kestra_run.py": {
+            "lines": 50,
+            "code": 33,
+            "comment": 6,
+            "blank": 12
+          }
+        }
+      },
+      "parity driver": {
+        "lines": 64,
+        "code": 53,
+        "comment": 2,
+        "blank": 9,
+        "files": {
+          "tests/parity/harness/drivers.py::KestraDriver": {
+            "lines": 64,
+            "code": 53,
+            "comment": 2,
+            "blank": 9
+          }
+        }
+      }
+    },
+    "prefect": {
+      "orchestration": {
+        "lines": 427,
+        "code": 292,
+        "comment": 56,
+        "blank": 82,
+        "files": {
+          "prefect/src/email_summarizer/clients.py": {
+            "lines": 53,
+            "code": 31,
+            "comment": 10,
+            "blank": 13
+          },
+          "prefect/src/email_summarizer/flows.py": {
+            "lines": 264,
+            "code": 176,
+            "comment": 31,
+            "blank": 58
+          },
+          "prefect/src/email_summarizer/sql.py": {
+            "lines": 110,
+            "code": 85,
+            "comment": 15,
+            "blank": 11
+          }
+        }
+      },
+      "ported n8n logic": {
+        "lines": 656,
+        "code": 451,
+        "comment": 104,
+        "blank": 112,
+        "files": {
+          "prefect/src/email_summarizer/imap.py": {
+            "lines": 293,
+            "code": 219,
+            "comment": 37,
+            "blank": 41
+          },
+          "prefect/src/email_summarizer/ingest.py": {
+            "lines": 100,
+            "code": 68,
+            "comment": 15,
+            "blank": 19
+          },
+          "prefect/src/email_summarizer/js.py": {
+            "lines": 89,
+            "code": 47,
+            "comment": 25,
+            "blank": 20
+          },
+          "prefect/src/email_summarizer/markdown.py": {
+            "lines": 89,
+            "code": 57,
+            "comment": 17,
+            "blank": 16
+          },
+          "prefect/src/email_summarizer/summarize.py": {
+            "lines": 85,
+            "code": 60,
+            "comment": 10,
+            "blank": 16
+          }
+        }
+      },
+      "glue": {
+        "lines": 142,
+        "code": 86,
+        "comment": 24,
+        "blank": 36,
+        "files": {
+          "prefect/src/email_summarizer/__init__.py": {
+            "lines": 0,
+            "code": 0,
+            "comment": 0,
+            "blank": 0
+          },
+          "prefect/src/email_summarizer/bootstrap.py": {
+            "lines": 57,
+            "code": 35,
+            "comment": 6,
+            "blank": 17
+          },
+          "prefect/src/email_summarizer/config.py": {
+            "lines": 85,
+            "code": 51,
+            "comment": 18,
+            "blank": 19
+          }
+        }
+      },
+      "stack and deployment": {
+        "lines": 168,
+        "code": 130,
+        "comment": 22,
+        "blank": 16,
+        "files": {
+          "prefect/Dockerfile": {
+            "lines": 16,
+            "code": 9,
+            "comment": 3,
+            "blank": 4
+          },
+          "prefect/compose.yaml": {
+            "lines": 107,
+            "code": 91,
+            "comment": 8,
+            "blank": 8
+          },
+          "prefect/deploy.sh": {
+            "lines": 12,
+            "code": 5,
+            "comment": 6,
+            "blank": 1
+          },
+          "prefect/prefect.yaml": {
+            "lines": 33,
+            "code": 25,
+            "comment": 5,
+            "blank": 3
+          }
+        }
+      },
+      "unit tests": {
+        "lines": 180,
+        "code": 112,
+        "comment": 17,
+        "blank": 53,
+        "files": {
+          "prefect/tests/test_golden.py": {
+            "lines": 63,
+            "code": 38,
+            "comment": 6,
+            "blank": 20
+          },
+          "prefect/tests/test_imap.py": {
+            "lines": 88,
+            "code": 53,
+            "comment": 10,
+            "blank": 26
+          },
+          "prefect/tests/test_sql.py": {
+            "lines": 29,
+            "code": 21,
+            "comment": 1,
+            "blank": 7
+          }
+        }
+      },
+      "run helper": {
+        "lines": 49,
+        "code": 32,
+        "comment": 8,
+        "blank": 11,
+        "files": {
+          "scripts/prefect_run.py": {
+            "lines": 49,
+            "code": 32,
+            "comment": 8,
+            "blank": 11
+          }
+        }
+      },
+      "parity driver": {
+        "lines": 79,
+        "code": 67,
+        "comment": 1,
+        "blank": 11,
+        "files": {
+          "tests/parity/harness/drivers.py::PrefectDriver": {
+            "lines": 79,
+            "code": 67,
+            "comment": 1,
+            "blank": 11
+          }
+        }
+      }
+    }
+  }
+}
