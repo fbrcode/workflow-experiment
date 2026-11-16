@@ -1,0 +1,42 @@
+id: probe-webhook
+namespace: experiment.probes
+description: |
+  Capability probe, not part of the n8n port (docs/probes.md): an upstream system announces a
+  batch with a webhook call, as Retool workflows are triggered today. The flow registers the
+  batch in the control table and answers the caller with the row, synchronously.
+  The request must carry an HMAC-SHA256 signature of its body in X-Signature; an unsigned or
+  wrongly signed call gets 401 before any execution exists.
+
+labels:
+  experiment: kestra-vs-prefect
+  probe: webhook
+
+tasks:
+  - id: register-batch
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    sql: |
+      insert into probe.batch (id, status) values (:id::bigint, 'PENDING')
+      on conflict (id) do update set status = 'PENDING'
+      returning id, status
+    parameters:
+      id: "{{ trigger.body.batch_id }}"
+    fetchType: FETCH_ONE
+
+outputs:  # returned to the caller (returnOutputs)
+  - id: batch
+    type: JSON
+    value: "{{ outputs['register-batch'].row }}"
+
+triggers:
+  - id: announce
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: probe-webhook  # part of the URL; the signature below is what authenticates the caller
+    signature:
+      header: X-Signature
+      secret: "{{ secret('WEBHOOK_SIGNING_SECRET') }}"
+      algorithm: HMAC_SHA256
+    wait: true
+    returnOutputs: true

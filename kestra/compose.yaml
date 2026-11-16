@@ -32,12 +32,13 @@ services:
     stop_grace_period: 30s
     environment:
       # Encoded into SECRET_<NAME> by secrets-entrypoint.sh; flows use {{ secret('NAME') }} (C8).
-      KESTRA_SECRET_NAMES: IMAP_PASSWORD APP_DB_PASSWORD GEMINI_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_ALERT_CHAT_ID
+      KESTRA_SECRET_NAMES: IMAP_PASSWORD APP_DB_PASSWORD GEMINI_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_ALERT_CHAT_ID WEBHOOK_SIGNING_SECRET
       IMAP_PASSWORD: ${IMAP_PASSWORD:?set in .env}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set in .env}
       GEMINI_API_KEY: ${GEMINI_API_KEY:?set in .env}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set in .env}
       TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID:?set in .env}
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:?set in .env}  # HMAC key of the probe webhook (docs/probes.md)
       # Non-secret configuration: ENV_<NAME> is exposed to flows as {{ envs.<name> }}.
       ENV_IMAP_HOST: ${IMAP_HOST:?set in .env}
       ENV_IMAP_PORT: ${IMAP_PORT:?set in .env}

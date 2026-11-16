@@ -13,4 +13,4 @@ RUN uv export --frozen --no-dev --no-emit-project --output-file /tmp/requirement
 COPY src ./src
 RUN uv pip install --system --no-cache --no-deps .
 
-COPY prefect.yaml deploy.sh ./
+COPY prefect.yaml probes.yaml deploy.sh ./

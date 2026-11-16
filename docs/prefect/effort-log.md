@@ -121,3 +121,15 @@ in [comparison/data/](../comparison/data/). What the measurements and the UI wal
 | Task data | A task's inputs show as references to upstream task runs, not values. Outputs aren't kept unless result storage is configured: the blocks page shows "Default result storage: Not configured". |
 | Metrics | `/api/metrics` answers 404 by default (after basic auth: it answers 401 without credentials). Run metrics need the separate `prometheus-prefect-exporter`. |
 | UI and the internet | The UI requests a config from Amplitude (`sr-client-cfg.amplitude.com`), images from a CMS CDN and a file from GitHub, although the server runs with `PREFECT_SERVER_ANALYTICS_ENABLED=false`. The screenshot browser blocked them, so block icons show as broken images. |
+
+## 2026-11-15: Capability probes for the Retool replacement (D-022)
+
+[probes.md](../probes.md) has the results. Friction and surprises:
+
+| Observation | Detail |
+|---|---|
+| No file upload in a human step | `pause_flow_run(wait_for_input=Model)` draws a form from the Pydantic model, but has no upload widget, and the resume API takes JSON only. The probe asks the reviewer to paste the CSV. |
+| Resume is hidden | In the 3.9 UI (v2), a paused run's page has no Resume button. It's in the "Open menu" (⋮) at the top right. |
+| Pause timeout | `pause_flow_run` fails the run after 3600 s unless `timeout` is set; the docs page doesn't state the default (the source does). `suspend_flow_run` has no default timeout, but needs a deployment and persisted results. |
+| Probe deployments kept apart | A second deployment file, `probes.yaml`, applied with `prefect deploy --all --prefect-file probes.yaml`, keeps the probes out of `make prefect-deploy`. The image now copies it. |
+| Long statement | `select pg_sleep(660)` through the connector block needed no setting: `COMPLETED` with 660.3 s of run time. A task's `timeout_seconds` couldn't have stopped it anyway: a timeout can't interrupt a blocking call. |

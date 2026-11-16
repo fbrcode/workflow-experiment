@@ -1,0 +1,101 @@
+id: probe-gate
+namespace: experiment.probes
+description: |
+  Capability probe, not part of the n8n port (docs/probes.md). A control-table gate with a human
+  step, the pattern the Retool replacement needs:
+    1. wait until the batch's row in probe.batch is READY (polled in Postgres)
+    2. pause for a person: a name, a decision, and the batch's CSV file, entered in the UI
+    3. validate the file and keep the report as an output file
+    4. write the outcome back to the control table
+
+labels:
+  experiment: kestra-vs-prefect
+  probe: gate
+
+inputs:
+  - id: batch_id
+    type: INT
+    defaults: 1
+
+tasks:
+  - id: wait-until-ready
+    type: io.kestra.plugin.core.flow.LoopUntil  # formerly WaitFor; pauses the execution between checks
+    condition: "{{ outputs['read-status'].row.status == 'READY' }}"
+    checkFrequency:
+      interval: PT5S
+      maxDuration: PT2H
+    failOnMaxReached: true
+    tasks:
+      - id: read-status
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: "{{ envs.app_db_url }}"
+        username: "{{ envs.app_db_user }}"
+        password: "{{ secret('APP_DB_PASSWORD') }}"
+        sql: select status from probe.batch where id = :id::bigint
+        parameters:
+          id: "{{ inputs.batch_id }}"
+        fetchType: FETCH_ONE
+
+  - id: human-review
+    type: io.kestra.plugin.core.flow.Pause  # no pauseDuration: waits until someone resumes it
+    onResume:
+      - id: approver
+        type: STRING
+        description: Who reviewed the batch
+      - id: decision
+        type: SELECT
+        values: [APPROVE, REJECT]
+      - id: data_file
+        type: FILE
+        description: "The batch's data file: CSV with the header id,amount"
+
+  - id: validate-file
+    type: io.kestra.plugin.scripts.python.Commands
+    containerImage: python:3.12.16-slim-trixie
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: IF_NOT_PRESENT
+    inputFiles:
+      data.csv: "{{ outputs['human-review'].onResume.data_file }}"
+      validate.py: |
+        import csv, json, os
+        rows = list(csv.reader(open("data.csv", newline="")))
+        header, body = rows[0], rows[1:]
+        def ok(row):
+            try:
+                return len(row) == 2 and int(row[0]) > 0 and float(row[1]) >= 0
+            except ValueError:
+                return False
+        valid = sum(ok(r) for r in body)
+        invalid = [i + 2 for i, r in enumerate(body) if not ok(r)]  # 1-based line numbers
+        good = header == ["id", "amount"] and not invalid and body
+        status = ("APPROVED" if os.environ["DECISION"] == "APPROVE" else "REJECTED") if good else "INVALID"
+        report = {"header_ok": header == ["id", "amount"], "rows": len(body), "valid": valid,
+                  "invalid_lines": invalid, "status": status}
+        json.dump(report, open("validation-report.json", "w"), indent=2)
+        print("::" + json.dumps({"outputs": {"status": status, "rows": len(body), "valid": valid}}) + "::")
+    env:
+      DECISION: "{{ outputs['human-review'].onResume.decision }}"
+    outputFiles:
+      - validation-report.json
+    commands:
+      - python validate.py
+
+  - id: record-outcome
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    sql: |
+      update probe.batch
+      set status = :status, approver = :approver, decision = :decision,
+          rows_total = :rows::int, rows_valid = :valid::int, decided_at = now()
+      where id = :id::bigint
+    parameters:
+      status: "{{ outputs['validate-file'].vars.status }}"
+      approver: "{{ outputs['human-review'].onResume.approver }}"
+      decision: "{{ outputs['human-review'].onResume.decision }}"
+      rows: "{{ outputs['validate-file'].vars.rows }}"
+      valid: "{{ outputs['validate-file'].vars.valid }}"
+      id: "{{ inputs.batch_id }}"
+    fetchType: NONE

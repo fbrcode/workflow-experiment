@@ -74,7 +74,7 @@ failure leaves the execution in `WARNING` state, where n8n would show success.
 | Kind | Mechanism | Used as |
 |---|---|---|
 | Non-secret config | Compose sets `ENV_<NAME>` on the Kestra container | `{{ envs.<name> }}`, e.g. `envs.gemini_base_url` |
-| Secrets (`IMAP_PASSWORD`, `APP_DB_PASSWORD`, `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALERT_CHAT_ID`) | Kestra OSS reads `SECRET_<NAME>` env vars, **base64-encoded**. Compose can't encode, so [`secrets-entrypoint.sh`](../../kestra/secrets-entrypoint.sh) encodes the names in `KESTRA_SECRET_NAMES` at container start. | `{{ secret('NAME') }}`, masked in logs |
+| Secrets (`IMAP_PASSWORD`, `APP_DB_PASSWORD`, `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALERT_CHAT_ID`; `WEBHOOK_SIGNING_SECRET` for the probe webhook, D-023) | Kestra OSS reads `SECRET_<NAME>` env vars, **base64-encoded**. Compose can't encode, so [`secrets-entrypoint.sh`](../../kestra/secrets-entrypoint.sh) encodes the names in `KESTRA_SECRET_NAMES` at container start. | `{{ secret('NAME') }}`, masked in logs |
 | UI/API login | `kestra.server.basic-auth` in `KESTRA_CONFIGURATION` | basic auth on every API call |
 
 Base URLs (`GEMINI_BASE_URL`, `TELEGRAM_BASE_URL`) and the IMAP host come from `.env`, so

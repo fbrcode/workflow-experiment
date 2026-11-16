@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-16T10:15:40-03:00",
+  "tool": {
+    "name": "kestra",
+    "version": "2.0.10"
+  },
+  "commands": [
+    {
+      "date": "2026-11-16T10:15:40-03:00",
+      "command": "make probe-kestra --probes webhook",
+      "probes": [
+        "webhook"
+      ]
+    }
+  ],
+  "docs": "docs/probes.md",
+  "deployed": [
+    "probe-gate (rev 1)",
+    "probe-long-query (rev 1)",
+    "probe-webhook (rev 1)"
+  ],
+  "webhook": {
+    "endpoint": "POST /api/v1/main/executions/webhook/experiment.probes/probe-webhook/probe-webhook",
+    "authentication": "HMAC-SHA256 of the body in X-Signature; the server's login isn't needed",
+    "unsigned": {
+      "status": 401,
+      "seconds": 0.04,
+      "body": "{\"type\":\"https://kestra.io/docs/api-reference/problems/unauthenticated\",\"title\":\"Authentication required\",\"status\":401,\"detail\":\"Invalid webhook signature.\",\"instance\":\"/api/v1/main/executions/webhook/experiment.probes/probe-webhook/probe-webhook\"}"
+    },
+    "wrong_signature": {
+      "status": 401,
+      "seconds": 0.02,
+      "body": "{\"type\":\"https://kestra.io/docs/api-reference/problems/unauthenticated\",\"title\":\"Authentication required\",\"status\":401,\"detail\":\"Invalid webhook signature.\",\"instance\":\"/api/v1/main/executions/webhook/experiment.probes/probe-webhook/probe-webhook\"}"
+    },
+    "signed": {
+      "status": 200,
+      "seconds": 0.35,
+      "body": "{\"batch\":{\"id\":7,\"status\":\"PENDING\"}}"
+    },
+    "row_after_seconds": 0.1
+  }
+}

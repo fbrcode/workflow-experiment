@@ -2,9 +2,9 @@
 
 ## What this repo is
 
-A local experiment comparing **Kestra** and **Prefect** as replacements for **n8n**. The n8n
-"Email Summarizer" workflow in `baseline/` (IMAP ingest, then Gemini summary, then Telegram) gets
-implemented in both tools. Both run locally with docker compose and are measured against the
+A local experiment comparing **Kestra** and **Prefect** as replacements for **Retool Workflows**
+(D-022). The test vehicle is an n8n workflow: the "Email Summarizer" in `baseline/` (IMAP ingest,
+then Gemini summary, then Telegram) gets implemented in both tools. Both run locally with docker compose and are measured against the
 same spec and the same criteria. Claude does the implementation and writes everything up under `docs/`.
 
 Start every session by reading, in this order:
@@ -136,5 +136,7 @@ Start every session by reading, in this order:
 | `make measure-kestra` / `make measure-prefect` | Measure one stack (C2, C3, C5) into `docs/comparison/data/measure-<tool>-<date>.json`; nothing else may run in Docker. `MEASURE_ARGS`: `--cold` (clean pull and build in a throwaway builder), `--phases`, `--update` (D-021) | Phase 6 |
 | `make loc` | Count each implementation's code lines by role (C4) into `docs/comparison/data/loc-<date>.json` | Phase 6 |
 | `make screenshots-kestra` / `make screenshots-prefect` | UI walkthrough (C9) of the running stack into `docs/comparison/data/screenshots/`, in the pinned Playwright image; run the parity suite first | Phase 6 |
+| `make probe-kestra` / `make probe-prefect` | Capability probes (`docs/probes.md`): a 660 s Postgres statement, a control-table gate with a human step, and a webhook call, into `docs/comparison/data/probes-<tool>-<date>.json`. `PROBE_ARGS="--probes webhook"` runs a subset and updates the day's file | Retool reports (D-022, D-023) |
+| `make screenshots-review-kestra` / `make screenshots-review-prefect` | Hold a probe gate run at its review step, then fill in and submit the tool's resume form in a browser, and capture it | Retool reports (D-022) |
 
 Mock control API (`/_mock/calls`, `/_mock/faults`, `/_mock/reset`): see `docs/infra.md`.

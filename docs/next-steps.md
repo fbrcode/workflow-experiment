@@ -4,6 +4,23 @@ What's needed to move forward, split by who acts. Phase details are in [plan.md]
 
 ## Owner actions
 
+### 0. Before choosing the Retool replacement
+
+From [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md#before-deciding):
+
+- Find out which Retool limit you hit. On Cloud, it's the 600 s per-block maximum. On
+  self-hosted, check `WORKFLOW_DBCONNECTOR_QUERY_TIMEOUT_MS` and the proxy timeout.
+- Check how promotion works today: one branch per environment, or one `main` with
+  multi-instance releases.
+- Pick one real workflow with a hard gate and a human step to pilot.
+- Decide how approvals are controlled: a shared login, a paid edition, or Retool apps in front.
+- Check your Retool version. Retool 4.0 supports only Kubernetes, not ECS, which changes where
+  any of the three would run on AWS.
+- Pilot the AWS side (Lambda, S3, Secrets Manager with the task role) in a sandbox account;
+  nothing here ran against AWS.
+- Ask for quotes if governance features are needed: Kestra Enterprise, and Prefect Cloud or
+  Customer-Managed Prefect.
+
 ### 1. ~~Provide the production schema~~
 
 Provided 2026-11-14 as psql `\d+` output ([baseline/prod-schema.md](baseline/prod-schema.md)).
