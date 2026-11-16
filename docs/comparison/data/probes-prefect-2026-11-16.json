@@ -1,0 +1,46 @@
+{
+  "date": "2026-11-16T10:16:18-03:00",
+  "tool": {
+    "name": "prefect",
+    "version": "3.9.3"
+  },
+  "commands": [
+    {
+      "date": "2026-11-16T10:15:05-03:00",
+      "command": "make probe-prefect --probes webhook",
+      "probes": [
+        "webhook"
+      ]
+    },
+    {
+      "date": "2026-11-16T10:16:18-03:00",
+      "command": "make probe-prefect --probes webhook",
+      "probes": [
+        "webhook"
+      ]
+    }
+  ],
+  "docs": "docs/probes.md",
+  "deployed": [
+    "probe-long-query",
+    "probe-gate",
+    "probe-webhook"
+  ],
+  "webhook": {
+    "endpoint": "POST /api/events (a list of events), with a deployment trigger in prefect/probes.yaml",
+    "authentication": "the server's basic-auth string",
+    "without_login": {
+      "status": 401,
+      "seconds": 0.0,
+      "body": "{\"exception_message\":\"Unauthorized\"}"
+    },
+    "with_login": {
+      "status": 204,
+      "seconds": 0.0,
+      "body": ""
+    },
+    "row_after_seconds": 11.17,
+    "run_state": "COMPLETED",
+    "total_seconds": 11.21
+  }
+}

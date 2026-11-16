@@ -1,12 +1,15 @@
 # Workflow orchestrator experiment: Kestra vs Prefect
 
 A local, reproducible comparison of **[Kestra](https://kestra.io)** and **[Prefect](https://www.prefect.io)**
-as replacements for **n8n**. A real production n8n workflow is re-implemented in both tools, run
-with docker compose, and judged against one behavior spec and one scorecard.
+as replacements for **Retool Workflows**. A real production n8n workflow serves as the test vehicle:
+it is re-implemented in both tools, run with docker compose, and judged against one behavior spec
+and one scorecard.
 
 > **Status:** Phases 0 to 6 are done: foundations, shared local infrastructure, golden vectors from the original n8n code, both implementations (**Kestra** and **Prefect**), the parity suite (both pass 13 of 13 scenarios), and the measurements and final report. Phase 7, a smoke test against the real services, is optional. See [docs/plan.md](docs/plan.md).
 >
 > **Result:** both tools reproduce the workflow. On the weighted scorecard Kestra leads slightly, 3.8 against 3.6 out of 5, a lean rather than a clear win. Kestra is ahead on observability, speed and native tasks; Prefect on footprint, secrets and Python testability. The recommendation and evidence are in [docs/comparison/results.md](docs/comparison/results.md).
+>
+> **For the Retool replacement** (D-022): both tools run Postgres work past Retool's 600 s limit and keep flows as plain files in Git, so promotion needs no merges. Kestra also takes values and a file upload in its own human step, and has native signed webhooks; Prefect takes values only, has no webhooks in OSS, but fits ECS natively (a task per flow run, Secrets Manager at runtime). Retool 4.0 itself requires Kubernetes, not ECS. Reports: [Kestra](docs/reports/kestra.md), [Prefect](docs/reports/prefect.md), [Retool vs Kestra vs Prefect](docs/reports/retool-kestra-prefect.md).
 
 ## The workflow under test
 
@@ -116,6 +119,16 @@ make screenshots-kestra   # UI walkthrough (C9), after make parity-kestra; scree
 
 Details: [docs/comparison/results.md](docs/comparison/results.md) and [D-021](docs/decisions.md).
 
+Capability probes for the Retool replacement (a 660 s Postgres statement; a control-table gate with
+a human step):
+
+```bash
+make probe-kestra                 # or probe-prefect, about 12 min each; PROBE_ARGS="--probes webhook" runs one probe
+make screenshots-review-kestra    # the probe's human step done through the UI form, captured
+```
+
+Details: [docs/probes.md](docs/probes.md).
+
 ## Documentation
 
 Start at [docs/README.md](docs/README.md). The key files:
@@ -124,6 +137,7 @@ Start at [docs/README.md](docs/README.md). The key files:
 - [docs/decisions.md](docs/decisions.md): assumptions and deviations
 - [docs/baseline/](docs/baseline/): spec and data model
 - [docs/comparison/results.md](docs/comparison/results.md): **the scorecard, the evidence and the recommendation**
+- [docs/reports/](docs/reports/): **the Retool replacement reports**: one per tool (running it, the development lifecycle, pros and cons) and one comparing all three
 
 ## Working with Claude
 

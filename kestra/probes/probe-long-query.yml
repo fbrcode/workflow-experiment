@@ -1,0 +1,26 @@
+id: probe-long-query
+namespace: experiment.probes
+description: |
+  Capability probe, not part of the n8n port (docs/probes.md): one Postgres statement that runs
+  longer than Retool Workflows' 600 s limit, through the same JDBC task the summarizer uses.
+  No timeout is set anywhere: Kestra tasks and executions have none by default.
+
+labels:
+  experiment: kestra-vs-prefect
+  probe: long-query
+
+inputs:
+  - id: seconds
+    type: INT
+    defaults: 660
+
+tasks:
+  - id: long-statement
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.app_db_url }}"
+    username: "{{ envs.app_db_user }}"
+    password: "{{ secret('APP_DB_PASSWORD') }}"
+    sql: select pg_sleep(:seconds::int)
+    parameters:
+      seconds: "{{ inputs.seconds }}"
+    fetchType: NONE

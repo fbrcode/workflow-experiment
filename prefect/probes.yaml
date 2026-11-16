@@ -1,0 +1,39 @@
+# Capability probes (docs/probes.md), deployed only by `make probe-prefect`, never by
+# `make prefect-deploy`: prefect --no-prompt deploy --all --prefect-file probes.yaml.
+# No schedules: a person (or the probe runner) starts them from the UI or the API.
+name: email-summarizer-probes
+prefect-version: 3.9.3
+
+build: null
+push: null
+pull: []
+
+deployments:
+  - name: probe-long-query
+    description: One Postgres statement longer than Retool Workflows' 600 s limit.
+    entrypoint: email_summarizer.probes.probe_long_query
+    work_pool:
+      name: email-summarizer
+
+  - name: probe-gate
+    description: Wait for a READY row in probe.batch, pause for a reviewer, validate the CSV, record the outcome.
+    entrypoint: email_summarizer.probes.probe_gate
+    work_pool:
+      name: email-summarizer
+
+  # Prefect OSS has no webhooks (Cloud only). The nearest thing: the caller posts an event to
+  # POST /api/events (basic auth) and this trigger turns it into a run, the payload into parameters.
+  - name: probe-webhook
+    description: Register an announced batch in probe.batch; started by a probe.batch.announced event.
+    entrypoint: email_summarizer.probes.probe_webhook
+    work_pool:
+      name: email-summarizer
+    triggers:
+      - type: event
+        enabled: true
+        match:
+          prefect.resource.id: probe.batch.*
+        expect:
+          - probe.batch.announced
+        parameters:
+          batch_id: "{{ event.payload.batch_id }}"

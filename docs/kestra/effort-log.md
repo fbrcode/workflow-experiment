@@ -106,3 +106,16 @@ in [comparison/data/](../comparison/data/). What the measurements and the UI wal
 | Metrics | `:8081/prometheus` is on by default, with per-flow execution durations and task-run counts (`kestra_executor_*`). |
 | UI and the internet | The UI calls `api.kestra.io` and keeps PostHog analytics keys in the browser's local storage, although the server has anonymous usage reporting off. The screenshot browser blocked every outside request. |
 | Logging in from a script | The login form ignores Playwright's `fill()`; it needs real keystrokes (`press_sequentially`). |
+
+## 2026-11-15: Capability probes for the Retool replacement (D-022)
+
+[probes.md](../probes.md) has the results. Friction and surprises:
+
+| Observation | Detail |
+|---|---|
+| `WaitFor` was renamed | The task is now `io.kestra.plugin.core.flow.LoopUntil`. `WaitFor` still works as an alias, and the running server's plugin API serves its schema under that name, so the rename is easy to miss. The probe uses the new name. |
+| A paused execution isn't necessarily waiting for a person | `LoopUntil` puts the whole execution in `PAUSED` between its checks. The first probe runner resumed on "execution is `PAUSED`". That only triggered an early check (`RESTARTED` in the history), and the real `Pause` then waited forever. Check the `Pause` task's own state. |
+| The resume API path | `POST /api/v1/main/executions/{id}/actions/resume`, `multipart/form-data`, files included. The plugin page gives the path without `/actions`. The kill action is `DELETE .../executions/{id}/actions/kill` as well. |
+| The resume form | Drawn from `onResume` with no code: a STRING is a Monaco code editor (inputs accept expressions), a SELECT is a dropdown, a FILE is a normal file chooser. Driving it from a browser script needs keystrokes in the editor. |
+| Live executions in the UI | The page of a running or paused execution keeps a stream open, so waiting for network idle never finishes. Wait for the page load instead. |
+| Long statement | `select pg_sleep(660)` through the JDBC task needed no setting: `SUCCESS` after 660.6 s. The JDBC plugin has no query-timeout property. |

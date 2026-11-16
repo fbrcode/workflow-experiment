@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-15T18:18:27-03:00",
+  "tool": {
+    "name": "prefect",
+    "version": "3.9.3"
+  },
+  "command": "make probe-prefect",
+  "docs": "docs/probes.md",
+  "deployed": [
+    "probe-long-query",
+    "probe-gate"
+  ],
+  "gate": [
+    {
+      "run_id": "22c78c63-cc46-4999-9d20-80963c530f32",
+      "decision": "APPROVE",
+      "csv_lines": 4,
+      "state_while_row_pending": "RUNNING",
+      "paused_seconds_after_ready": 4.1,
+      "final_state": "COMPLETED",
+      "seconds": 34.7,
+      "control_row": {
+        "status": "APPROVED",
+        "approver": "probe reviewer",
+        "decision": "APPROVE",
+        "rows_total": "3",
+        "rows_valid": "3"
+      },
+      "tasks": {
+        "record-outcome-3f3": "COMPLETED",
+        "validate-file-edb": "COMPLETED",
+        "wait-until-ready-433": "COMPLETED"
+      },
+      "artifacts": [
+        {
+          "key": "probe-validation-report",
+          "type": "table"
+        }
+      ]
+    },
+    {
+      "run_id": "485e10ec-4877-4b74-8e4d-95edd586a821",
+      "decision": "APPROVE",
+      "csv_lines": 4,
+      "state_while_row_pending": "RUNNING",
+      "paused_seconds_after_ready": 4.1,
+      "final_state": "COMPLETED",
+      "seconds": 34.7,
+      "control_row": {
+        "status": "INVALID",
+        "approver": "probe reviewer",
+        "decision": "APPROVE",
+        "rows_total": "3",
+        "rows_valid": "1"
+      },
+      "tasks": {
+        "record-outcome-d08": "COMPLETED",
+        "validate-file-73a": "COMPLETED",
+        "wait-until-ready-3d9": "COMPLETED"
+      },
+      "artifacts": [
+        {
+          "key": "probe-validation-report",
+          "type": "table"
+        }
+      ]
+    }
+  ],
+  "long_query": {
+    "run_id": "b93654af-5ac7-43e2-8432-c71378961f54",
+    "statement": "select pg_sleep(660)",
+    "final_state": "COMPLETED",
+    "seconds": 675.2,
+    "tasks": {
+      "long-statement-557": "COMPLETED"
+    },
+    "artifacts": []
+  }
+}

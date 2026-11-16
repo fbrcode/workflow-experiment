@@ -14,7 +14,8 @@ MOCKS    := uv run --project infra/mocks
         kestra-up kestra-down kestra-deploy kestra-seed kestra-reset kestra-ps kestra-logs kestra-run test-kestra \
         prefect-up prefect-down prefect-deploy prefect-seed prefect-reset prefect-ps prefect-logs prefect-run test-prefect \
         parity-kestra parity-prefect measure-kestra measure-prefect loc \
-        screenshots-kestra screenshots-prefect
+        screenshots-kestra screenshots-prefect probe-kestra probe-prefect \
+        screenshots-review-kestra screenshots-review-prefect
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
@@ -180,3 +181,24 @@ screenshots-kestra: ## C9: screenshots of the running Kestra UI into docs/compar
 
 screenshots-prefect: ## C9: screenshots of the running Prefect UI into docs/comparison/data/screenshots (after parity-prefect)
 	@$(call SCREENSHOTS,wfx-prefect_default,prefect)
+
+# --- Capability probes (docs/probes.md): a >600 s Postgres statement and a control-table gate with a
+# human step, against the stack (started if needed). Not part of the n8n port.
+# PROBE_ARGS goes to scripts/probes.py, e.g. PROBE_ARGS="--probes webhook" (a subset updates the day's results file).
+PROBE_ARGS ?=
+PROBE = set -a; source $(ENV_FILE); set +a; export ENV_FILE=$(ENV_FILE) PROBE_COMMAND="make $@ $(PROBE_ARGS)"; \
+	uv run --quiet --no-project --python 3.12 scripts/probes.py
+
+probe-kestra: kestra-up ## Run the capability probes on Kestra into docs/comparison/data (about 12 min)
+	@$(PROBE) kestra $(PROBE_ARGS)
+
+probe-prefect: prefect-up ## Run the capability probes on Prefect into docs/comparison/data (about 12 min)
+	@$(PROBE) prefect $(PROBE_ARGS)
+
+# The probe's human step done in the UI (docs/probes.md): hold a probe-gate run at its review step,
+# then fill in and submit the tool's resume form in the pinned Playwright image, and capture it.
+screenshots-review-kestra: kestra-up ## Hold a probe-gate run for review, do the review in the Kestra UI, capture it
+	@RUN=$$($(PROBE) kestra --hold 99) && $(call SCREENSHOTS,wfx-kestra,kestra-review $$RUN)
+
+screenshots-review-prefect: prefect-up ## Hold a probe-gate run for review, do the review in the Prefect UI, capture it
+	@RUN=$$($(PROBE) prefect --hold 99) && $(call SCREENSHOTS,wfx-prefect_default,prefect-review $$RUN)

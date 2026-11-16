@@ -248,3 +248,63 @@ file in [comparison/data/](comparison/data/) records the date, host, versions an
 - **Scoring.** Each criterion gets 1 to 5 per tool, with the weights in
   [criteria.md](comparison/criteria.md) unchanged and C1 as a gate. One run per stack, so small
   differences (a second here, 50 MiB there) aren't treated as meaningful.
+
+### D-022: The real target is Retool Workflows; capability probes added · `accepted`
+
+The owner clarified on 2026-11-15 that the tools are candidates to replace **Retool Workflows**,
+not n8n. The n8n workflow was a realistic stand-in for comparing database work and wait handling.
+What the replacement needs:
+
+- **Promotion without merge conflicts.** Promotion from dev to stage to prod must not produce
+  merge conflicts. Trunk-based development is an option.
+- **Spec-driven development.**
+- **Decision gates on Postgres control tables.**
+- **Human steps.** People type values into UI fields, upload data files and validate
+  artifacts.
+- **Runs past Retool's 600 s limit.**
+
+Consequences:
+
+- **Phases 0 to 6 stand as they are.** The parity gate and the scorecard in
+  [comparison/results.md](comparison/results.md) are unchanged.
+- **Capability probes.** Two probes per tool test the new needs directly:
+  - a Postgres statement longer than 600 s;
+  - a control-table gate with a human step: form fields, a file and validation.
+
+  The probes are [`kestra/probes/`](../kestra/probes/), [`prefect/probes.yaml`](../prefect/probes.yaml)
+  with `email_summarizer/probes.py`, and `make probe-<tool>`. They live in their own Kestra
+  namespace and Prefect deployment file, so the summarizer's deploys never touch them. They are
+  not parity scenarios. See [probes.md](probes.md).
+- **Retool can't run here.** It is a commercial product, and the experiment is OSS and local
+  (D-006). It is assessed from Retool's documentation, fetched 2026-11-15, and from the owner's
+  experience. The reports mark each claim as measured here, documented by the vendor, or reported
+  by the owner.
+- **Three reports.** They are in [reports/](reports/): one per tool, with the development
+  lifecycle and pros and cons per capability, and one comparing Retool, Kestra and Prefect.
+
+### D-023: Webhooks, AWS and self-hosting cost join the Retool comparison · `accepted`
+
+The owner added three needs on 2026-11-16:
+
+- Webhook calls, native in Retool's workflow triggers.
+- AWS integration. Retool runs self-hosted on ECS today and calls Lambda, S3, Postgres and
+  Secrets Manager; the replacement must do the same and be deployable self-hosted on AWS.
+- Pricing against features for the self-hosted options.
+
+How they're covered:
+
+- **Webhooks are measured.** A third probe, `webhook`, runs in both tools
+  ([probes.md](probes.md#webhook-2026-11-16)):
+  - **Kestra** uses its core `Webhook` trigger with an HMAC signature. The signing key is the
+    new `WEBHOOK_SIGNING_SECRET` in `.env.example`, passed to Kestra as a secret.
+  - **Prefect OSS** has no webhooks, so its probe posts an event that a deployment trigger in
+    `prefect/probes.yaml` turns into a run.
+  - `make probe-<tool> PROBE_ARGS="--probes webhook"` runs it alone.
+- **AWS is from the docs, not measured.** The facts come from the vendors' docs and plugin
+  sources: Kestra `plugin-aws` 4.0.0, `prefect-aws` 0.8.0, Retool's resources and deployment
+  guides. No AWS account or AWS emulator was used. The reports say so and propose a pilot in an
+  AWS sandbox account.
+- **Pricing is from the vendors' public pages on 2026-11-16.** Kestra Enterprise and Retool
+  self-hosted have no public price.
+- **A new fact for the recommendation:** Retool 4.0 (2026-06-11) supports only Kubernetes, not
+  ECS. The comparison was updated in [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md).

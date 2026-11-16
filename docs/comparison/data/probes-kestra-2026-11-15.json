@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-15T18:06:04-03:00",
+  "tool": {
+    "name": "kestra",
+    "version": "2.0.10"
+  },
+  "command": "make probe-kestra",
+  "docs": "docs/probes.md",
+  "deployed": [
+    "probe-gate (rev 2)",
+    "probe-long-query (rev 1)"
+  ],
+  "gate": [
+    {
+      "run_id": "1drIHyKiasaXYjPvhfcNkE",
+      "decision": "APPROVE",
+      "csv_lines": 4,
+      "state_while_row_pending": "PAUSED",
+      "paused_seconds_after_ready": 4.0,
+      "final_state": "SUCCESS",
+      "seconds": 26.7,
+      "control_row": {
+        "status": "APPROVED",
+        "approver": "probe reviewer",
+        "decision": "APPROVE",
+        "rows_total": "3",
+        "rows_valid": "3"
+      },
+      "tasks": {
+        "wait-until-ready": "SUCCESS",
+        "read-status": "SUCCESS",
+        "human-review": "SUCCESS",
+        "validate-file": "SUCCESS",
+        "record-outcome": "SUCCESS"
+      }
+    },
+    {
+      "run_id": "6sRppsgZsVjU2IexfbVmJN",
+      "decision": "APPROVE",
+      "csv_lines": 4,
+      "state_while_row_pending": "PAUSED",
+      "paused_seconds_after_ready": 4.0,
+      "final_state": "SUCCESS",
+      "seconds": 26.6,
+      "control_row": {
+        "status": "INVALID",
+        "approver": "probe reviewer",
+        "decision": "APPROVE",
+        "rows_total": "3",
+        "rows_valid": "1"
+      },
+      "tasks": {
+        "wait-until-ready": "SUCCESS",
+        "read-status": "SUCCESS",
+        "human-review": "SUCCESS",
+        "validate-file": "SUCCESS",
+        "record-outcome": "SUCCESS"
+      }
+    }
+  ],
+  "long_query": {
+    "run_id": "3XQYl6ivYqXxtPV8G3ESFc",
+    "statement": "select pg_sleep(660)",
+    "final_state": "SUCCESS",
+    "seconds": 660.6,
+    "tasks": {
+      "long-statement": "SUCCESS"
+    }
+  }
+}

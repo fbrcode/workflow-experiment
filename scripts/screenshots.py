@@ -25,6 +25,7 @@ import socket
 import socketserver
 import sys
 import threading
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -93,6 +94,57 @@ def metrics(url: str, keep: Callable[[str], bool], limit: int = 60, auth: tuple[
 
 # --- Kestra ------------------------------------------------------------------------------------
 
+REVIEW_CSV = b"id,amount\n1,10.50\n2,0\n3,99.99\n"  # the probe's good batch (scripts/probes.py)
+
+
+def kestra_login(page: Page, user: str, password: str) -> None:
+    page.goto("http://localhost:8080/ui/login", wait_until="networkidle")
+    page.locator("#input-username").press_sequentially(user)  # fill() doesn't trigger the form's input events
+    page.locator("#input-password").press_sequentially(password)
+    page.locator("button[type=submit]").click()
+    page.wait_for_url(lambda url: "/login" not in url, timeout=15000)
+
+
+def wait_until(check: Callable[[], bool], timeout: float = 120.0) -> None:
+    deadline = time.monotonic() + timeout
+    while not check():
+        if time.monotonic() > deadline:
+            raise TimeoutError("the run didn't finish after the review")
+        time.sleep(2)
+
+
+def kestra_review(page: Page, shoot: Callable[[str], None]) -> str:
+    """Do a probe-gate run's human step in the UI: the resume form, a name, a decision, the CSV."""
+    user, password = os.environ["KESTRA_ADMIN_USER"], os.environ["KESTRA_ADMIN_PASSWORD"]
+    run_id = sys.argv[2]
+    forward(8080, "kestra")
+    kestra_login(page, user, password)
+    run_page = f"http://localhost:8080/ui/main/executions/experiment.probes/probe-gate/{run_id}"
+    page.goto(f"{run_page}/overview", wait_until="load")  # a live execution keeps a stream open: no networkidle
+    page.wait_for_timeout(4000)
+    page.get_by_role("button", name="Resume").first.click()
+    page.wait_for_timeout(1500)
+    dialog = page.locator("[role=dialog]")
+    dialog.locator(".monaco-editor").first.click()  # STRING inputs are a code editor (they accept expressions)
+    page.keyboard.type("ui reviewer")
+    dialog.locator("input.kel-select__input").first.click(force=True)
+    page.wait_for_timeout(600)
+    page.get_by_role("option", name="APPROVE").click()
+    page.set_input_files(
+        "input[type=file]", files=[{"name": "batch.csv", "mimeType": "text/csv", "buffer": REVIEW_CSV}]
+    )
+    page.wait_for_timeout(500)
+    shoot("form")
+    dialog.get_by_role("button", name="Resume").click()
+    api = f"http://localhost:8080/api/v1/main/executions/{run_id}"
+    wait_until(lambda: http(api, user, password)["state"]["current"] == "SUCCESS")
+    page.goto(f"{run_page}/outputs", wait_until="load")
+    page.wait_for_timeout(4000)
+    page.get_by_text("validate-file", exact=True).first.click()
+    page.wait_for_timeout(1500)
+    shoot("outputs")
+    return ""
+
 
 def kestra(page: Page, shoot: Callable[[str], None]) -> str:
     user, password = os.environ["KESTRA_ADMIN_USER"], os.environ["KESTRA_ADMIN_PASSWORD"]
@@ -119,11 +171,7 @@ def kestra(page: Page, shoot: Callable[[str], None]) -> str:
             picked.setdefault("happy", execution["id"])
     print("kestra executions:", picked)
 
-    page.goto(f"{base}/ui/login", wait_until="networkidle")
-    page.locator("#input-username").press_sequentially(user)  # fill() doesn't trigger the form's input events
-    page.locator("#input-password").press_sequentially(password)
-    page.locator("button[type=submit]").click()
-    page.wait_for_url(lambda url: "/login" not in url, timeout=15000)
+    kestra_login(page, user, password)
 
     def visit(path: str) -> None:
         page.goto(base + path, wait_until="networkidle")
@@ -170,6 +218,48 @@ def kestra(page: Page, shoot: Callable[[str], None]) -> str:
 # --- Prefect -----------------------------------------------------------------------------------
 
 
+def prefect_login(page: Page, user: str, password: str) -> None:
+    page.goto("http://localhost:4200", wait_until="networkidle")  # the default UI is the new one, under /v2
+    page.locator("input").first.press_sequentially(f"{user}:{password}")  # the basic-auth string
+    page.keyboard.press("Enter")
+    page.wait_for_url(lambda url: "/login" not in url, timeout=15000)
+
+
+def prefect_review(page: Page, shoot: Callable[[str], None]) -> str:
+    """Do a probe-gate run's human step in the UI: the resume form, a name, a decision, the CSV as text."""
+    user, password = os.environ["PREFECT_ADMIN_USER"], os.environ["PREFECT_ADMIN_PASSWORD"]
+    run_id = sys.argv[2]
+    forward(4200, "prefect-server")
+    prefect_login(page, user, password)
+    page.goto(f"http://localhost:4200/v2/runs/flow-run/{run_id}", wait_until="load")
+    page.wait_for_timeout(4000)
+    page.get_by_role("button", name="Open menu").click()  # Resume is in the run page's menu
+    page.wait_for_timeout(800)
+    page.get_by_role("menuitem", name="Resume").click()
+    page.wait_for_timeout(2500)
+    dialog = page.locator("[role=dialog]")
+    fields = dialog.locator("textarea")  # the form draws every str field as a text box: no file upload
+    fields.nth(0).fill("ui reviewer")
+    dialog.get_by_text("Select", exact=True).click()
+    page.get_by_role("option", name="APPROVE").click()
+    fields.nth(1).fill(REVIEW_CSV.decode())
+    page.wait_for_timeout(500)
+    shoot("form")
+    dialog.get_by_role("button", name="Resume").click()
+    dialog.wait_for(state="hidden", timeout=15000)  # the form closes once the server accepted the input
+    api = f"http://localhost:4200/api/flow_runs/{run_id}"
+    wait_until(lambda: http(api, user, password)["state"]["type"] == "COMPLETED")
+    page.goto(f"http://localhost:4200/v2/runs/flow-run/{run_id}", wait_until="load")
+    page.wait_for_timeout(4000)
+    page.get_by_role("tab", name="Artifacts").or_(page.get_by_role("button", name="Artifacts")).first.click()
+    page.wait_for_timeout(2000)
+    shoot("artifacts")
+    page.get_by_text("probe-validation-report", exact=True).first.click()
+    page.wait_for_timeout(3000)
+    shoot("artifact-table")
+    return ""
+
+
 def prefect(page: Page, shoot: Callable[[str], None]) -> str:
     user, password = os.environ["PREFECT_ADMIN_USER"], os.environ["PREFECT_ADMIN_PASSWORD"]
     forward(4200, "prefect-server")
@@ -199,10 +289,7 @@ def prefect(page: Page, shoot: Callable[[str], None]) -> str:
     }
     print("prefect runs:", picked)
 
-    page.goto(base, wait_until="networkidle")  # the server's default UI is the new one, under /v2
-    page.locator("input").first.press_sequentially(f"{user}:{password}")  # the basic-auth string
-    page.keyboard.press("Enter")
-    page.wait_for_url(lambda url: "/login" not in url, timeout=15000)
+    prefect_login(page, user, password)
 
     def visit(path: str) -> None:
         page.goto(base + path, wait_until="networkidle")
@@ -231,8 +318,10 @@ def prefect(page: Page, shoot: Callable[[str], None]) -> str:
 
 
 def main() -> int:
-    tool = sys.argv[1]
-    capture = {"kestra": kestra, "prefect": prefect}[tool]
+    tool = sys.argv[1]  # kestra | prefect | kestra-review RUN_ID | prefect-review RUN_ID
+    capture = {"kestra": kestra, "prefect": prefect, "kestra-review": kestra_review, "prefect-review": prefect_review}[
+        tool
+    ]
     OUT.mkdir(parents=True, exist_ok=True)
     blocked: set[str] = set()
     with sync_playwright() as playwright:
@@ -259,7 +348,8 @@ def main() -> int:
 
         text = capture(page, shoot)
         browser.close()
-    (OUT / f"{tool}-metrics.txt").write_text(text)
+    if text:
+        (OUT / f"{tool}-metrics.txt").write_text(text)
     print("blocked hosts:", sorted(blocked) or "none")
     return 0
 
