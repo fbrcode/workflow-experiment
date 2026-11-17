@@ -107,21 +107,23 @@ Done 2026-11-15. The result is in [comparison/results.md](comparison/results.md)
   - `make lint`: clean.
   - Teardown left no containers, volumes, networks or buildx builders.
 
-## Retool replacement reports (D-022)
+## Retool replacement reports (D-022 to D-024)
 
 Done 2026-11-15. The owner clarified that the target is Retool Workflows.
 
 - [x] Capability probes in both tools ([probes.md](probes.md)): a 660 s Postgres statement, and a control-table gate with a human step (form fields, a file, validation), run through the API and through each tool's UI
 - [x] Vendor facts for Retool Workflows, Kestra and Prefect checked against their docs and sources (cited in the reports)
 - [x] [reports/kestra.md](reports/kestra.md) and [reports/prefect.md](reports/prefect.md): running each tool, the development lifecycle (inner loop, spec-driven loop, trunk-based promotion), pros and cons per capability
-- [x] [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md): the three-way comparison, options and recommendation
+- [x] [reports/retool-replacement.md](reports/retool-replacement.md) (first named `retool-kestra-prefect.md`): the comparison, options and recommendation
 - [x] Added 2026-11-16 ([D-023](decisions.md)): webhooks (a third probe, measured in both tools), AWS integration and self-hosted deployment on AWS (from the docs), and pricing against features for self-hosting, in all three reports
+- [x] Added 2026-11-16 ([D-024](decisions.md)): AWS Step Functions as a fourth option, from AWS's docs ([reports/step-functions.md](reports/step-functions.md)); Lambda calls, 30-minute Postgres statements and ECS task triggering in every report; the long-query probe now runs 30 minutes; the comparison rebuilt as four-way and renamed
 - **Verified:**
   - **Probes:** `make probe-kestra` and `make probe-prefect`, one stack at a time. Both long statements finished, Kestra `SUCCESS` in 660.6 s and Prefect `COMPLETED` in 660.3 s. In both tools, both gate batches ended as expected: `APPROVED` with 3 of 3 rows valid, and `INVALID` with 1 of 3.
   - **UI review:** `make screenshots-review-kestra` and `make screenshots-review-prefect` completed the human step through each UI's form. Batch 99 is `APPROVED` by "ui reviewer" in both.
   - **Checks:** `make lint` is clean. A link check of the reports found every relative link and anchor resolving. Teardown left no containers, volumes or networks.
   - **Webhook probe (2026-11-16):** `make probe-kestra PROBE_ARGS="--probes webhook"` returned 401 for unsigned and wrongly signed calls, and 200 in 0.35 s with the flow's output for a signed one. `make probe-prefect PROBE_ARGS="--probes webhook"` returned 401 without the auth string and 204 with it; the triggered run registered the batch 3 to 11 s later. Lint is clean, and the unit tests still pass: Kestra 141, Prefect 127.
-  - **Not built or run:** the CI/CD pipelines and the AWS layouts in the reports are proposals. Nothing ran against AWS.
+  - **30-minute statement (2026-11-16):** `make probe-kestra PROBE_ARGS="--probes long-query"` gave `SUCCESS` in 1,801.3 s. `make probe-prefect PROBE_ARGS="--probes long-query"` gave `COMPLETED` in 1,825.0 s from the API call. One stack at a time; teardown left no containers or volumes.
+  - **Not built or run:** the CI/CD pipelines, the AWS layouts and the Step Functions state machine in the reports are proposals. Nothing ran against AWS. Lambda and ECS behavior is from the docs and the sources at the tags in use.
 
 ## Phase 7 (optional): Real-service smoke test
 

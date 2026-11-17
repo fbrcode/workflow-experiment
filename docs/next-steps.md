@@ -6,19 +6,28 @@ What's needed to move forward, split by who acts. Phase details are in [plan.md]
 
 ### 0. Before choosing the Retool replacement
 
-From [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md#before-deciding):
+From [reports/retool-replacement.md](reports/retool-replacement.md#before-deciding):
 
-- Find out which Retool limit you hit. On Cloud, it's the 600 s per-block maximum. On
-  self-hosted, check `WORKFLOW_DBCONNECTOR_QUERY_TIMEOUT_MS` and the proxy timeout.
-- Check how promotion works today: one branch per environment, or one `main` with
+- **Decide where people do their part:** in the workflow tool (Kestra, option A) or in apps
+  (Step Functions behind Retool apps, option C).
+- **Find out which Retool limit you hit.** On Cloud, it's the 10-minute block maximum. On
+  self-hosted, check the block's timeout, `WORKFLOW_DBCONNECTOR_QUERY_TIMEOUT_MS` (12 minutes
+  by default) and the proxy timeout.
+- **Check how promotion works today:** one branch per environment, or one `main` with
   multi-instance releases.
-- Pick one real workflow with a hard gate and a human step to pilot.
-- Decide how approvals are controlled: a shared login, a paid edition, or Retool apps in front.
-- Check your Retool version. Retool 4.0 supports only Kubernetes, not ECS, which changes where
-  any of the three would run on AWS.
-- Pilot the AWS side (Lambda, S3, Secrets Manager with the task role) in a sandbox account;
-  nothing here ran against AWS.
-- Ask for quotes if governance features are needed: Kestra Enterprise, and Prefect Cloud or
+- **Check your Retool version.** Retool 4.0 supports only Kubernetes, not ECS.
+- **Pilot the finalist in an AWS sandbox account.** Nothing here ran against AWS. Cover:
+  - a 30-minute statement;
+  - a gate with a human step and a file;
+  - a webhook;
+  - a 14-minute Lambda;
+  - an ECS task that exits non-zero.
+
+  For Step Functions, follow its [pilot plan](reports/step-functions.md#pilot-plan).
+- **Set up the network for long statements:** direct connections, client keepalives at 240 s
+  or less, and a deliberate `statement_timeout`.
+- **Decide how approvals are controlled:** a shared login, a paid edition, or apps in front.
+- **Ask for quotes** if governance features are needed: Kestra Enterprise, and Prefect Cloud or
   Customer-Managed Prefect.
 
 ### 1. ~~Provide the production schema~~

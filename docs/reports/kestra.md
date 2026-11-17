@@ -2,24 +2,30 @@
 
 How to run the Kestra implementation yourself, how a change moves from your laptop to
 production without merge conflicts, and what Kestra gives you for each capability the Retool
-replacement needs ([D-022](../decisions.md)). Everything here is Kestra **OSS 2.0.10**, the
-current LTS, self-hosted.
+replacement needs ([D-022](../decisions.md) to [D-024](../decisions.md)). Everything here is
+Kestra **OSS 2.0.10**, the current LTS, self-hosted. The comparison with Retool, Prefect and AWS
+Step Functions is in [retool-replacement.md](retool-replacement.md).
 
-Each claim is marked with where it comes from: **[measured]** means run in this repo, with a
-link to the data; **[docs]** means Kestra's documentation or source, checked 2026-11-15;
-**[proposal]** means a recommendation that wasn't built or run here.
+Each claim is marked with where it comes from:
+
+- **[measured]**: run in this repo, with a link to the data.
+- **[docs]**: Kestra's or AWS's documentation, checked 2026-11-15 and 2026-11-16.
+- **[src]**: the source code at the release tag in use.
+- **[proposal]**: a recommendation that wasn't built or run here.
 
 ## In short
 
 | Retool pain point or need | With Kestra |
 |---|---|
 | Merge conflicts from dev > stage > prod | **Solved by design, if you keep the UI read-only.** A flow is one plain YAML file in Git, and the same file deploys to every environment. Environment differences live outside the flow, in environment variables and secrets. Trunk-based development fits: one `main`, short branches, and promotion as a deploy, not a merge. |
-| Retool's 600 s limit | **None.** A 660 s Postgres statement finished `SUCCESS` after 660.6 s, with no setting changed [measured]. Tasks and executions have no default timeout [docs]. |
+| Postgres work of up to 30 minutes (Retool stops at 600 s) | **Nothing to work around.** A 30-minute statement, `select pg_sleep(1800)`, finished `SUCCESS` in 1,801.3 s through the ordinary JDBC task, with no setting changed [measured]. Tasks and executions have no default timeout, and neither does the Postgres driver (`socketTimeout=0`) [docs, src]. On AWS, add `tcpKeepAlive=true` to the JDBC URL. |
 | Gates on Postgres control tables | **Native.** `LoopUntil` polls a query until a condition holds; the Postgres `Trigger` starts a flow when a query returns rows; `If`, `Switch`, `Fail` and `Assert` branch or stop [docs]. The probe held a run until its control row turned READY [measured]. |
 | People enter values and upload files | **Native, in OSS.** A `Pause` task asks for inputs when someone resumes it: text, a choice and a file in the probe. Kestra draws the form [measured, [screenshot](../comparison/data/screenshots/kestra-review-01-form.png)]. What OSS lacks: assigning a step to a person or group, and custom approval apps. Those are Enterprise. |
 | Validating artifacts | **Native.** A task validated the uploaded CSV, kept the report as a file you can preview and download in the UI, and wrote the outcome to the control table [measured, [screenshot](../comparison/data/screenshots/kestra-review-02-outputs.png)]. |
 | Webhook calls (native in Retool) | **Native, and stricter than Retool's.** A `Webhook` trigger gives each flow a URL. It can verify an HMAC signature and answer with the flow's outputs. Unsigned calls got 401; a signed one got the result in 0.35 s [measured]. |
-| Lambda, S3, RDS, Secrets Manager | **Covered, with two OSS limits.** `plugin-aws` (Apache-2.0) has S3 tasks, an S3 trigger and SQS triggers, and uses the ECS task role or IRSA automatically. Its Lambda call is **synchronous only**. Secrets Manager reaches Kestra OSS only as environment variables set at container start; the native secret store is Enterprise [docs]. |
+| Lambda calls | **Native, synchronous only.** `lambda.Invoke` waits up to 15 min 10 s by default, just past Lambda's own maximum, so even a 14-minute function works. Set `sdkMaxAttempts: 1`: an SDK retry after a timeout runs the function again [src]. |
+| ECS task triggering | **No native task.** `plugin-aws` 4.0.0 has no ECS tasks. The AWS Batch task runner, which runs a task on Fargate, is Enterprise [src, docs]. In OSS, a short Python script task starts the ECS task and waits for it with boto3 [proposal]. |
+| S3, RDS, Secrets Manager | **Covered, with one OSS limit.** `plugin-aws` (Apache-2.0) has S3 tasks, an S3 trigger and SQS triggers, and uses the ECS task role or IRSA automatically. Secrets Manager reaches Kestra OSS only as environment variables set at container start; the native secret store is Enterprise [docs]. |
 | Self-hosted on AWS | **EKS or EC2, not ECS Fargate.** Official guides cover EKS (Helm chart) and EC2 (Docker Compose), with RDS and S3. Kestra's docs say Fargate isn't supported for script tasks [docs]. Retool 4.0 also requires Kubernetes. |
 | Spec-driven development | **Good for logic, weaker for the flow.** Ported logic is plain Python, tested against the golden vectors outside Kestra (141 tests in 0.3 s). The flow's wiring and its Pebble templates can only be tested end to end, by the parity suite. Kestra's own flow unit tests are Enterprise [docs]. |
 
@@ -29,6 +35,7 @@ Kestra's costs, covered below:
 - Secrets in OSS are base64-encoded environment variables only.
 - No access control in OSS: one shared login.
 - Root access to the Docker socket for script tasks.
+- No ECS task: starting and awaiting one is a script.
 - More surprises in the YAML and Pebble layer than in plain code.
 
 ## What's in the repo
@@ -40,7 +47,7 @@ Kestra's costs, covered below:
 | [`kestra/tests/`](../../kestra/tests/) | pytest for that logic, against the golden vectors; no Kestra needed |
 | [`kestra/compose.yaml`](../../kestra/compose.yaml), [`Dockerfile`](../../kestra/Dockerfile), [`secrets-entrypoint.sh`](../../kestra/secrets-entrypoint.sh) | The stack: Kestra plus its Postgres, the shared infra, an image with 3 pinned plugins |
 | [`kestra/deploy.sh`](../../kestra/deploy.sh) | Deploys flows and namespace files from the repo through the REST API, and deletes flows that aren't in the repo |
-| [`kestra/probes/`](../../kestra/probes/) | The capability probes (namespace `experiment.probes`): the long statement and the control-table gate with a human step |
+| [`kestra/probes/`](../../kestra/probes/) | The capability probes (namespace `experiment.probes`): the 30-minute statement, the control-table gate with a human step, and the webhook |
 | [README](../kestra/README.md), [node mapping](../kestra/node-mapping.md), [effort log](../kestra/effort-log.md) | Architecture, versions, the construct used per n8n node, and what was hard |
 
 ## Run it yourself
@@ -57,7 +64,7 @@ make kestra-run                     # one summarize-and-send tick (it also runs 
 open http://localhost:8080          # UI: admin@kestra.local / Kestra-local-only1 (.env.example)
 make test-kestra                    # unit tests of the ported logic: 0.3 s, no Kestra needed
 make parity-kestra                  # the 13 parity scenarios: about 4 minutes
-make probe-kestra                   # the capability probes: about 12 minutes (PROBE_ARGS="--probes webhook" for one)
+make probe-kestra                   # the capability probes: about 32 minutes (PROBE_ARGS="--probes webhook" for one)
 make screenshots-review-kestra      # the probe's human step done through the UI form, captured
 make kestra-down                    # stop and delete everything
 ```
@@ -99,7 +106,7 @@ doesn't depend on Kestra Enterprise's unit-test feature.
 
 ### Branching and promotion without merge conflicts [proposal]
 
-Retool's own guidance points the same way ([comparison](retool-kestra-prefect.md#1-merge-conflicts-and-promotion)):
+Retool's own guidance points the same way ([comparison](retool-replacement.md#1-merge-conflicts-and-promotion)):
 avoid one branch per environment. With Kestra:
 
 ```mermaid
@@ -204,7 +211,7 @@ What the probe showed ([data](../comparison/data/probes-kestra-2026-11-15.json))
 | Waiting on the control table | The run held until the row turned READY; the review step was reached about 4 s later. While `LoopUntil` waits between checks, Kestra shows the whole execution as `PAUSED`. A person who presses Resume then only triggers an early check. Scripts that look for "the run is paused" must check the `Pause` task itself, as [`probes.py`](../../scripts/probes.py) does. |
 | The human step | Kestra drew the form from `onResume`: a text field, a dropdown and a file chooser ([form](../comparison/data/screenshots/kestra-review-01-form.png)). It was filled in and submitted through the UI, and through the API (`POST /api/v1/main/executions/{id}/actions/resume`, multipart, file included). |
 | Validation | A good CSV wrote `APPROVED`, 3 of 3 rows valid. A bad one wrote `INVALID`, 1 of 3 valid. The report is a file on the run's Input/Output tab, with Preview and Download ([outputs](../comparison/data/screenshots/kestra-review-02-outputs.png)). |
-| Long statement | `select pg_sleep(660)` through the JDBC task: `SUCCESS` after 660.6 s, and 11 min 0.6 s in an earlier run. |
+| Long statement | `select pg_sleep(1800)` through the JDBC task: `SUCCESS` in 1,801.3 s from the API call, on 2026-11-16 ([data](../comparison/data/probes-kestra-2026-11-16.json)). Earlier, 660 s: `SUCCESS` after 660.6 s. |
 
 Two notes for a team:
 
@@ -257,18 +264,50 @@ What to know [docs]:
 - `signature` is in the running 2.0.10 server's plugin schema but missing from the published
   plugin page.
 
-## AWS: services and deployment [docs, proposal]
+## AWS: Lambda, ECS, long statements, services and deployment [docs, src, proposal]
 
-Nothing here ran against AWS; it's from Kestra's docs and plugin sources.
+Nothing here ran against AWS. It's from Kestra's and AWS's docs and the plugin sources at
+their release tags.
 
 | Service | In Kestra OSS |
 |---|---|
-| **AWS Lambda** | `io.kestra.plugin.aws.lambda.Invoke` (`plugin-aws` 4.0.0, the newest that 2.0.10 accepts): `functionArn`, `functionPayload`. **Synchronous only.** The response body is saved as a file (`outputs.<task>.uri`, read it with `read()`). The task fails on a function error and copies the function's CloudWatch logs into the task log. For a fire-and-forget call, send to SQS or EventBridge instead (both have tasks). |
+| **AWS Lambda** | `io.kestra.plugin.aws.lambda.Invoke` (`plugin-aws` 4.0.0, the newest that 2.0.10 accepts): `functionArn`, `functionPayload`. **Synchronous only.** `socketTimeout` defaults to `PT15M10S`, just past Lambda's 15-minute maximum, so the function's own timeout is the one reported. `sdkMaxAttempts` caps the AWS SDK's own retries: each retry after a read timeout runs the function again, so set it to `1` and use the task's `retry`. Both properties are new in 4.0.0; every other `plugin-aws` task keeps the SDK's 30 s read timeout. The response body is saved as a file (`outputs.<task>.uri`, read it with `read()`). The task fails on a function error and copies the function's CloudWatch logs into the task log. For a fire-and-forget call, send to SQS or EventBridge instead (both have tasks). |
+| **Amazon ECS** | **No ECS tasks** in `plugin-aws` 4.0.0, and no Step Functions tasks. A request for one was closed as "already possible via AWS Batch runner", which is Enterprise. In OSS: a Python script task with boto3 (below), or the `AwsCLI` task (`aws ecs run-task`). The CLI's `wait tasks-stopped` gives up after 10 minutes (6 s × 100), so a 30-minute task needs a loop, such as `LoopUntil` around `describe-tasks`. Script and CLI tasks use the Docker task runner by default; on a host without Docker, use the `Process` runner with Python or the CLI in the Kestra image. |
 | **Amazon S3** | `s3.Upload`, `Download`, `List`, `Delete`, `Copy` and more. **`s3.Trigger`** polls a bucket and starts a flow for new objects; it can move or delete them afterwards. A file a person uploads in a `Pause` form can be copied to S3 with `s3.Upload`. |
-| **Postgres (RDS)** | `plugin-jdbc-postgres`, what this repo uses, with a JDBC URL to RDS. Kestra's own state also lives in RDS Postgres (14 or newer). |
+| **Postgres (RDS)** | `plugin-jdbc-postgres`, what this repo uses, with a JDBC URL to RDS. The plugin sets no query timeout, and the driver's `socketTimeout` defaults to 0, so a statement runs as long as it needs. Add `tcpKeepAlive=true` to the URL (off by default); see the [AWS network notes](retool-replacement.md#5-postgres-work-of-up-to-30-minutes). The statement runs on a worker thread, not in a container: a 30-minute statement holds one of the worker's threads (CPU count × 8 by default). Kestra's own state also lives in RDS Postgres (14 or newer). |
 | **Secrets Manager** | As Kestra's secret store: Enterprise only. **In OSS:** let ECS (`secrets` in the task definition) or Kubernetes (External Secrets) put the values into the container's environment. [`secrets-entrypoint.sh`](../../kestra/secrets-entrypoint.sh) turns plain variables into the base64 `SECRET_*` ones Kestra reads. Flows read them as `{{ secret('NAME') }}`. They're read once at start: a rotated secret needs a restart. |
 | **Credentials** | With no keys set, `plugin-aws` uses AWS's default chain, which picks up **the ECS task role** or **IRSA** on EKS. `stsRoleArn` assumes a role; `endpointOverride` points at LocalStack or MinIO for local tests. |
 | **Also** | SQS `RealtimeTrigger` (one run per message); SNS; EventBridge `PutEvents`; Athena; DynamoDB; Glue; Bedrock |
+
+Starting an ECS task and waiting for it, as a script task (a sketch, not run):
+
+```yaml
+  - id: rebuild-batch
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process   # boto3 in the Kestra image; no Docker needed
+    script: |
+      import boto3
+      ecs = boto3.client("ecs")                    # the ECS task role or IRSA, through the default chain
+      started = ecs.run_task(
+          cluster="{{ envs.ecs_cluster }}", taskDefinition="sql-runner", launchType="FARGATE",
+          networkConfiguration={"awsvpcConfiguration": {"subnets": {{ envs.ecs_subnets }}, "securityGroups": {{ envs.ecs_security_groups }}}},
+          overrides={"containerOverrides": [{"name": "sql-runner", "command": ["run-sql", "sql/rebuild-batch.sql"]}]},
+      )
+      arn = started["tasks"][0]["taskArn"]
+      waiter = ecs.get_waiter("tasks_stopped")      # 6 s x 100 by default: 10 minutes
+      waiter.wait(cluster="{{ envs.ecs_cluster }}", tasks=[arn], WaiterConfig={"Delay": 30, "MaxAttempts": 240})
+      task = ecs.describe_tasks(cluster="{{ envs.ecs_cluster }}", tasks=[arn])["tasks"][0]
+      code = task["containers"][0].get("exitCode")
+      if code != 0:
+          raise SystemExit(f"{arn} stopped with exit code {code}: {task.get('stoppedReason')}")
+```
+
+What happens when a timeout fires (from the source, not tested): a task `timeout` interrupts
+the worker thread, but a thread blocked on a socket read isn't unblocked by that. The JDBC
+task's `kill()`, which cancels the statement, runs only afterwards. So a timed-out statement
+probably keeps running on the server. A manual Kill does cancel it. If you need a hard limit,
+set Postgres's `statement_timeout` for the role.
 
 Deploying on AWS:
 
@@ -295,14 +334,16 @@ Kestra Cloud also exists, usage-based and by request; it isn't self-hosted.
 | Version control, merge conflicts | One YAML file per flow; namespace files as plain files; deploy through the REST API | Small, readable diffs; no generated IDs; `delete=true` keeps the server equal to the repo | The UI editor invites a second source of truth; OSS can't block API edits; deploys need a script (`kestractl` has no prune) |
 | Promotion dev > stage > prod | Separate instances, same files, config in `ENV_*`, `SECRET_*` and KV | Trunk-based fits; promotion is a deploy of a tag | Promote (the UI feature) and RBAC are Enterprise; you build the CI pipeline yourself |
 | Spec-driven development and tests | Python logic tested outside Kestra; flows tested end to end | Logic tests run in 0.3 s; the parity suite drives flows through the API | Pebble templates and flow wiring can't be unit-tested in OSS; Kestra's flow tests are Enterprise |
-| Long Postgres work | JDBC `Query` task; no default timeouts | 660 s statement passed [measured]; set `timeout` or an SLA `MAX_DURATION` only where you want a limit | No query-timeout property on the JDBC task; use Postgres `statement_timeout` if you need one |
+| Long Postgres work (30 min) | JDBC `Query` task; no default timeouts in Kestra, the plugin or the driver | A 30-minute statement passed [measured]; set `timeout` or an SLA `MAX_DURATION` only where you want a limit | A task `timeout` probably doesn't cancel the statement [src]: use Postgres `statement_timeout`; each running statement holds a worker thread |
+| Lambda | `lambda.Invoke` | Waits up to 15 min 10 s by default; function errors and CloudWatch logs land in the task [src, docs] | Synchronous only; set `sdkMaxAttempts: 1` or a timeout retry runs the function again |
+| ECS tasks | A Python script task with boto3, or `AwsCLI` | Works with the task role; the wait can be a visible `LoopUntil` | No native task in OSS; the AWS Batch task runner is Enterprise; the CLI waiter stops at 10 minutes |
 | Gates on control tables | `LoopUntil`, Postgres `Trigger`, `If`, `Switch`, `Fail`, `Assert` | Declarative, and the gate is visible in the topology; a Postgres trigger starts a flow when rows appear | `LoopUntil` makes the execution look `PAUSED` while it waits; JDBC parameters bind as text, so SQL needs casts (`:id::bigint`) |
 | Human input: fields, files, approvals | `Pause` with `onResume` inputs; flow inputs on the Execute form | A form with fields and file upload in OSS, no code [measured]; pauses can wait forever or time out with a chosen behavior | No assignment, roles or custom forms in OSS (Enterprise); text fields are a code editor |
 | Artifacts and validation | Script tasks write output files; the UI previews and downloads them | The reviewer sees the report next to the run; any task's output is browsable | Validation code runs in a container per task (about 0.6 s each) |
 | Error handling | `allowFailure`, `runIf`, `If`, `errorLogs()`, retries per task | Error branches are declarative and visible | Some plugin defaults bite: fixed LLM retries, a 73 s HTTP connect timeout, a 10 s DNS window after outages ([effort log](../kestra/effort-log.md)) |
 | Scheduling and triggers | Cron with concurrency limits; backfill; webhooks; flow triggers; Postgres trigger | Backfill and a missed-run policy built in | Every poll is an execution in the history |
 | Webhooks | Core `Webhook` trigger with key, HMAC signature, `wait` and `returnOutputs` | Matches Retool's triggers, plus signature checks and the flow's outputs as the answer [measured] | Open to anyone with the key unless signed; bodies over 1 MiB need `STORE` |
-| AWS services | `plugin-aws` (OSS): S3, Lambda, SQS, SNS, EventBridge and more; ECS task role or IRSA | Ready-made S3 and SQS triggers; Lambda logs land in the task log | Lambda calls are synchronous only; Secrets Manager only through environment variables (rotation needs a restart) unless Enterprise |
+| S3, Secrets Manager, other AWS | `plugin-aws` (OSS): S3, SQS, SNS, EventBridge and more; ECS task role or IRSA | Ready-made S3 and SQS triggers | Secrets Manager only through environment variables (rotation needs a restart) unless Enterprise; most `plugin-aws` tasks keep the SDK's 30 s read timeout |
 | Deployment on AWS | Helm chart on EKS, or Docker Compose on EC2; RDS and S3 | Official guides for both; S3 internal storage in OSS | Not ECS Fargate for script tasks (needs Docker-in-Docker); remote task runners are Enterprise |
 | Observability | Topology, Gantt, per-task logs and outputs, Prometheus | Best in this comparison ([results C9](../comparison/results.md#c9-observability)) | The topology needs zooming for large flows |
 | Secrets and config | `SECRET_*` base64 environment variables; `ENV_*`; KV | Simple, and secrets are masked in logs | No encryption at rest; secret managers are Enterprise |
@@ -320,17 +361,24 @@ Kestra Cloud also exists, usage-based and by request; it isn't self-hosted.
 | Docker socket as root for script tasks | Use the process task runner with Python in the image, or run workers on a dedicated host |
 | Leaving ECS (Fargate isn't supported for script tasks) | Run on EKS, where Retool 4.0 is heading too; or ECS on EC2 with the Docker socket; or the Process runner |
 | A public webhook URL | Sign calls (`signature`), use long keys, expose only the webhook path |
+| No ECS task in OSS | A short boto3 script task with a long waiter and an exit-code check (above); or Enterprise's AWS Batch task runner |
+| A Lambda call retried by the SDK runs twice | `sdkMaxAttempts: 1` on `lambda.Invoke`; retries through the task's `retry`, with idempotent functions |
+| A timed-out task leaves its statement running | Postgres `statement_timeout` for the role; Kill (not timeout) cancels the statement |
 | Enterprise features that look free in the UI (Promote, Tests, Apps, Audit Logs show a lock) | Plan around them; this report assumes OSS only |
 
 ## Evidence
 
 - Measurements: [results.md](../comparison/results.md) and [measure-kestra](../comparison/data/measure-kestra-2026-11-15.json)
 - Parity: [parity.md](../parity.md) and [parity-kestra](../comparison/data/parity-kestra-2026-11-15.json)
-- Probes: [probes.md](../probes.md), [probes-kestra (11-15)](../comparison/data/probes-kestra-2026-11-15.json) and [probes-kestra (11-16, webhook)](../comparison/data/probes-kestra-2026-11-16.json)
+- Probes: [probes.md](../probes.md), [probes-kestra (11-15)](../comparison/data/probes-kestra-2026-11-15.json) and [probes-kestra (11-16: webhook, 30-minute statement)](../comparison/data/probes-kestra-2026-11-16.json)
 - Screenshots: [the UI walkthrough](../comparison/data/screenshots/) (`kestra-*.png`, `kestra-review-*.png`)
 - Kestra's docs:
   - [Pause](https://kestra.io/plugins/core/flow/io.kestra.plugin.core.flow.pause), [inputs](https://kestra.io/docs/workflow-components/inputs), [LoopUntil](https://kestra.io/plugins/core/flow/io.kestra.plugin.core.flow.loopuntil), [Postgres trigger](https://kestra.io/plugins/plugin-jdbc-postgres/io.kestra.plugin.jdbc.postgresql.trigger)
   - [Git and CI/CD](https://kestra.io/docs/version-control-cicd/git), [environments](https://kestra.io/docs/best-practices/manage-environments), [system labels](https://kestra.io/docs/concepts/system-labels)
   - [secrets](https://kestra.io/docs/concepts/secret), [OSS vs paid](https://kestra.io/docs/oss-vs-paid), [Apps](https://kestra.io/docs/enterprise/scalability/apps), [pricing](https://kestra.io/pricing)
   - [webhook trigger](https://kestra.io/docs/workflow-components/triggers/webhook-trigger), [plugin-aws](https://kestra.io/plugins/plugin-aws), [Lambda Invoke](https://kestra.io/plugins/plugin-aws/lambda/io.kestra.plugin.aws.lambda.invoke), [S3 trigger](https://kestra.io/plugins/plugin-aws/s3/io.kestra.plugin.aws.s3.trigger), [Secrets Manager (Enterprise)](https://kestra.io/docs/enterprise/governance/secrets-manager)
-  - [EKS](https://kestra.io/docs/installation/kubernetes-aws-eks), [EC2](https://kestra.io/docs/installation/aws-ec2), [requirements](https://kestra.io/docs/administrator-guide/requirements), [task runners](https://kestra.io/docs/task-runners/types)
+  - [EKS](https://kestra.io/docs/installation/kubernetes-aws-eks), [EC2](https://kestra.io/docs/installation/aws-ec2), [requirements](https://kestra.io/docs/administrator-guide/requirements), [task runners](https://kestra.io/docs/task-runners/types), [AWS Batch task runner (Enterprise)](https://kestra.io/docs/task-runners/types/aws-batch-task-runner), [timeout](https://kestra.io/docs/workflow-components/timeout), [SLA](https://kestra.io/docs/workflow-components/sla)
+- Source, at the tags in use:
+  - `plugin-aws` 4.0.0: [Lambda `Invoke`](https://github.com/kestra-io/plugin-aws/blob/v4.0.0/src/main/java/io/kestra/plugin/aws/lambda/Invoke.java), [`AwsCLI`](https://github.com/kestra-io/plugin-aws/blob/v4.0.0/src/main/java/io/kestra/plugin/aws/cli/AwsCLI.java), [the package list](https://github.com/kestra-io/plugin-aws/tree/v4.0.0/src/main/java/io/kestra/plugin/aws) (no `ecs`), [the ECS request](https://github.com/kestra-io/plugin-aws/issues/148)
+  - JDBC: [`AbstractJdbcQuery`](https://github.com/kestra-io/plugin-jdbc/blob/v3.1.2/plugin-jdbc/src/main/java/io/kestra/plugin/jdbc/AbstractJdbcQuery.java), [pgjdbc properties](https://github.com/pgjdbc/pgjdbc/blob/REL42.7.14/pgjdbc/src/main/java/org/postgresql/PGProperty.java); worker: [`Worker`](https://github.com/kestra-io/kestra/blob/v2.0.10/core/src/main/java/io/kestra/core/runners/Worker.java), [`AbstractWorkerCallable`](https://github.com/kestra-io/kestra/blob/v2.0.10/worker/src/main/java/io/kestra/worker/processors/internals/AbstractWorkerCallable.java)
+  - The ECS waiter: [botocore `TasksStopped`](https://github.com/boto/botocore/blob/1.44.3/botocore/data/ecs/2014-11-13/waiters-2.json), [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/ecs/wait/tasks-stopped.html)

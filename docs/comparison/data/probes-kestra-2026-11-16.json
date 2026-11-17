@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-16T10:15:40-03:00",
+  "date": "2026-11-16T12:26:00-03:00",
   "tool": {
     "name": "kestra",
     "version": "2.0.10"
@@ -10,6 +10,13 @@
       "command": "make probe-kestra --probes webhook",
       "probes": [
         "webhook"
+      ]
+    },
+    {
+      "date": "2026-11-16T12:26:00-03:00",
+      "command": "make probe-kestra --probes long-query",
+      "probes": [
+        "long-query"
       ]
     }
   ],
@@ -38,5 +45,14 @@
       "body": "{\"batch\":{\"id\":7,\"status\":\"PENDING\"}}"
     },
     "row_after_seconds": 0.1
+  },
+  "long_query": {
+    "run_id": "2SCAgsQD82lFtYv5JvjGz1",
+    "statement": "select pg_sleep(1800)",
+    "final_state": "SUCCESS",
+    "seconds": 1801.3,
+    "tasks": {
+      "long-statement": "SUCCESS"
+    }
   }
 }

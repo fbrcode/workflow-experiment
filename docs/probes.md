@@ -1,13 +1,13 @@
 # Capability probes
 
-Two small probes per tool for the needs of the Retool Workflows replacement
-([D-022](decisions.md)) that the n8n workflow doesn't exercise. They aren't parity scenarios
+Three small probes per tool for the needs of the Retool Workflows replacement
+([D-022](decisions.md) to [D-024](decisions.md)) that the n8n workflow doesn't exercise. They aren't parity scenarios
 and aren't part of the summarizer. Each tool's summarizer deploy (`make kestra-deploy`,
 `make prefect-deploy`) leaves them alone.
 
 | Probe | Question | Kestra | Prefect |
 |---|---|---|---|
-| **long-query** | Does a single Postgres statement longer than Retool Workflows' 600 s limit finish? | [`probe-long-query.yml`](../kestra/probes/probe-long-query.yml): the JDBC `Query` task runs `select pg_sleep(:seconds::int)` | `probe_long_query` in [`probes.py`](../prefect/src/email_summarizer/probes.py): the `SqlAlchemyConnector` block runs `select pg_sleep(:seconds)` |
+| **long-query** | Does a single 30-minute Postgres statement finish? Retool Workflows stops at 600 s. The length is `--seconds`, 1800 by default (660 until 2026-11-16) | [`probe-long-query.yml`](../kestra/probes/probe-long-query.yml): the JDBC `Query` task runs `select pg_sleep(:seconds::int)` | `probe_long_query` in [`probes.py`](../prefect/src/email_summarizer/probes.py): the `SqlAlchemyConnector` block runs `select pg_sleep(:seconds)` |
 | **webhook** | Can an upstream system start a run with an HTTP call, as Retool workflows' webhook triggers allow, and get an answer? | [`probe-webhook.yml`](../kestra/probes/probe-webhook.yml): the core `Webhook` trigger, with an HMAC-SHA256 signature check (`WEBHOOK_SIGNING_SECRET`), `wait: true` and `returnOutputs: true`; the flow registers the batch and returns the row | OSS has no webhooks (Cloud only). The caller posts a `probe.batch.announced` event to `POST /api/events`; a deployment trigger in [`probes.yaml`](../prefect/probes.yaml) maps its payload to the `probe_webhook` flow's parameters |
 | **gate** | Can a run wait on a Postgres control table, then for a person to enter values and a file, then validate the file and write the outcome back? | [`probe-gate.yml`](../kestra/probes/probe-gate.yml): `LoopUntil` + `Pause` with `onResume` inputs (STRING, SELECT, FILE) + a Python script task + JDBC `Query` | `probe_gate`: a polling task + `pause_flow_run(wait_for_input=Review)` + a validation task that publishes a table artifact + an UPDATE task |
 
@@ -18,8 +18,9 @@ then `READY`, then `APPROVED`, `REJECTED` or `INVALID`.
 ## Running them
 
 ```bash
-make probe-kestra                 # or probe-prefect: starts the stack if needed, about 12 minutes
+make probe-kestra                 # or probe-prefect: starts the stack if needed, about 32 minutes
 make probe-kestra PROBE_ARGS="--probes webhook"   # one probe; a subset updates the day's results file
+make probe-kestra PROBE_ARGS="--seconds 660"      # a shorter statement
 make screenshots-review-kestra    # or -prefect: the human step done through the UI form, captured
 ```
 
@@ -73,6 +74,25 @@ property's own description says so. Prefect's route gives the caller nothing bac
 that needs the result must create the run through the REST API and poll it. Prefect Cloud has
 real webhooks with payload templates.
 
+### 30-minute statement (2026-11-16)
+
+The owner's requirement became Postgres statements of up to 30 minutes ([D-024](decisions.md)),
+so the long-query probe ran again at 1800 s, alone, one stack at a time.
+
+| | Kestra 2.0.10 | Prefect 3.9.3 |
+|---|---|---|
+| `select pg_sleep(1800)` | `SUCCESS` in 1,801.3 s from the API call | `COMPLETED` in 1,825.0 s from the API call, including the worker's pickup and the flow run's start |
+| Settings changed | None | None |
+| Command | `make probe-kestra PROBE_ARGS="--probes long-query"` | `make probe-prefect PROBE_ARGS="--probes long-query"` |
+| Data | [probes-kestra (11-16)](comparison/data/probes-kestra-2026-11-16.json) | [probes-prefect (11-16)](comparison/data/probes-prefect-2026-11-16.json) |
+
+The results files record the 2026-11-16 runs as `make probe-<tool> --probes ...`: the Makefile
+left `PROBE_ARGS=` out of the recorded command. It records the command exactly from now on.
+
+Locally, nothing sits between the tool and Postgres. On AWS, the network path and the RDS
+settings decide whether a 30-minute statement survives: see
+[the comparison, section 5](reports/retool-replacement.md#5-postgres-work-of-up-to-30-minutes).
+
 ## What the probes found along the way
 
 - **Kestra: a paused execution isn't necessarily waiting for a person.** `LoopUntil`
@@ -91,7 +111,7 @@ real webhooks with payload templates.
 - **Prefect: `pause_flow_run` gives up after one hour by default.** The probe sets two hours.
   For longer waits, `suspend_flow_run` releases the worker process and has no default timeout,
   but needs a deployment and persisted results. It wasn't probed here.
-- **Both: nothing had to be configured for a long statement.** Neither tool sets a default
-  timeout on tasks, runs or queries. If you want a limit, set one: Kestra's `timeout` or an SLA;
+- **Both: nothing had to be configured for a long statement,** at 11 or 30 minutes. Neither
+  tool sets a default timeout on tasks, runs or queries, and neither do their Postgres drivers. If you want a limit, set one: Kestra's `timeout` or an SLA;
   Prefect's `timeout_seconds`. Prefect's timeout can't interrupt a blocking database call, so
   use Postgres `statement_timeout` for that.

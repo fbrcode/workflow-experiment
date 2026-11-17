@@ -1,12 +1,12 @@
 """Capability probes for the Retool replacement questions (docs/probes.md).
 
-    make probe-kestra       # or probe-prefect; starts the stack if needed, about 12 minutes
+    make probe-kestra       # or probe-prefect; starts the stack if needed, about 32 minutes
 
 Runs against the stack that is up, through the tool's REST API, and writes
-docs/comparison/data/probes-<tool>-<date>.json. Two probes, run at the same time:
+docs/comparison/data/probes-<tool>-<date>.json. Three probes, run at the same time:
 
-  long-query  one `select pg_sleep(660)` through the tool's own Postgres task: does a statement
-              longer than Retool Workflows' 600 s limit finish?
+  long-query  one `select pg_sleep(1800)` through the tool's own Postgres task: does a 30-minute
+              statement, three times Retool Workflows' 600 s limit, finish? (--seconds)
   webhook     an upstream system announces a batch with an HTTP call: Kestra's webhook trigger
               (HMAC-signed, answered synchronously); Prefect OSS has no webhooks, so the caller
               posts an event that a deployment trigger turns into a run
@@ -38,7 +38,7 @@ from typing import Any
 REPO = Path(__file__).resolve().parent.parent
 ENV_FILE = os.environ.get("ENV_FILE", ".env.example")
 JSON = dict[str, Any]
-LONG_SECONDS = 660
+LONG_SECONDS = 1800  # the owner's requirement: Postgres statements of up to 30 minutes (D-024)
 READY_AFTER = 20  # seconds the gate waits on the control table before the row turns READY
 GOOD_CSV = "id,amount\n1,10.50\n2,0\n3,99.99\n"
 BAD_CSV = "id,amount\n1,10.50\nx,3\n3,-1\n"

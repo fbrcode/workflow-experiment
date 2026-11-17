@@ -9,7 +9,7 @@ and one scorecard.
 >
 > **Result:** both tools reproduce the workflow. On the weighted scorecard Kestra leads slightly, 3.8 against 3.6 out of 5, a lean rather than a clear win. Kestra is ahead on observability, speed and native tasks; Prefect on footprint, secrets and Python testability. The recommendation and evidence are in [docs/comparison/results.md](docs/comparison/results.md).
 >
-> **For the Retool replacement** (D-022): both tools run Postgres work past Retool's 600 s limit and keep flows as plain files in Git, so promotion needs no merges. Kestra also takes values and a file upload in its own human step, and has native signed webhooks; Prefect takes values only, has no webhooks in OSS, but fits ECS natively (a task per flow run, Secrets Manager at runtime). Retool 4.0 itself requires Kubernetes, not ECS. Reports: [Kestra](docs/reports/kestra.md), [Prefect](docs/reports/prefect.md), [Retool vs Kestra vs Prefect](docs/reports/retool-kestra-prefect.md).
+> **For the Retool replacement** (D-022 to D-024): Kestra and Prefect both ran a 30-minute Postgres statement with nothing configured, and keep flows as plain files in Git, so promotion needs no merges. Kestra also takes values and a file upload in its own human step, and has native signed webhooks; Prefect takes values only and has no webhooks in OSS, but fits ECS natively. AWS Step Functions, assessed from AWS's docs, is the strongest at Lambda calls and ECS tasks and has nothing to host, but has no human-step UI and no SQL step. Retool 4.0 itself requires Kubernetes, not ECS. Reports: [Kestra](docs/reports/kestra.md), [Prefect](docs/reports/prefect.md), [Step Functions](docs/reports/step-functions.md), and [the four-way comparison](docs/reports/retool-replacement.md).
 
 ## The workflow under test
 
@@ -119,11 +119,11 @@ make screenshots-kestra   # UI walkthrough (C9), after make parity-kestra; scree
 
 Details: [docs/comparison/results.md](docs/comparison/results.md) and [D-021](docs/decisions.md).
 
-Capability probes for the Retool replacement (a 660 s Postgres statement; a control-table gate with
-a human step):
+Capability probes for the Retool replacement (a 30-minute Postgres statement; a control-table gate
+with a human step; a webhook):
 
 ```bash
-make probe-kestra                 # or probe-prefect, about 12 min each; PROBE_ARGS="--probes webhook" runs one probe
+make probe-kestra                 # or probe-prefect, about 32 min each; PROBE_ARGS="--probes webhook" runs one probe
 make screenshots-review-kestra    # the probe's human step done through the UI form, captured
 ```
 
