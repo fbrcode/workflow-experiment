@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-16T10:16:18-03:00",
+  "date": "2026-11-16T12:58:18-03:00",
   "tool": {
     "name": "prefect",
     "version": "3.9.3"
@@ -17,6 +17,13 @@
       "command": "make probe-prefect --probes webhook",
       "probes": [
         "webhook"
+      ]
+    },
+    {
+      "date": "2026-11-16T12:58:18-03:00",
+      "command": "make probe-prefect --probes long-query",
+      "probes": [
+        "long-query"
       ]
     }
   ],
@@ -42,5 +49,15 @@
     "row_after_seconds": 11.17,
     "run_state": "COMPLETED",
     "total_seconds": 11.21
+  },
+  "long_query": {
+    "run_id": "84feac66-c691-4c4c-8d20-3a7fcc8d4527",
+    "statement": "select pg_sleep(1800)",
+    "final_state": "COMPLETED",
+    "seconds": 1825.0,
+    "tasks": {
+      "long-statement-4b5": "COMPLETED"
+    },
+    "artifacts": []
   }
 }

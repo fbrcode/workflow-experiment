@@ -39,8 +39,8 @@ def long_statement(seconds: int) -> None:
 
 
 @flow(name="probe-long-query")
-def probe_long_query(seconds: int = 660) -> None:
-    """One statement longer than 600 s."""
+def probe_long_query(seconds: int = 1800) -> None:
+    """One statement longer than 600 s: 30 minutes by default."""
     long_statement(seconds)
 
 

@@ -307,4 +307,32 @@ How they're covered:
 - **Pricing is from the vendors' public pages on 2026-11-16.** Kestra Enterprise and Retool
   self-hosted have no public price.
 - **A new fact for the recommendation:** Retool 4.0 (2026-06-11) supports only Kubernetes, not
-  ECS. The comparison was updated in [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md).
+  ECS. The comparison was updated in [reports/retool-replacement.md](reports/retool-replacement.md)
+  (then named `retool-kestra-prefect.md`; renamed by D-024).
+
+### D-024: AWS Step Functions joins the comparison; Lambda, 30-minute statements and ECS tasks · `accepted`
+
+The owner added on 2026-11-16:
+
+- AWS Step Functions as a fourth option.
+- Three hard requirements: Lambda calls, Postgres statements of up to 30 minutes, and
+  triggering ECS tasks.
+- Rebuild the reports on everything provided so far (D-022, D-023 and this).
+
+How they're covered:
+
+- **Step Functions is assessed from AWS's documentation, like Retool.** It's a managed AWS
+  service, and no AWS account was used, so nothing about it is measured. There's no
+  implementation here. Its report, [reports/step-functions.md](reports/step-functions.md),
+  sketches the probes as one state machine and lists a pilot plan. D-006 (OSS, self-hosted)
+  still governs what's built here; it doesn't stop a managed service from being compared.
+- **The long-query probe now runs 30 minutes by default.** `--seconds` defaults to 1800; it
+  was 660. Both tools ran it on 2026-11-16 ([probes.md](probes.md)).
+- **Lambda calls and ECS tasks are from docs and source, not measured.** Client-side timeouts
+  decide whether long calls work, and they're set in plugin and library code. So the reports
+  cite the sources at the tags in use: `plugin-aws` 4.0.0, `prefect-aws` 0.8.0, Prefect 3.9.3
+  and botocore 1.44.3.
+- **The comparison is renamed** from `reports/retool-kestra-prefect.md` to
+  [reports/retool-replacement.md](reports/retool-replacement.md), with the needs renumbered 1
+  to 11. The recommendation now turns on one question: do people do their part in the
+  workflow tool (Kestra) or in apps (Step Functions behind them)?

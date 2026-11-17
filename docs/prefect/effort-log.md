@@ -133,3 +133,15 @@ in [comparison/data/](../comparison/data/). What the measurements and the UI wal
 | Pause timeout | `pause_flow_run` fails the run after 3600 s unless `timeout` is set; the docs page doesn't state the default (the source does). `suspend_flow_run` has no default timeout, but needs a deployment and persisted results. |
 | Probe deployments kept apart | A second deployment file, `probes.yaml`, applied with `prefect deploy --all --prefect-file probes.yaml`, keeps the probes out of `make prefect-deploy`. The image now copies it. |
 | Long statement | `select pg_sleep(660)` through the connector block needed no setting: `COMPLETED` with 660.3 s of run time. A task's `timeout_seconds` couldn't have stopped it anyway: a timeout can't interrupt a blocking call. |
+
+## 2026-11-16: Webhook, AWS sources and the 30-minute statement (D-023, D-024)
+
+[probes.md](../probes.md) has the results. Friction and surprises:
+
+| Observation | Detail |
+|---|---|
+| No webhooks in OSS | Webhooks are Prefect Cloud only. The substitute, `POST /api/events` matched by a deployment trigger, needs the server's admin auth string and answers 204 with no body. |
+| The events route in the OpenAPI document | The schema lists paths relative to the API root (`/events`); the route is served at `/api/events`. |
+| 30-minute statement | `select pg_sleep(1800)` through the connector block needed no setting: `COMPLETED` 1,825.0 s after the API call. |
+| `LambdaFunction` ignores its client parameters | `prefect-aws` 0.8.0 builds the Lambda client from the session without `aws_client_parameters`. It gets botocore's 60 s read timeout, and retries that include read timeouts: a synchronous function that runs over a minute fails, and runs again on each retry. `AwsCredentials.get_client("lambda")` does apply the parameters. Not in the docs; read from the source. |
+| No ECS task block | `EcsTask` was removed in 2024 ([#13417](https://github.com/PrefectHQ/prefect/pull/13417)). For Prefect flows, `run_deployment()` on an ECS work pool waits for the Fargate task; for other task definitions, boto3, with a waiter that stops at 10 minutes unless configured. |

@@ -2,7 +2,8 @@ id: probe-long-query
 namespace: experiment.probes
 description: |
   Capability probe, not part of the n8n port (docs/probes.md): one Postgres statement that runs
-  longer than Retool Workflows' 600 s limit, through the same JDBC task the summarizer uses.
+  longer than Retool Workflows' 600 s limit (30 minutes by default, D-024), through the same JDBC
+  task the summarizer uses.
   No timeout is set anywhere: Kestra tasks and executions have none by default.
 
 labels:
@@ -12,7 +13,7 @@ labels:
 inputs:
   - id: seconds
     type: INT
-    defaults: 660
+    defaults: 1800
 
 tasks:
   - id: long-statement

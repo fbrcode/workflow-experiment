@@ -119,3 +119,16 @@ in [comparison/data/](../comparison/data/). What the measurements and the UI wal
 | The resume form | Drawn from `onResume` with no code: a STRING is a Monaco code editor (inputs accept expressions), a SELECT is a dropdown, a FILE is a normal file chooser. Driving it from a browser script needs keystrokes in the editor. |
 | Live executions in the UI | The page of a running or paused execution keeps a stream open, so waiting for network idle never finishes. Wait for the page load instead. |
 | Long statement | `select pg_sleep(660)` through the JDBC task needed no setting: `SUCCESS` after 660.6 s. The JDBC plugin has no query-timeout property. |
+
+## 2026-11-16: Webhook, AWS sources and the 30-minute statement (D-023, D-024)
+
+[probes.md](../probes.md) has the results. Friction and surprises:
+
+| Observation | Detail |
+|---|---|
+| Webhook signatures are undocumented | The `Webhook` trigger's `signature` property (HMAC SHA1, SHA256 or SHA512 of the body) is in the 2.0.10 server's plugin schema, but not on the published plugin page. |
+| Webhook paths skip the login | The server's basic auth doesn't apply to `/executions/webhook/...`. The key in the URL is the only check unless `signature` is set. |
+| 30-minute statement | `select pg_sleep(1800)` through the JDBC task needed no setting: `SUCCESS` in 1,801.3 s. |
+| No ECS task | `plugin-aws` 4.0.0 has no `ecs` package. The request for one ([#148](https://github.com/kestra-io/plugin-aws/issues/148)) was closed with a pointer to the AWS Batch task runner, which is Enterprise. Starting and awaiting an ECS task is a script. |
+| Lambda timeouts are new | `lambda.Invoke`'s `socketTimeout` (default 15 min 10 s) and `sdkMaxAttempts` arrived on 2026-11-02, in 4.0.0. Earlier versions, and every other `plugin-aws` task, keep the AWS SDK's 30 s read timeout. Read from the source. |
+| Timeouts don't cancel statements | From the source: a task `timeout` interrupts the worker thread, which doesn't unblock a socket read, and the JDBC task's `kill()` (which cancels the statement) runs only after it returns. Not tested. |

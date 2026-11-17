@@ -182,17 +182,18 @@ screenshots-kestra: ## C9: screenshots of the running Kestra UI into docs/compar
 screenshots-prefect: ## C9: screenshots of the running Prefect UI into docs/comparison/data/screenshots (after parity-prefect)
 	@$(call SCREENSHOTS,wfx-prefect_default,prefect)
 
-# --- Capability probes (docs/probes.md): a >600 s Postgres statement and a control-table gate with a
-# human step, against the stack (started if needed). Not part of the n8n port.
-# PROBE_ARGS goes to scripts/probes.py, e.g. PROBE_ARGS="--probes webhook" (a subset updates the day's results file).
+# --- Capability probes (docs/probes.md): a 30-minute Postgres statement, a control-table gate with a
+# human step, and a webhook, against the stack (started if needed). Not part of the n8n port.
+# PROBE_ARGS goes to scripts/probes.py, e.g. PROBE_ARGS="--probes webhook" (a subset updates the day's
+# results file) or PROBE_ARGS="--seconds 660" (a shorter statement).
 PROBE_ARGS ?=
-PROBE = set -a; source $(ENV_FILE); set +a; export ENV_FILE=$(ENV_FILE) PROBE_COMMAND="make $@ $(PROBE_ARGS)"; \
+PROBE = set -a; source $(ENV_FILE); set +a; export ENV_FILE=$(ENV_FILE) PROBE_COMMAND="make $@$(if $(PROBE_ARGS), PROBE_ARGS='$(PROBE_ARGS)')"; \
 	uv run --quiet --no-project --python 3.12 scripts/probes.py
 
-probe-kestra: kestra-up ## Run the capability probes on Kestra into docs/comparison/data (about 12 min)
+probe-kestra: kestra-up ## Run the capability probes on Kestra into docs/comparison/data (about 32 min)
 	@$(PROBE) kestra $(PROBE_ARGS)
 
-probe-prefect: prefect-up ## Run the capability probes on Prefect into docs/comparison/data (about 12 min)
+probe-prefect: prefect-up ## Run the capability probes on Prefect into docs/comparison/data (about 32 min)
 	@$(PROBE) prefect $(PROBE_ARGS)
 
 # The probe's human step done in the UI (docs/probes.md): hold a probe-gate run at its review step,

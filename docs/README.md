@@ -13,10 +13,11 @@
 | [baseline/prod-schema.md](baseline/prod-schema.md) | Owner-provided psql `\d+` output from production, verbatim |
 | [comparison/criteria.md](comparison/criteria.md) | Evaluation dimensions, scoring, fault-injection scenarios, node mapping template |
 | [comparison/results.md](comparison/results.md) | **The result.** Scorecard, measurements, evidence per dimension, recommendation |
-| [reports/retool-kestra-prefect.md](reports/retool-kestra-prefect.md) | **The Retool replacement.** Retool Workflows vs Kestra vs Prefect on promotion, long Postgres work, control-table gates, human steps and spec-driven development; options and recommendation |
+| [reports/retool-replacement.md](reports/retool-replacement.md) | **The Retool replacement.** Retool Workflows vs Kestra vs Prefect vs AWS Step Functions on promotion, spec-driven development, control-table gates, human steps, 30-minute Postgres work, Lambda, ECS tasks, webhooks, AWS services, hosting and price; options and recommendation |
 | [reports/kestra.md](reports/kestra.md) | Kestra for the Retool replacement: running it, the development lifecycle, pros and cons per capability |
 | [reports/prefect.md](reports/prefect.md) | Prefect for the Retool replacement: running it, the development lifecycle, pros and cons per capability |
-| [probes.md](probes.md) | Capability probes: a 660 s Postgres statement and a control-table gate with a human step, in both tools |
+| [reports/step-functions.md](reports/step-functions.md) | AWS Step Functions for the Retool replacement, from AWS's docs: the design, the development lifecycle, pros and cons per capability, a pilot plan |
+| [probes.md](probes.md) | Capability probes: a 30-minute Postgres statement, a control-table gate with a human step, and a webhook, in both tools |
 | [comparison/data/](comparison/data/) | Raw evidence with date, host, versions and command: parity runs, measurements, line counts, UI screenshots |
 | [reference/](reference/) | External material provided by the owner (e.g. the original comparison doc) |
 | [kestra/README.md](kestra/README.md) | Kestra: setup, architecture, versions, verification |
